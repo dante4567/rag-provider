@@ -750,7 +750,7 @@ class DocumentProcessor:
             chunk_overlap=CHUNK_OVERLAP
         )
 
-    async def extract_text_from_file(self, file_path: str, process_ocr: bool = False) -> tuple[str, DocumentType]:
+    async def extract_text_from_file(self, file_path: str, process_ocr: bool = False) -> tuple[str, DocumentType, Dict[str, Any]]:
         """Extract text from various file formats"""
         file_path = Path(file_path)
 
@@ -765,26 +765,33 @@ class DocumentProcessor:
         # Detect file type
         mime_type = magic.from_file(str(file_path), mime=True)
         file_extension = file_path.suffix.lower()
+        logger.info(f"Detected file: {file_path}, MIME type: {mime_type}, Extension: {file_extension}")
+        logger.info(f"Is .docx or .doc: {file_extension in ['.docx', '.doc']}")
+        metadata = {}
 
         # PDF processing
         if mime_type == "application/pdf" or file_extension == ".pdf":
-            return await self._process_pdf(file_path, process_ocr)
+            text, doc_type = await self._process_pdf(file_path, process_ocr)
+            return text, doc_type, metadata
 
         # Office documents
         elif file_extension in ['.docx', '.doc']:
-            return await self._process_word_document(file_path), DocumentType.office
+            text, metadata = await self._process_word_document(file_path)
+            return text, DocumentType.office, metadata
         elif file_extension in ['.pptx', '.ppt']:
-            return await self._process_powerpoint(file_path), DocumentType.office
+            text = await self._process_powerpoint(file_path)
+            return text, DocumentType.office, metadata
         elif file_extension in ['.xlsx', '.xls']:
-            return await self._process_excel(file_path), DocumentType.office
+            text = await self._process_excel(file_path)
+            return text, DocumentType.office, metadata
 
         # Images
         elif mime_type.startswith("image/") or file_extension in ['.png', '.jpg', '.jpeg', '.tiff', '.bmp']:
             if process_ocr or USE_OCR:
                 text = OCRService.extract_text_from_image(str(file_path))
-                return text, DocumentType.scanned
+                return text, DocumentType.scanned, metadata
             else:
-                return f"Image file: {file_path.name}", DocumentType.image
+                return f"Image file: {file_path.name}", DocumentType.image, metadata
 
         # Text-based files
         elif (mime_type.startswith("text/") or
@@ -794,19 +801,21 @@ class DocumentProcessor:
 
             # Check if it's a WhatsApp export
             if self._is_whatsapp_export(content):
-                return content, DocumentType.whatsapp
+                return content, DocumentType.whatsapp, metadata
             elif file_extension in ['.py', '.js', '.java', '.cpp', '.c', '.cs', '.php']:
-                return content, DocumentType.code
+                return content, DocumentType.code, metadata
             else:
-                return content, DocumentType.text
+                return content, DocumentType.text, metadata
 
         # Email files
         elif file_extension in ['.eml', '.msg']:
-            return await self._process_email(file_path), DocumentType.email
+            text = await self._process_email(file_path)
+            return text, DocumentType.email, metadata
 
         # HTML/Web content
         elif mime_type.startswith("text/html") or file_extension in ['.html', '.htm']:
-            return await self._process_html(file_path), DocumentType.webpage
+            text = await self._process_html(file_path)
+            return text, DocumentType.webpage, metadata
 
         else:
             raise ValueError(f"Unsupported file type: {mime_type} ({file_extension})")
@@ -841,13 +850,16 @@ class DocumentProcessor:
 
     async def _process_word_document(self, file_path: Path) -> str:
         """Process Word documents"""
+        logger.info(f"Attempting to process Word document: {file_path}")
         try:
             doc = DocxDocument(str(file_path))
             text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
-            return text
+            title = doc.core_properties.title if doc.core_properties.title else file_path.stem
+            logger.info(f"Successfully extracted text from {file_path}")
+            return text, {"title": title}
         except Exception as e:
-            logger.error(f"Word document processing failed: {e}")
-            return f"Failed to process Word document: {file_path.name}"
+            logger.error(f"Word document processing failed for {file_path}: {e}")
+            return f"Failed to process Word document: {file_path.name}", {}
 
     async def _process_powerpoint(self, file_path: Path) -> str:
         """Process PowerPoint presentations"""
@@ -952,7 +964,7 @@ class DocumentProcessor:
                 return True
         return False
 
-    async def enrich_with_llm(self, content: str, filename: str, document_type: DocumentType) -> ObsidianMetadata:
+    async def enrich_with_llm(self, content: str, filename: str, document_type: DocumentType, title: str = None) -> ObsidianMetadata:
         """Enhanced LLM enrichment for metadata extraction"""
 
         # Determine content sample for LLM analysis
@@ -972,7 +984,7 @@ Content Sample: {content_sample}
 
 Provide a JSON response with this exact structure:
 {{
-    "title": "Descriptive title for the document",
+    "title": "{title or 'Descriptive title for the document'}",
     "summary": "2-3 sentence executive summary",
     "abstract": "Detailed paragraph abstract",
     "keywords": {{
@@ -1034,7 +1046,7 @@ Respond only with valid JSON."""
             logger.error(f"LLM enrichment failed: {e}")
             # Return basic metadata as fallback
             return ObsidianMetadata(
-                title=filename,
+                title=title or filename,
                 summary=f"Document: {filename}",
                 keywords=Keywords(primary=["document"], secondary=[], related=[]),
                 entities=Entities(),
@@ -1283,8 +1295,9 @@ class RAGService:
             chunks = self.document_processor.text_splitter.split_text(content)
 
             # LLM enrichment
+            title = file_metadata.get("title") if file_metadata else None
             obsidian_metadata = await self.document_processor.enrich_with_llm(
-                content, filename or f"document_{doc_id}", document_type
+                content, filename or f"document_{doc_id}", document_type, title=title
             )
 
             # Store chunks in ChromaDB
@@ -1351,7 +1364,7 @@ class RAGService:
     async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True) -> IngestResponse:
         """Process a file from path"""
         try:
-            content, document_type = await self.document_processor.extract_text_from_file(file_path, process_ocr)
+            content, document_type, metadata = await self.document_processor.extract_text_from_file(file_path, process_ocr)
             filename = Path(file_path).name
 
             return await self.process_document(
@@ -1359,7 +1372,8 @@ class RAGService:
                 filename=filename,
                 document_type=document_type,
                 process_ocr=process_ocr,
-                generate_obsidian=generate_obsidian
+                generate_obsidian=generate_obsidian,
+                file_metadata=metadata
             )
         except Exception as e:
             logger.error(f"File processing failed for {file_path}: {e}")
@@ -1477,6 +1491,7 @@ async def ingest_file(
     generate_obsidian: bool = Form(True)
 ):
     """Ingest file via upload"""
+    logger.info(f"Received file for ingestion: {file.filename}, Content-Type: {file.content_type}")
     try:
         # Save uploaded file temporarily
         temp_path = Path(PATHS['temp_path']) / f"upload_{uuid.uuid4()}_{file.filename}"

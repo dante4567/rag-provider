@@ -13,7 +13,12 @@
       "Bash(chown:*)",
       "Bash(docker exec:*)",
       "Bash(sudo chown:*)",
-      "Bash(python test_rag_enhanced.py:*)"
+      "Bash(python test_rag_enhanced.py:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(python3 -m pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(docker cp:*)"
     ],
     "deny": [],
     "ask": []

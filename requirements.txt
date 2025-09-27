@@ -10,7 +10,6 @@ httpx>=0.25.2
 chromadb>=0.4.18
 
 # Text processing (simplified to avoid conflicts)
-langchain-text-splitters>=0.0.1
 
 # LLM providers
 anthropic>=0.7.8
@@ -53,3 +52,5 @@ requests>=2.31.0
 tqdm>=4.66.1
 click>=8.1.7
 rich>=13.7.0
+python-docx
+pytest
