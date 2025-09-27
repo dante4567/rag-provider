@@ -169,18 +169,36 @@ DELETE /documents/{doc_id}
 # Delete document and associated files
 ```
 
-### **LLM Testing**
+### **LLM Testing & Model Selection**
 ```http
 POST /test-llm
 {
-  "provider": "groq|anthropic|openai",
+  "provider": "groq|anthropic|openai|google",
+  "model": "groq/llama-3.1-8b-instant|anthropic/claude-3-haiku-20240307|...",
   "prompt": "Test prompt"
+}
+
+GET /models
+# Returns available models with pricing information
+
+GET /cost-stats
+# Returns cost tracking statistics and budget information
+```
+
+### **Chat with RAG**
+```http
+POST /chat
+{
+  "question": "What is machine learning?",
+  "llm_model": "groq/llama-3.1-8b-instant",
+  "max_context_chunks": 5,
+  "include_sources": true
 }
 ```
 
 ## 🔧 **Configuration Options**
 
-### **LLM Providers**
+### **LLM Providers & Models**
 ```bash
 # Provider priority (fallback chain)
 DEFAULT_LLM=groq           # Primary choice
@@ -190,7 +208,21 @@ EMERGENCY_LLM=openai       # Final fallback
 # Model parameters
 LLM_TEMPERATURE=0.7        # Creativity level
 LLM_MAX_RETRIES=3         # Retry attempts
+
+# Cost tracking
+ENABLE_COST_TRACKING=true
+DAILY_BUDGET_USD=10.0
 ```
+
+**Supported Models by Task:**
+- **Ultra-Fast & Cheap**: `groq/llama-3.1-8b-instant` ($0.05-0.08/M tokens)
+- **Fast & Good Quality**: `groq/llama3-70b-8192` ($0.59-0.79/M tokens)
+- **Cheap & Capable**: `anthropic/claude-3-haiku-20240307` ($0.25-1.25/M tokens)
+- **Balanced & Latest**: `anthropic/claude-3-5-sonnet-20241022` ($3-15/M tokens)
+- **Ultimate Quality**: `anthropic/claude-3-opus-20240229` ($15-75/M tokens)
+- **Reliable General**: `openai/gpt-4o-mini` ($0.15-0.60/M tokens)
+- **Powerful Flagship**: `openai/gpt-4o` ($5-15/M tokens)
+- **Long Context**: `google/gemini-1.5-pro` ($1.25-5/M tokens, 2M context)
 
 ### **Document Processing**
 ```bash
@@ -274,6 +306,35 @@ curl -X POST "http://localhost:8001/ingest/batch" \
   -F "files=@document2.docx" \
   -F "files=@chat_export.txt" \
   -F "generate_obsidian=true"
+```
+
+### **Model Testing & Cost Tracking**
+```bash
+# Test specific LLM model with cost tracking
+curl -X POST "http://localhost:8001/test-llm" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "groq/llama-3.1-8b-instant",
+    "prompt": "Explain machine learning briefly"
+  }'
+
+# Get available models and pricing
+curl "http://localhost:8001/models"
+
+# Check cost statistics
+curl "http://localhost:8001/cost-stats"
+```
+
+### **Chat with RAG & Model Selection**
+```bash
+# Chat with document context using specific model
+curl -X POST "http://localhost:8001/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "What ML accuracy was achieved?",
+    "llm_model": "anthropic/claude-3-haiku-20240307",
+    "max_context_chunks": 5
+  }'
 ```
 
 ### **Advanced Search**

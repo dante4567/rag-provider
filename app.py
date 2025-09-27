@@ -50,6 +50,12 @@ except ImportError:
 import anthropic
 import openai
 import groq
+try:
+    import google.generativeai as genai
+    GOOGLE_AVAILABLE = True
+except ImportError:
+    GOOGLE_AVAILABLE = False
+    logger.warning("Google Generative AI not available")
 
 # File monitoring
 from watchdog.observers import Observer
@@ -174,6 +180,11 @@ HIERARCHY_DEPTH = int(os.getenv("HIERARCHY_DEPTH", "3"))
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+# Cost tracking
+DAILY_BUDGET_USD = float(os.getenv("DAILY_BUDGET_USD", "10.0"))
+ENABLE_COST_TRACKING = os.getenv("ENABLE_COST_TRACKING", "true").lower() == "true"
 
 # Enums
 class DocumentType(str, Enum):
@@ -191,6 +202,25 @@ class LLMProvider(str, Enum):
     anthropic = "anthropic"
     openai = "openai"
     groq = "groq"
+    google = "google"
+
+class LLMModel(str, Enum):
+    # Groq models (fast & cost-effective)
+    groq_llama3_8b = "groq/llama-3.1-8b-instant"  # Lightning fast, very cheap
+    groq_llama3_70b = "groq/llama3-70b-8192"      # Good quality, fast
+    groq_mixtral_8x7b = "groq/mixtral-8x7b-32768" # Large context, deprecated but keeping for compatibility
+
+    # Anthropic models (high quality)
+    anthropic_claude_3_haiku = "anthropic/claude-3-haiku-20240307"   # Cheap & good
+    anthropic_claude_3_5_sonnet = "anthropic/claude-3-5-sonnet-20241022"  # Balanced, latest
+    anthropic_claude_3_opus = "anthropic/claude-3-opus-20240229"    # Ultimate quality
+
+    # OpenAI models (reliable)
+    openai_gpt_4o_mini = "openai/gpt-4o-mini"     # Very cheap
+    openai_gpt_4o = "openai/gpt-4o"               # Powerful
+
+    # Google models (long context)
+    google_gemini_15_pro = "google/gemini-1.5-pro"  # Long context processing
 
 class ComplexityLevel(str, Enum):
     beginner = "beginner"
@@ -280,25 +310,99 @@ class Query(BaseModel):
     top_k: int = 5
     filter: Optional[Dict[str, Any]] = None
 
+class ChatRequest(BaseModel):
+    question: str
+    max_context_chunks: int = 5
+    llm_model: Optional[LLMModel] = None
+    llm_provider: Optional[LLMProvider] = None
+    include_sources: bool = True
+
+class ChatResponse(BaseModel):
+    question: str
+    answer: str
+    sources: List[SearchResult]
+    llm_provider_used: str
+    llm_model_used: str
+    total_chunks_found: int
+    response_time_ms: float
+    cost_usd: Optional[float] = None
+
+class CostInfo(BaseModel):
+    provider: str
+    model: str
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float
+    timestamp: datetime
+
+class CostStats(BaseModel):
+    total_cost_today: float
+    total_cost_all_time: float
+    daily_budget: float
+    budget_remaining: float
+    operations_today: int
+    most_expensive_operation: Optional[CostInfo] = None
+    cost_by_provider: Dict[str, float]
+
+class TestLLMRequest(BaseModel):
+    provider: Optional[LLMProvider] = None
+    model: Optional[LLMModel] = None
+    prompt: str = "Hello, this is a test."
+
+# Model pricing (per 1M tokens) - Updated 2024
+MODEL_PRICING = {
+    # Groq - Lightning fast inference
+    "groq/llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},      # Ultra-cheap
+    "groq/llama3-70b-8192": {"input": 0.59, "output": 0.79},           # Fast & good quality
+    "groq/mixtral-8x7b-32768": {"input": 0.27, "output": 0.27},        # Deprecated but cheap
+
+    # Anthropic - High quality reasoning
+    "anthropic/claude-3-haiku-20240307": {"input": 0.25, "output": 1.25},        # Cheapest Claude
+    "anthropic/claude-3-5-sonnet-20241022": {"input": 3.0, "output": 15.0},      # Latest & best balanced
+    "anthropic/claude-3-opus-20240229": {"input": 15.0, "output": 75.0},         # Ultimate quality
+
+    # OpenAI - Reliable general purpose
+    "openai/gpt-4o-mini": {"input": 0.15, "output": 0.60},             # Very cheap & capable
+    "openai/gpt-4o": {"input": 5.0, "output": 15.0},                   # Powerful flagship
+
+    # Google - Long context specialist
+    "google/gemini-1.5-pro": {"input": 1.25, "output": 5.0}            # 2M context window
+}
+
 # LLM Provider Configuration
 LLM_PROVIDERS = {
     "anthropic": {
         "api_key": ANTHROPIC_API_KEY,
-        "model": "claude-3-sonnet-20241022",
-        "max_tokens": 4000,
+        "models": {
+            "anthropic/claude-3-haiku-20240307": {"max_tokens": 4000, "model_name": "claude-3-haiku-20240307"},
+            "anthropic/claude-3-5-sonnet-20241022": {"max_tokens": 4000, "model_name": "claude-3-5-sonnet-20241022"},
+            "anthropic/claude-3-opus-20240229": {"max_tokens": 4000, "model_name": "claude-3-opus-20240229"}
+        },
         "client_class": anthropic.Anthropic
     },
     "openai": {
         "api_key": OPENAI_API_KEY,
-        "model": "gpt-4o-mini",
-        "max_tokens": 4000,
+        "models": {
+            "openai/gpt-4o-mini": {"max_tokens": 4000, "model_name": "gpt-4o-mini"},
+            "openai/gpt-4o": {"max_tokens": 4000, "model_name": "gpt-4o"}
+        },
         "client_class": openai.OpenAI
     },
     "groq": {
         "api_key": GROQ_API_KEY,
-        "model": "llama-3.1-8b-instant",
-        "max_tokens": 8000,
+        "models": {
+            "groq/mixtral-8x7b-32768": {"max_tokens": 32000, "model_name": "mixtral-8x7b-32768"},
+            "groq/llama3-70b-8192": {"max_tokens": 8000, "model_name": "llama3-70b-8192"},
+            "groq/llama-3.1-8b-instant": {"max_tokens": 8000, "model_name": "llama-3.1-8b-instant"}
+        },
         "client_class": groq.Groq
+    },
+    "google": {
+        "api_key": GOOGLE_API_KEY,
+        "models": {
+            "google/gemini-1.5-pro": {"max_tokens": 8000, "model_name": "gemini-1.5-pro-latest"}
+        },
+        "client_class": None  # Will be set during import
     }
 }
 
@@ -307,13 +411,21 @@ llm_clients = {}
 for provider, config in LLM_PROVIDERS.items():
     if config["api_key"]:
         try:
-            if provider == "groq":
-                llm_clients[provider] = config["client_class"](api_key=config["api_key"])
-            else:
+            if provider == "google" and GOOGLE_AVAILABLE:
+                genai.configure(api_key=config["api_key"])
+                llm_clients[provider] = genai.GenerativeModel('gemini-1.5-pro-latest')
+            elif provider in ["groq", "anthropic", "openai"]:
                 llm_clients[provider] = config["client_class"](api_key=config["api_key"])
             logger.info(f"Initialized {provider} LLM client")
         except Exception as e:
             logger.warning(f"Failed to initialize {provider} client: {e}")
+
+# Cost tracking storage (in-memory for simplicity, could be moved to database)
+cost_tracking = {
+    "operations": [],
+    "daily_totals": {},
+    "total_cost": 0.0
+}
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -337,43 +449,171 @@ text_splitter = None
 file_watcher = None
 executor = ThreadPoolExecutor(max_workers=4)
 
+class CostTracker:
+    """Tracks LLM API costs and enforces budget limits"""
+
+    def __init__(self):
+        self.operations = cost_tracking["operations"]
+        self.daily_totals = cost_tracking["daily_totals"]
+        self.total_cost = cost_tracking["total_cost"]
+
+    def estimate_tokens(self, text: str) -> int:
+        """Rough token estimation (4 chars = 1 token for most models)"""
+        return len(text) // 4
+
+    def calculate_cost(self, model: str, input_tokens: int, output_tokens: int) -> float:
+        """Calculate cost based on model pricing"""
+        if model not in MODEL_PRICING:
+            return 0.0
+
+        pricing = MODEL_PRICING[model]
+        input_cost = (input_tokens / 1000000) * pricing["input"]
+        output_cost = (output_tokens / 1000000) * pricing["output"]
+        return input_cost + output_cost
+
+    def check_budget(self) -> bool:
+        """Check if daily budget limit is reached"""
+        if not ENABLE_COST_TRACKING:
+            return True
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        today_cost = self.daily_totals.get(today, 0.0)
+        return today_cost < DAILY_BUDGET_USD
+
+    def record_operation(self, provider: str, model: str, input_tokens: int, output_tokens: int, cost: float):
+        """Record an API operation and its cost"""
+        if not ENABLE_COST_TRACKING:
+            return
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        operation = CostInfo(
+            provider=provider,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost_usd=cost,
+            timestamp=datetime.now()
+        )
+
+        self.operations.append(operation)
+        self.daily_totals[today] = self.daily_totals.get(today, 0.0) + cost
+        self.total_cost += cost
+
+        logger.info(f"Recorded ${cost:.4f} cost for {provider}/{model}")
+
+    def get_stats(self) -> CostStats:
+        """Get current cost statistics"""
+        today = datetime.now().strftime("%Y-%m-%d")
+        today_cost = self.daily_totals.get(today, 0.0)
+
+        cost_by_provider = {}
+        operations_today = 0
+        most_expensive = None
+        max_cost = 0.0
+
+        for op in self.operations:
+            if op.timestamp.strftime("%Y-%m-%d") == today:
+                operations_today += 1
+                cost_by_provider[op.provider] = cost_by_provider.get(op.provider, 0.0) + op.cost_usd
+                if op.cost_usd > max_cost:
+                    max_cost = op.cost_usd
+                    most_expensive = op
+
+        return CostStats(
+            total_cost_today=today_cost,
+            total_cost_all_time=self.total_cost,
+            daily_budget=DAILY_BUDGET_USD,
+            budget_remaining=max(0, DAILY_BUDGET_USD - today_cost),
+            operations_today=operations_today,
+            most_expensive_operation=most_expensive,
+            cost_by_provider=cost_by_provider
+        )
+
 class LLMService:
-    """Manages multiple LLM providers with fallback"""
+    """Manages multiple LLM providers with fallback and cost tracking"""
 
     def __init__(self):
         self.provider_order = [DEFAULT_LLM, FALLBACK_LLM, EMERGENCY_LLM]
+        self.cost_tracker = CostTracker()
+
+    def get_model_info(self, model_id: str) -> tuple[str, dict]:
+        """Extract provider and model config from model ID"""
+        provider = model_id.split('/')[0]
+        if provider in LLM_PROVIDERS and model_id in LLM_PROVIDERS[provider]["models"]:
+            return provider, LLM_PROVIDERS[provider]["models"][model_id]
+        return None, None
+
+    async def call_llm_with_model(self, prompt: str, model_id: str, max_tokens: int = None) -> tuple[str, float]:
+        """Call LLM with specific model and return response with cost"""
+        if not self.cost_tracker.check_budget():
+            raise Exception("Daily budget limit reached")
+
+        provider, model_config = self.get_model_info(model_id)
+        if not provider or provider not in llm_clients:
+            raise Exception(f"Model {model_id} not available")
+
+        try:
+            client = llm_clients[provider]
+            tokens = max_tokens or model_config["max_tokens"]
+            model_name = model_config["model_name"]
+
+            # Estimate input tokens
+            input_tokens = self.cost_tracker.estimate_tokens(prompt)
+
+            if provider == "anthropic":
+                response = client.messages.create(
+                    model=model_name,
+                    max_tokens=tokens,
+                    temperature=LLM_TEMPERATURE,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                result = response.content[0].text
+                output_tokens = self.cost_tracker.estimate_tokens(result)
+
+            elif provider in ["openai", "groq"]:
+                response = client.chat.completions.create(
+                    model=model_name,
+                    max_tokens=tokens,
+                    temperature=LLM_TEMPERATURE,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                result = response.choices[0].message.content
+                output_tokens = self.cost_tracker.estimate_tokens(result)
+
+            elif provider == "google":
+                response = client.generate_content(prompt)
+                result = response.text
+                output_tokens = self.cost_tracker.estimate_tokens(result)
+
+            # Calculate and record cost
+            cost = self.cost_tracker.calculate_cost(model_id, input_tokens, output_tokens)
+            self.cost_tracker.record_operation(provider, model_id, input_tokens, output_tokens, cost)
+
+            return result, cost
+
+        except Exception as e:
+            logger.warning(f"LLM {provider}/{model_id} failed: {e}")
+            raise
 
     async def call_llm(self, prompt: str, provider: str = None, max_tokens: int = None) -> str:
-        """Call LLM with fallback support"""
+        """Call LLM with fallback support (legacy method)"""
         providers_to_try = [provider] if provider else self.provider_order
 
         for llm_provider in providers_to_try:
             if llm_provider not in llm_clients:
                 continue
 
+            # Use default model for the provider
+            provider_config = LLM_PROVIDERS.get(llm_provider, {})
+            models = provider_config.get("models", {})
+            if not models:
+                continue
+
+            default_model = list(models.keys())[0]  # Use first model as default
+
             try:
-                config = LLM_PROVIDERS[llm_provider]
-                client = llm_clients[llm_provider]
-                tokens = max_tokens or config["max_tokens"]
-
-                if llm_provider == "anthropic":
-                    response = client.messages.create(
-                        model=config["model"],
-                        max_tokens=tokens,
-                        temperature=LLM_TEMPERATURE,
-                        messages=[{"role": "user", "content": prompt}]
-                    )
-                    return response.content[0].text
-
-                elif llm_provider in ["openai", "groq"]:
-                    response = client.chat.completions.create(
-                        model=config["model"],
-                        max_tokens=tokens,
-                        temperature=LLM_TEMPERATURE,
-                        messages=[{"role": "user", "content": prompt}]
-                    )
-                    return response.choices[0].message.content
-
+                result, cost = await self.call_llm_with_model(prompt, default_model, max_tokens)
+                return result
             except Exception as e:
                 logger.warning(f"LLM {llm_provider} failed: {e}")
                 continue
@@ -1428,24 +1668,177 @@ async def get_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/test-llm")
-async def test_llm_provider(provider: LLMProvider, prompt: str = "Hello, how are you?"):
-    """Test LLM provider"""
+async def test_llm_provider(request: TestLLMRequest):
+    """Test LLM provider or specific model"""
     try:
         llm_service = LLMService()
-        response = await llm_service.call_llm(prompt, provider.value)
-        return {
-            "provider": provider,
-            "prompt": prompt,
-            "response": response,
-            "success": True
-        }
+
+        if request.model:
+            # Test specific model
+            response, cost = await llm_service.call_llm_with_model(request.prompt, request.model.value)
+            return {
+                "model": request.model.value,
+                "prompt": request.prompt,
+                "response": response,
+                "cost_usd": cost,
+                "success": True
+            }
+        elif request.provider:
+            # Test provider with default model
+            response = await llm_service.call_llm(request.prompt, request.provider.value)
+            return {
+                "provider": request.provider.value,
+                "prompt": request.prompt,
+                "response": response,
+                "success": True
+            }
+        else:
+            # Test default fallback chain
+            response = await llm_service.call_llm(request.prompt)
+            return {
+                "provider": "fallback_chain",
+                "prompt": request.prompt,
+                "response": response,
+                "success": True
+            }
     except Exception as e:
         return {
-            "provider": provider,
-            "prompt": prompt,
+            "provider": request.provider.value if request.provider else "unknown",
+            "model": request.model.value if request.model else None,
+            "prompt": request.prompt,
             "error": str(e),
             "success": False
         }
+
+@app.get("/cost-stats", response_model=CostStats)
+async def get_cost_stats():
+    """Get cost tracking statistics"""
+    try:
+        cost_tracker = CostTracker()
+        return cost_tracker.get_stats()
+    except Exception as e:
+        logger.error(f"Failed to get cost stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/models")
+async def list_available_models():
+    """List all available LLM models with their pricing"""
+    available_models = []
+
+    for provider, config in LLM_PROVIDERS.items():
+        if config["api_key"] and provider in llm_clients:
+            for model_id, model_config in config.get("models", {}).items():
+                pricing = MODEL_PRICING.get(model_id, {"input": 0, "output": 0})
+                available_models.append({
+                    "model_id": model_id,
+                    "provider": provider,
+                    "model_name": model_config["model_name"],
+                    "max_tokens": model_config["max_tokens"],
+                    "pricing_per_1m_tokens": pricing,
+                    "available": True
+                })
+
+    return {
+        "available_models": available_models,
+        "total_models": len(available_models),
+        "providers": list(llm_clients.keys())
+    }
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat_with_rag(request: ChatRequest):
+    """Chat endpoint with RAG functionality - combines search with LLM-powered answer generation"""
+    start_time = time.time()
+
+    try:
+        # Step 1: Search for relevant context
+        rag_service = RAGService()
+        search_query = Query(
+            text=request.question,
+            top_k=request.max_context_chunks
+        )
+
+        search_response = await search_documents(search_query)
+
+        if not search_response.results:
+            # No relevant context found
+            return ChatResponse(
+                question=request.question,
+                answer="I don't have any relevant information in my knowledge base to answer your question. Please try rephrasing your question or ensure relevant documents have been ingested.",
+                sources=[],
+                llm_provider_used="none",
+                total_chunks_found=0,
+                response_time_ms=round((time.time() - start_time) * 1000, 2)
+            )
+
+        # Step 2: Prepare context from search results
+        context_chunks = []
+        for result in search_response.results:
+            context_chunks.append(f"Source: {result.metadata.get('filename', 'Unknown')}\nContent: {result.content}")
+
+        context = "\n\n---\n\n".join(context_chunks)
+
+        # Step 3: Create RAG prompt
+        rag_prompt = f"""You are an AI assistant that answers questions based on the provided context. Use only the information from the context to answer the question. If the context doesn't contain enough information to answer the question, say so clearly.
+
+Context:
+{context}
+
+Question: {request.question}
+
+Instructions:
+- Answer based solely on the provided context
+- Be accurate and specific
+- If the context is insufficient, clearly state that
+- Cite relevant parts of the context when possible
+- Keep your answer concise but complete
+
+Answer:"""
+
+        # Step 4: Generate answer using LLM
+        llm_service = LLMService()
+        cost = 0.0
+        model_used = None
+
+        # Determine which model to use
+        if request.llm_model:
+            model_to_use = request.llm_model.value
+            try:
+                answer, cost = await llm_service.call_llm_with_model(rag_prompt, model_to_use)
+                provider_used = model_to_use.split('/')[0]
+                model_used = model_to_use
+            except Exception as e:
+                logger.error(f"LLM call failed for {model_to_use}: {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to generate answer with {model_to_use}: {str(e)}")
+        else:
+            # Use legacy fallback method
+            provider_to_use = request.llm_provider.value if request.llm_provider else None
+            try:
+                answer = await llm_service.call_llm(rag_prompt, provider_to_use)
+                provider_used = provider_to_use or DEFAULT_LLM
+                model_used = f"{provider_used}/default"
+            except Exception as e:
+                logger.error(f"LLM call failed: {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to generate answer: {str(e)}")
+
+        # Step 5: Prepare response
+        sources = search_response.results if request.include_sources else []
+
+        response_time = round((time.time() - start_time) * 1000, 2)
+
+        return ChatResponse(
+            question=request.question,
+            answer=answer,
+            sources=sources,
+            llm_provider_used=provider_used,
+            llm_model_used=model_used,
+            total_chunks_found=search_response.total_results,
+            response_time_ms=response_time,
+            cost_usd=cost if cost > 0 else None
+        )
+
+    except Exception as e:
+        logger.error(f"Chat endpoint failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Chat processing failed: {str(e)}")
 
 @app.get("/", response_class=HTMLResponse)
 async def web_interface():
