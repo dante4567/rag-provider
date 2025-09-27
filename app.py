@@ -2107,6 +2107,139 @@ async def web_interface():
     """
     return HTMLResponse(content=html_content)
 
+# Enhanced RAG Integration
+try:
+    import sys
+    sys.path.append('/home/danielt/mygit/rag-provider')
+    from production_enhanced_retrieval import ProductionEnhancedRAG
+
+    # Initialize enhanced RAG service
+    enhanced_rag = None
+
+    @app.post("/search/enhanced")
+    async def enhanced_search_endpoint(request: dict):
+        """Enhanced search with hybrid retrieval and reranking"""
+        global enhanced_rag
+
+        if enhanced_rag is None:
+            enhanced_rag = ProductionEnhancedRAG()
+            await enhanced_rag.initialize()
+
+        query = request.get('text', '')
+        top_k = request.get('top_k', 5)
+        use_hybrid = request.get('use_hybrid', True)
+        use_reranker = request.get('use_reranker', True)
+
+        if not query or not query.strip():
+            return {"error": "Search query cannot be empty"}
+
+        try:
+            result = await enhanced_rag.enhanced_search(
+                query=query,
+                top_k=top_k,
+                use_hybrid=use_hybrid,
+                use_reranker=use_reranker
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Enhanced search failed: {e}")
+            return {"error": str(e)}
+
+    @app.post("/chat/enhanced")
+    async def enhanced_chat_endpoint(request: dict):
+        """Enhanced RAG chat with improved retrieval"""
+        global enhanced_rag
+
+        if enhanced_rag is None:
+            enhanced_rag = ProductionEnhancedRAG()
+            await enhanced_rag.initialize()
+
+        question = request.get('question', '')
+        max_context_chunks = request.get('max_context_chunks', 5)
+        use_hybrid = request.get('use_hybrid', True)
+        use_reranker = request.get('use_reranker', True)
+
+        if not question or not question.strip():
+            return {"error": "Question cannot be empty"}
+
+        try:
+            result = await enhanced_rag.enhanced_chat(
+                question=question,
+                max_context_chunks=max_context_chunks,
+                use_hybrid=use_hybrid,
+                use_reranker=use_reranker
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Enhanced chat failed: {e}")
+            return {"error": str(e)}
+
+    @app.post("/triage/document")
+    async def document_quality_triage(file: UploadFile = File(...)):
+        """Analyze document quality and suggest improvements"""
+        global enhanced_rag
+
+        if enhanced_rag is None:
+            enhanced_rag = ProductionEnhancedRAG()
+            await enhanced_rag.initialize()
+
+        try:
+            content = await file.read()
+            text_content = content.decode('utf-8', errors='ignore')
+
+            result = await enhanced_rag.triage_document_quality(text_content)
+            return result
+        except Exception as e:
+            logger.error(f"Document triage failed: {e}")
+            return {"error": str(e)}
+
+    @app.get("/search/config")
+    async def get_enhanced_search_config():
+        """Get enhanced search configuration"""
+        global enhanced_rag
+
+        if enhanced_rag is None:
+            enhanced_rag = ProductionEnhancedRAG()
+            await enhanced_rag.initialize()
+
+        return {
+            'hybrid_retrieval': {
+                'dense_weight': enhanced_rag.dense_weight,
+                'sparse_weight': enhanced_rag.sparse_weight,
+                'initialized': enhanced_rag.initialized
+            },
+            'reranker': {
+                'model': 'production-hybrid-scorer',
+                'available': True
+            },
+            'triage': {
+                'quality_levels': ['excellent', 'good', 'fair', 'poor', 'unusable'],
+                'ocr_enabled': True,
+                'cloud_ocr_fallbacks': ['google_vision', 'azure_cv', 'aws_textract']
+            }
+        }
+
+    @app.post("/admin/initialize-enhanced")
+    async def initialize_enhanced_search():
+        """Initialize enhanced search with current documents"""
+        global enhanced_rag
+
+        try:
+            enhanced_rag = ProductionEnhancedRAG()
+            await enhanced_rag.initialize()
+
+            return {
+                "success": True,
+                "message": "Enhanced RAG initialized successfully",
+                "features": ["hybrid_retrieval", "reranking", "quality_triage", "cloud_ocr"]
+            }
+        except Exception as e:
+            logger.error(f"Enhanced RAG initialization failed: {e}")
+            return {"error": str(e)}
+
+except ImportError as e:
+    logger.warning(f"Enhanced RAG features not available: {e}")
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""

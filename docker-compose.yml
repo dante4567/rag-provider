@@ -73,6 +73,21 @@ services:
       - DOCKER_CONTAINER=true
       - SUPPORTED_LANGUAGES=en,de,fr,es
 
+      # Cloud OCR Configuration (optional - add API keys in .env)
+      - GOOGLE_VISION_API_KEY=${GOOGLE_VISION_API_KEY:-}
+      - AZURE_CV_ENDPOINT=${AZURE_CV_ENDPOINT:-}
+      - AZURE_CV_API_KEY=${AZURE_CV_API_KEY:-}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+
+      # Enhanced Features
+      - ENABLE_ENHANCED_SEARCH=true
+      - ENABLE_HYBRID_RETRIEVAL=true
+      - ENABLE_RERANKING=true
+      - ENABLE_QUALITY_TRIAGE=true
+      - ENABLE_CLOUD_OCR=true
+
     env_file:
       - .env
     restart: unless-stopped
@@ -92,6 +107,27 @@ services:
         reservations:
           memory: 1G
 
+  # Production-ready reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: rag_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - rag-service
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro  # For HTTPS certificates
+    restart: unless-stopped
+    networks:
+      - rag_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Optional: Web UI (uncomment if you want a dedicated UI service)
   # rag-ui:
   #   build:
@@ -103,7 +139,7 @@ services:
   #   depends_on:
   #     - rag-service
   #   environment:
-  #     - REACT_APP_API_URL=http://localhost:8001
+  #     - REACT_APP_API_URL=http://localhost/api
   #   restart: unless-stopped
   #   networks:
   #     - rag_network
