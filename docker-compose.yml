@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: rag_chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - ANONYMIZED_TELEMETRY=False
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - rag_network
+
+  rag-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag_service
+    ports:
+      - "8001:8001"
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    volumes:
+      # Main data directories
+      - ./data:/data
+      - ./data/input:/data/input
+      - ./data/output:/data/output
+      - ./data/processed:/data/processed
+      - ./data/obsidian:/data/obsidian
+      # Temporary processing
+      - rag_temp:/tmp/rag_processing
+    environment:
+      # ChromaDB connection
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - COLLECTION_NAME=documents
+
+      # File processing
+      - WATCH_FOLDER=/data/input
+      - MARKDOWN_FOLDER=/data/output
+      - OBSIDIAN_VAULT_PATH=/data/obsidian
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+      - MAX_FILE_SIZE_MB=50
+
+      # LLM Configuration
+      - DEFAULT_LLM=groq
+      - FALLBACK_LLM=anthropic
+      - EMERGENCY_LLM=openai
+      - LLM_TEMPERATURE=0.7
+      - LLM_MAX_RETRIES=3
+
+      # OCR Configuration
+      - USE_OCR=true
+      - OCR_PROVIDER=tesseract
+      - OCR_LANGUAGES=eng,deu,fra,spa
+
+      # Feature flags
+      - ENABLE_FILE_WATCH=true
+      - CREATE_OBSIDIAN_LINKS=true
+      - HIERARCHY_DEPTH=3
+
+      # Platform
+      - DOCKER_CONTAINER=true
+      - SUPPORTED_LANGUAGES=en,de,fr,es
+
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health', timeout=5)"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 45s
+    networks:
+      - rag_network
+    # Resource limits for better performance
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # Optional: Web UI (uncomment if you want a dedicated UI service)
+  # rag-ui:
+  #   build:
+  #     context: ./ui
+  #     dockerfile: Dockerfile
+  #   container_name: rag_ui
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - rag-service
+  #   environment:
+  #     - REACT_APP_API_URL=http://localhost:8001
+  #   restart: unless-stopped
+  #   networks:
+  #     - rag_network
+
+volumes:
+  chroma_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./volumes/chroma_data
+  rag_temp:
+    driver: local
+
+networks:
+  rag_network:
+    driver: bridge
