@@ -24,7 +24,7 @@ from concurrent.futures import ThreadPoolExecutor
 import mimetypes
 
 # Document processing imports
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+# Using simple text splitter to avoid langchain dependency conflicts
 import PyPDF2
 import magic
 from docx import Document as DocxDocument
@@ -60,6 +60,49 @@ from rich.console import Console
 from rich.table import Table
 from tqdm import tqdm
 
+# Simple text splitter to replace langchain dependency
+class SimpleTextSplitter:
+    def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+
+    def split_text(self, text: str) -> List[str]:
+        """Split text into chunks with overlap"""
+        if not text:
+            return []
+
+        chunks = []
+        start = 0
+        text_len = len(text)
+
+        while start < text_len:
+            end = start + self.chunk_size
+
+            # If this isn't the last chunk, try to break at a sentence or word boundary
+            if end < text_len:
+                # Look for sentence endings
+                for i in range(min(100, self.chunk_size // 4)):
+                    if end - i >= 0 and text[end - i] in '.!?':
+                        end = end - i + 1
+                        break
+                else:
+                    # Look for word boundaries
+                    for i in range(min(50, self.chunk_size // 8)):
+                        if end - i >= 0 and text[end - i] == ' ':
+                            end = end - i
+                            break
+
+            chunk = text[start:end].strip()
+            if chunk:
+                chunks.append(chunk)
+
+            # Move start position with overlap
+            start = end - self.chunk_overlap
+            if start <= 0:
+                start = end
+
+        return chunks
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -81,7 +124,7 @@ def get_platform_config():
             'input_path': '/data/input',
             'output_path': '/data/output',
             'processed_path': '/data/processed',
-            'obsidian_path': '/data/obsidian',
+            'obsidian_path': '/tmp/obsidian',
             'temp_path': '/tmp'
         }
     elif PLATFORM == 'windows':
@@ -247,14 +290,14 @@ LLM_PROVIDERS = {
     },
     "openai": {
         "api_key": OPENAI_API_KEY,
-        "model": "gpt-4-turbo-preview",
+        "model": "gpt-4o-mini",
         "max_tokens": 4000,
         "client_class": openai.OpenAI
     },
     "groq": {
         "api_key": GROQ_API_KEY,
-        "model": "mixtral-8x7b-32768",
-        "max_tokens": 32768,
+        "model": "llama-3.1-8b-instant",
+        "max_tokens": 8000,
         "client_class": groq.Groq
     }
 }
@@ -462,10 +505,9 @@ class DocumentProcessor:
 
     def __init__(self, llm_service: LLMService):
         self.llm_service = llm_service
-        self.text_splitter = RecursiveCharacterTextSplitter(
+        self.text_splitter = SimpleTextSplitter(
             chunk_size=CHUNK_SIZE,
-            chunk_overlap=CHUNK_OVERLAP,
-            length_function=len,
+            chunk_overlap=CHUNK_OVERLAP
         )
 
     async def extract_text_from_file(self, file_path: str, process_ocr: bool = False) -> tuple[str, DocumentType]:
@@ -718,7 +760,18 @@ Respond only with valid JSON."""
             response = await self.llm_service.call_llm(prompt)
             metadata_dict = json.loads(response)
 
-            # Create ObsidianMetadata object
+            # Create ObsidianMetadata object with safe parsing
+            links = metadata_dict.get("links", [])
+            # Ensure links are strings, not nested lists
+            if isinstance(links, list):
+                safe_links = []
+                for link in links:
+                    if isinstance(link, list):
+                        safe_links.extend([str(item) for item in link])
+                    else:
+                        safe_links.append(str(link))
+                links = safe_links
+
             obsidian_metadata = ObsidianMetadata(
                 title=metadata_dict.get("title", filename),
                 summary=metadata_dict.get("summary", ""),
@@ -730,7 +783,7 @@ Respond only with valid JSON."""
                 complexity=ComplexityLevel(metadata_dict.get("complexity", "intermediate")),
                 reading_time=metadata_dict.get("reading_time", "Unknown"),
                 document_type=document_type,
-                links=metadata_dict.get("links", []),
+                links=links,
                 source=filename,
                 created_at=datetime.now()
             )
@@ -1004,14 +1057,14 @@ class RAGService:
                 "filename": filename or f"document_{doc_id}",
                 "chunks": len(chunks),
                 "created_at": datetime.now().isoformat(),
-                "document_type": document_type,
+                "document_type": str(document_type),
                 "title": obsidian_metadata.title,
-                "tags": obsidian_metadata.tags,
-                "keywords_primary": obsidian_metadata.keywords.primary,
-                "keywords_secondary": obsidian_metadata.keywords.secondary,
-                "entities_people": obsidian_metadata.entities.people,
-                "entities_organizations": obsidian_metadata.entities.organizations,
-                "complexity": obsidian_metadata.complexity,
+                "tags": ",".join(obsidian_metadata.tags) if obsidian_metadata.tags else "",
+                "keywords_primary": ",".join(obsidian_metadata.keywords.primary) if obsidian_metadata.keywords.primary else "",
+                "keywords_secondary": ",".join(obsidian_metadata.keywords.secondary) if obsidian_metadata.keywords.secondary else "",
+                "entities_people": ",".join(obsidian_metadata.entities.people) if obsidian_metadata.entities.people else "",
+                "entities_organizations": ",".join(obsidian_metadata.entities.organizations) if obsidian_metadata.entities.organizations else "",
+                "complexity": str(obsidian_metadata.complexity),
                 **(file_metadata or {})
             }
 
