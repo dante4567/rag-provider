@@ -208,7 +208,6 @@ class LLMModel(str, Enum):
     # Groq models (fast & cost-effective)
     groq_llama3_8b = "groq/llama-3.1-8b-instant"  # Lightning fast, very cheap
     groq_llama3_70b = "groq/llama3-70b-8192"      # Good quality, fast
-    groq_mixtral_8x7b = "groq/mixtral-8x7b-32768" # Large context, deprecated but keeping for compatibility
 
     # Anthropic models (high quality)
     anthropic_claude_3_haiku = "anthropic/claude-3-haiku-20240307"   # Cheap & good
@@ -353,8 +352,6 @@ class TestLLMRequest(BaseModel):
 MODEL_PRICING = {
     # Groq - Lightning fast inference
     "groq/llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},      # Ultra-cheap
-    "groq/llama3-70b-8192": {"input": 0.59, "output": 0.79},           # Fast & good quality
-    "groq/mixtral-8x7b-32768": {"input": 0.27, "output": 0.27},        # Deprecated but cheap
 
     # Anthropic - High quality reasoning
     "anthropic/claude-3-haiku-20240307": {"input": 0.25, "output": 1.25},        # Cheapest Claude
@@ -391,8 +388,6 @@ LLM_PROVIDERS = {
     "groq": {
         "api_key": GROQ_API_KEY,
         "models": {
-            "groq/mixtral-8x7b-32768": {"max_tokens": 32000, "model_name": "mixtral-8x7b-32768"},
-            "groq/llama3-70b-8192": {"max_tokens": 8000, "model_name": "llama3-70b-8192"},
             "groq/llama-3.1-8b-instant": {"max_tokens": 8000, "model_name": "llama-3.1-8b-instant"}
         },
         "client_class": groq.Groq
@@ -1279,6 +1274,32 @@ class RAGService:
             logger.error(f"Failed to connect to ChromaDB: {e}")
             raise
 
+    def _clean_content(self, content: str) -> str:
+        """Clean and validate content encoding"""
+        import re
+
+        # Remove null bytes and other problematic control characters
+        content = content.replace('\x00', '')
+
+        # Remove other control characters except whitespace
+        content = re.sub(r'[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]', '', content)
+
+        # Ensure valid UTF-8 encoding
+        try:
+            content = content.encode('utf-8', errors='ignore').decode('utf-8')
+        except Exception:
+            # Fallback: try latin-1 then convert to utf-8
+            try:
+                content = content.encode('latin-1').decode('utf-8', errors='ignore')
+            except Exception:
+                content = str(content)
+
+        # Remove excessive whitespace
+        content = re.sub(r'\s+', ' ', content)
+        content = content.strip()
+
+        return content
+
     async def process_document(self,
                              content: str,
                              filename: str = None,
@@ -1288,7 +1309,40 @@ class RAGService:
                              file_metadata: Dict[str, Any] = None) -> IngestResponse:
         """Process a document with full enrichment pipeline"""
 
+        # Validate content
+        if not content or not content.strip():
+            raise ValueError("Document content cannot be empty")
+
+        # Check minimum content length
+        if len(content.strip()) < 10:
+            raise ValueError("Document content must be at least 10 characters long")
+
+        # Validate and clean content encoding
+        content = self._clean_content(content)
+
         doc_id = str(uuid.uuid4())
+
+        # Check for duplicate content
+        content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+        # Search for existing documents with same content hash
+        try:
+            existing_docs = collection.get(
+                where={"content_hash": content_hash},
+                limit=1
+            )
+            if existing_docs and existing_docs['ids']:
+                existing_doc_id = existing_docs['ids'][0].split('_chunk_')[0]
+                logger.info(f"Duplicate content detected for {filename}. Existing doc: {existing_doc_id}")
+                return IngestResponse(
+                    success=True,
+                    doc_id=existing_doc_id,
+                    chunks=len(existing_docs['ids']),
+                    metadata={"duplicate": True, "original_filename": filename},
+                    obsidian_path=None
+                )
+        except Exception as e:
+            logger.debug(f"Duplicate check failed, proceeding with ingestion: {e}")
 
         try:
             # Split into chunks
@@ -1318,6 +1372,7 @@ class RAGService:
                 "entities_people": ",".join(obsidian_metadata.entities.people) if obsidian_metadata.entities.people else "",
                 "entities_organizations": ",".join(obsidian_metadata.entities.organizations) if obsidian_metadata.entities.organizations else "",
                 "complexity": str(obsidian_metadata.complexity),
+                "content_hash": content_hash,
                 **(file_metadata or {})
             }
 
@@ -1396,6 +1451,13 @@ class RAGService:
 
     async def search_documents(self, query: str, top_k: int = 5, filter_dict: Dict[str, Any] = None) -> SearchResponse:
         """Search for relevant documents"""
+        # Validate search query
+        if not query or not query.strip():
+            raise ValueError("Search query cannot be empty")
+
+        if len(query.strip()) < 2:
+            raise ValueError("Search query must be at least 2 characters long")
+
         start_time = time.time()
 
         results = collection.query(
@@ -1854,6 +1916,85 @@ Answer:"""
     except Exception as e:
         logger.error(f"Chat endpoint failed: {e}")
         raise HTTPException(status_code=500, detail=f"Chat processing failed: {str(e)}")
+
+@app.post("/admin/cleanup-corrupted")
+async def cleanup_corrupted_documents():
+    """Remove documents with corrupted or binary content"""
+    try:
+        all_docs = collection.get()
+
+        if not all_docs or not all_docs['documents']:
+            return {"removed_corrupted": 0, "message": "No documents found"}
+
+        corrupted_ids = []
+        for i, doc_content in enumerate(all_docs['documents']):
+            if doc_content:
+                # Check for binary content indicators
+                if (len(doc_content) > 100 and
+                    (doc_content.count('\x00') > 0 or
+                     doc_content.count('\ufffd') > 0 or  # replacement character
+                     len([c for c in doc_content if ord(c) < 32 and c not in '\t\n\r']) > len(doc_content) * 0.1)):
+                    corrupted_ids.append(all_docs['ids'][i])
+
+        if corrupted_ids:
+            rag_service.collection.delete(ids=corrupted_ids)
+            logger.info(f"Removed {len(corrupted_ids)} corrupted documents")
+
+        return {
+            "removed_corrupted": len(corrupted_ids),
+            "message": f"Successfully removed {len(corrupted_ids)} corrupted documents"
+        }
+
+    except Exception as e:
+        logger.error(f"Corruption cleanup failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
+
+@app.post("/admin/cleanup-duplicates")
+async def cleanup_duplicates():
+    """Remove duplicate documents based on content hash"""
+    try:
+        # Get all documents grouped by content_hash
+        all_docs = collection.get()
+
+        if not all_docs or not all_docs['metadatas']:
+            return {"removed_duplicates": 0, "message": "No documents found"}
+
+        # Group by content_hash
+        hash_groups = {}
+        for i, metadata in enumerate(all_docs['metadatas']):
+            content_hash = metadata.get('content_hash')
+            if content_hash:
+                if content_hash not in hash_groups:
+                    hash_groups[content_hash] = []
+                hash_groups[content_hash].append({
+                    'id': all_docs['ids'][i],
+                    'metadata': metadata,
+                    'index': i
+                })
+
+        # Find duplicates (groups with more than 1 document)
+        duplicates_removed = 0
+        for content_hash, docs in hash_groups.items():
+            if len(docs) > 1:
+                # Keep the first one, remove the rest
+                docs_to_remove = docs[1:]  # Remove all except the first
+                ids_to_remove = [doc['id'] for doc in docs_to_remove]
+
+                try:
+                    collection.delete(ids=ids_to_remove)
+                    duplicates_removed += len(ids_to_remove)
+                    logger.info(f"Removed {len(ids_to_remove)} duplicates for hash {content_hash}")
+                except Exception as e:
+                    logger.error(f"Failed to remove duplicates for hash {content_hash}: {e}")
+
+        return {
+            "removed_duplicates": duplicates_removed,
+            "message": f"Successfully removed {duplicates_removed} duplicate documents"
+        }
+
+    except Exception as e:
+        logger.error(f"Cleanup failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
 
 @app.get("/", response_class=HTMLResponse)
 async def web_interface():
