@@ -22,6 +22,12 @@ PyPDF2>=3.0.1
 python-magic>=0.4.27
 pyyaml>=6.0.1
 
+# Modern document processing (basic version)
+unstructured>=0.10.0
+
+# Modern LLM management
+litellm>=1.0.0
+
 # Office documents
 python-docx>=0.8.11
 openpyxl>=3.1.2
