@@ -1,4 +1,0 @@
-1/20/24, 10:30 - John: How is the ML project going?
-1/20/24, 10:31 - Jane: Going really well! We achieved 95% accuracy
-1/20/24, 10:32 - John: That is amazing! When can we deploy?
-1/20/24, 10:33 - Jane: I think next week should be good
