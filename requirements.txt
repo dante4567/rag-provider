@@ -30,6 +30,9 @@ unstructured[pdf]>=0.10.0
 # Modern LLM management
 litellm>=1.0.0
 
+# Advanced reranking and embeddings
+sentence-transformers>=2.2.2
+
 # Office documents
 python-docx>=0.8.11
 openpyxl>=3.1.2
