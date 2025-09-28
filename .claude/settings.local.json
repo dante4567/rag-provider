@@ -36,7 +36,12 @@
       "Bash(git commit:*)",
       "Bash(docker build:*)",
       "Bash(gh:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(ssh:*)",
+      "Bash(GIT_SSH_COMMAND=\"gh ssh git\" git push -u origin main)"
     ],
     "deny": [],
     "ask": []

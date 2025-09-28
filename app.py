@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, BackgroundTasks, Form, Depends, Request, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
@@ -185,6 +186,14 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 # Cost tracking
 DAILY_BUDGET_USD = float(os.getenv("DAILY_BUDGET_USD", "10.0"))
 ENABLE_COST_TRACKING = os.getenv("ENABLE_COST_TRACKING", "true").lower() == "true"
+
+# Security Configuration
+API_KEY = os.getenv("RAG_API_KEY")
+REQUIRE_AUTH = os.getenv("REQUIRE_AUTH", "true").lower() == "true"
+PUBLIC_ENDPOINTS = {"/health", "/docs", "/redoc", "/openapi.json"}
+
+# Authentication setup
+security = HTTPBearer(auto_error=False)
 
 # Enums
 class DocumentType(str, Enum):
@@ -422,19 +431,54 @@ cost_tracking = {
     "total_cost": 0.0
 }
 
+# Authentication dependency
+async def verify_token(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Verify API key for protected endpoints"""
+    if not REQUIRE_AUTH:
+        return True
+
+    # Check if endpoint is public
+    if request.url.path in PUBLIC_ENDPOINTS:
+        return True
+
+    # Check for API key in header or query parameter
+    token = None
+    if credentials:
+        token = credentials.credentials
+    else:
+        token = request.headers.get("X-API-Key") or request.query_params.get("api_key")
+
+    if not API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication is required but no API key is configured"
+        )
+
+    if not token or token != API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return True
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Enhanced RAG Service",
-    version="2.0.0",
-    description="Cross-platform RAG service with OCR, WhatsApp processing, and Obsidian optimization"
+    version="2.0.1",
+    description="Secure cross-platform RAG service with OCR, WhatsApp processing, and Obsidian optimization"
 )
+
+# Secure CORS configuration
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080").split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 # Global variables
@@ -1531,7 +1575,7 @@ async def health_check():
         raise HTTPException(status_code=503, detail=f"Service unhealthy: {e}")
 
 @app.post("/ingest", response_model=IngestResponse)
-async def ingest_document(document: Document):
+async def ingest_document(document: Document, _: bool = Depends(verify_token)):
     """Ingest document via API"""
     try:
         return await rag_service.process_document(
@@ -1550,7 +1594,8 @@ async def ingest_document(document: Document):
 async def ingest_file(
     file: UploadFile = File(...),
     process_ocr: bool = Form(False),
-    generate_obsidian: bool = Form(True)
+    generate_obsidian: bool = Form(True),
+    _: bool = Depends(verify_token)
 ):
     """Ingest file via upload"""
     logger.info(f"Received file for ingestion: {file.filename}, Content-Type: {file.content_type}")
@@ -1745,9 +1790,16 @@ async def get_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/test-llm")
-async def test_llm_provider(request: TestLLMRequest):
+async def test_llm_provider(request: TestLLMRequest, _: bool = Depends(verify_token)):
     """Test LLM provider or specific model"""
     try:
+        # Check if any LLM providers are available
+        if not llm_clients:
+            raise HTTPException(
+                status_code=503,
+                detail="No LLM providers are configured with valid API keys. Please set your API keys in the .env file."
+            )
+
         llm_service = LLMService()
 
         if request.model:
