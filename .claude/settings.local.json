@@ -34,7 +34,9 @@
       "Bash(docker run:*)",
       "Bash(docker system prune:*)",
       "Bash(git commit:*)",
-      "Bash(docker build:*)"
+      "Bash(docker build:*)",
+      "Bash(gh:*)",
+      "Bash(git remote set-url:*)"
     ],
     "deny": [],
     "ask": []
