@@ -73,6 +73,16 @@ services:
       - DOCKER_CONTAINER=true
       - SUPPORTED_LANGUAGES=en,de,fr,es
 
+      # LLM API Keys (LiteLLM will auto-detect these)
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - COHERE_API_KEY=${COHERE_API_KEY:-}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN:-}
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY:-}
+
       # Cloud OCR Configuration (optional - add API keys in .env)
       - GOOGLE_VISION_API_KEY=${GOOGLE_VISION_API_KEY:-}
       - AZURE_CV_ENDPOINT=${AZURE_CV_ENDPOINT:-}

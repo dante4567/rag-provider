@@ -29,7 +29,12 @@
       "Bash(python3:*)",
       "Read(//tmp/**)",
       "Read(//nix/store/ki5h5zqg0cb7xw4nfc3qwdxn9wjbi4g9-user-environment/bin/**)",
-      "Bash(nix-env:*)"
+      "Bash(nix-env:*)",
+      "Bash(find:*)",
+      "Bash(docker run:*)",
+      "Bash(docker system prune:*)",
+      "Bash(git commit:*)",
+      "Bash(docker build:*)"
     ],
     "deny": [],
     "ask": []

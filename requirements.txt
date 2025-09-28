@@ -24,6 +24,8 @@ pyyaml>=6.0.1
 
 # Modern document processing (basic version)
 unstructured>=0.10.0
+pdfminer.six>=20221105
+unstructured[pdf]>=0.10.0
 
 # Modern LLM management
 litellm>=1.0.0
