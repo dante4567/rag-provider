@@ -36,9 +36,12 @@ def upload_document(files):
                 # Gradio provides the full path in file.name, extract just the filename
                 filename = os.path.basename(file.name)
 
+                # Read file content into memory to avoid file handle issues
                 with open(file.name, 'rb') as f:
-                    file_data = {"file": (filename, f, 'application/octet-stream')}
-                    response = requests.post(f"{RAG_URL}/ingest/file", files=file_data, timeout=120)
+                    file_content = f.read()
+
+                file_data = {"file": (filename, file_content, 'application/octet-stream')}
+                response = requests.post(f"{RAG_URL}/ingest/file", files=file_data, timeout=120)
 
                 if response.status_code == 200:
                     data = response.json()
