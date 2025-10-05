@@ -72,6 +72,23 @@ class ChunkingService:
         """Rough token estimation (4 chars ≈ 1 token)"""
         return len(text) // 4
 
+    def _remove_rag_ignore_blocks(self, content: str) -> str:
+        """
+        Remove <!-- RAG:IGNORE-START --> ... <!-- RAG:IGNORE-END --> blocks
+
+        These blocks contain Obsidian-specific wiki-links (xref) that should
+        not be indexed for RAG retrieval.
+        """
+        import re
+
+        # Pattern to match RAG:IGNORE blocks
+        pattern = r'<!--\s*RAG:IGNORE-START\s*-->.*?<!--\s*RAG:IGNORE-END\s*-->'
+
+        # Remove all matching blocks (case-insensitive, multiline, dotall)
+        cleaned = re.sub(pattern, '', content, flags=re.IGNORECASE | re.DOTALL)
+
+        return cleaned
+
     def chunk_text(self, content: str, preserve_structure: bool = True) -> List[Dict[str, Any]]:
         """
         Main chunking function
@@ -83,6 +100,9 @@ class ChunkingService:
         Returns:
             List of chunk dictionaries with content and metadata
         """
+        # Remove RAG:IGNORE blocks before processing
+        content = self._remove_rag_ignore_blocks(content)
+
         if not preserve_structure:
             # Fallback to simple chunking
             return self._simple_chunk(content)

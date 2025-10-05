@@ -85,6 +85,7 @@ try:
     # V2 Services (Controlled Vocabulary)
     from src.services.enrichment_service_v2 import EnrichmentServiceV2
     from src.services.obsidian_service_v2 import ObsidianServiceV2
+    from src.services.obsidian_service_v3 import ObsidianServiceV3
     from src.services.vocabulary_service import VocabularyService
     from src.services.chunking_service import ChunkingService
     V2_SERVICES_AVAILABLE = True
@@ -208,6 +209,9 @@ HIERARCHY_DEPTH = int(os.getenv("HIERARCHY_DEPTH", "3"))
 # Enrichment Configuration
 USE_ENRICHMENT_V2 = os.getenv("USE_ENRICHMENT_V2", "true").lower() == "true"
 VOCABULARY_DIR = os.getenv("VOCABULARY_DIR", "vocabulary")
+
+# Obsidian Configuration V3 (RAG-first format)
+USE_OBSIDIAN_V3 = os.getenv("USE_OBSIDIAN_V3", "true").lower() == "true"
 
 # API Keys
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
@@ -673,6 +677,7 @@ class RAGService:
             # Initialize V2 services if available and enabled
             self.enrichment_v2 = None
             self.obsidian_v2 = None
+            self.obsidian_v3 = None
             self.vocabulary_service = None
             self.chunking_service = None
             if V2_SERVICES_AVAILABLE and USE_ENRICHMENT_V2:
@@ -683,7 +688,17 @@ class RAGService:
                         llm_service=self.llm_service,
                         vocab_service=self.vocabulary_service
                     )
-                    self.obsidian_v2 = ObsidianServiceV2(output_dir=obsidian_output_dir)
+
+                    # Initialize Obsidian export (V2 or V3)
+                    if USE_OBSIDIAN_V3:
+                        self.obsidian_v3 = ObsidianServiceV3(
+                            output_dir=obsidian_output_dir,
+                            refs_dir=f"{obsidian_output_dir}/refs"
+                        )
+                        logger.info("✅ Obsidian V3 (RAG-first) enabled")
+                    else:
+                        self.obsidian_v2 = ObsidianServiceV2(output_dir=obsidian_output_dir)
+                        logger.info("✅ Obsidian V2 (clean YAML) enabled")
 
                     # Initialize structure-aware chunking
                     self.chunking_service = ChunkingService(
@@ -697,7 +712,7 @@ class RAGService:
                     logger.info(f"   📚 Topics: {len(self.vocabulary_service.get_all_topics())}")
                     logger.info(f"   🏗️  Projects: {len(self.vocabulary_service.get_active_projects())}")
                     logger.info(f"   📍 Places: {len(self.vocabulary_service.get_all_places())}")
-                    logger.info("✅ Structure-aware chunking enabled")
+                    logger.info("✅ Structure-aware chunking enabled (ignores RAG:IGNORE blocks)")
                 except Exception as e:
                     logger.warning(f"⚠️  V2 services initialization failed: {e}")
                     logger.info("   Falling back to standard enrichment")
@@ -976,8 +991,21 @@ class RAGService:
                 try:
                     logger.info(f"📝 Exporting to Obsidian vault...")
 
-                    # Use V2 Obsidian export if available
-                    if self.obsidian_v2:
+                    # Use V3 (RAG-first) > V2 (clean YAML) > V1 (standard)
+                    if self.obsidian_v3:
+                        logger.info("   Using Obsidian V3 (RAG-first, entity stubs)")
+                        file_path = self.obsidian_v3.export_document(
+                            title=title,
+                            content=content,
+                            metadata=enriched_metadata,
+                            document_type=document_type,
+                            created_at=datetime.now(),
+                            source=filename or "rag_pipeline"
+                        )
+                        obsidian_path = str(file_path)
+                        logger.info(f"✅ Obsidian V3 export: {file_path.name}")
+                        logger.info(f"   📁 Entity stubs created in refs/")
+                    elif self.obsidian_v2:
                         logger.info("   Using Obsidian V2 (clean YAML)")
                         file_path = self.obsidian_v2.export_document(
                             title=title,

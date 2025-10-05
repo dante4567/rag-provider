@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/danielteckentrup/Documents/my-git/rag-provider/**)",
+      "Read(//Users/danielteckentrup/**)",
+      "Bash(docker system:*)",
+      "Bash(nix-collect-garbage:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
