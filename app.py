@@ -582,722 +582,11 @@ class CostTracker:
             cost_by_provider=cost_by_provider
         )
 
-class LLMService:
-    """Manages multiple LLM providers with fallback and cost tracking"""
 
-    def __init__(self):
-        self.provider_order = [DEFAULT_LLM, FALLBACK_LLM, EMERGENCY_LLM]
-        self.cost_tracker = CostTracker()
+# ============================================================================
+# FILE WATCH HANDLER
+# ============================================================================
 
-    def get_model_info(self, model_id: str) -> tuple[str, dict]:
-        """Extract provider and model config from model ID"""
-        provider = model_id.split('/')[0]
-        if provider in LLM_PROVIDERS and model_id in LLM_PROVIDERS[provider]["models"]:
-            return provider, LLM_PROVIDERS[provider]["models"][model_id]
-        return None, None
-
-    async def call_llm_with_model(self, prompt: str, model_id: str, max_tokens: int = None) -> tuple[str, float]:
-        """Call LLM with specific model and return response with cost"""
-        if not self.cost_tracker.check_budget():
-            raise Exception("Daily budget limit reached")
-
-        provider, model_config = self.get_model_info(model_id)
-        if not provider or provider not in llm_clients:
-            raise Exception(f"Model {model_id} not available")
-
-        try:
-            client = llm_clients[provider]
-            tokens = max_tokens or model_config["max_tokens"]
-            model_name = model_config["model_name"]
-
-            # Estimate input tokens
-            input_tokens = self.cost_tracker.estimate_tokens(prompt)
-
-            if provider == "anthropic":
-                response = client.messages.create(
-                    model=model_name,
-                    max_tokens=tokens,
-                    temperature=LLM_TEMPERATURE,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                result = response.content[0].text
-                output_tokens = self.cost_tracker.estimate_tokens(result)
-
-            elif provider in ["openai", "groq"]:
-                response = client.chat.completions.create(
-                    model=model_name,
-                    max_tokens=tokens,
-                    temperature=LLM_TEMPERATURE,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                result = response.choices[0].message.content
-                output_tokens = self.cost_tracker.estimate_tokens(result)
-
-            elif provider == "google":
-                response = client.generate_content(prompt)
-                result = response.text
-                output_tokens = self.cost_tracker.estimate_tokens(result)
-
-            # Calculate and record cost
-            cost = self.cost_tracker.calculate_cost(model_id, input_tokens, output_tokens)
-            self.cost_tracker.record_operation(provider, model_id, input_tokens, output_tokens, cost)
-
-            return result, cost
-
-        except Exception as e:
-            logger.warning(f"LLM {provider}/{model_id} failed: {e}")
-            raise
-
-    async def call_llm(self, prompt: str, provider: str = None, max_tokens: int = None) -> str:
-        """Call LLM with fallback support (legacy method)"""
-        providers_to_try = [provider] if provider else self.provider_order
-
-        for llm_provider in providers_to_try:
-            if llm_provider not in llm_clients:
-                continue
-
-            # Use default model for the provider
-            provider_config = LLM_PROVIDERS.get(llm_provider, {})
-            models = provider_config.get("models", {})
-            if not models:
-                continue
-
-            default_model = list(models.keys())[0]  # Use first model as default
-
-            try:
-                result, cost = await self.call_llm_with_model(prompt, default_model, max_tokens)
-                return result
-            except Exception as e:
-                logger.warning(f"LLM {llm_provider} failed: {e}")
-                continue
-
-        raise Exception("All LLM providers failed")
-
-class OCRService:
-    """Handles OCR processing for scanned documents"""
-
-    @staticmethod
-    def extract_text_from_image(image_path: str, languages: List[str] = None) -> str:
-        """Extract text from image using Tesseract"""
-        if not OCR_AVAILABLE:
-            raise Exception("OCR dependencies not available")
-
-        try:
-            lang_codes = "+".join(languages or OCR_LANGUAGES)
-            text = pytesseract.image_to_string(
-                Image.open(image_path),
-                lang=lang_codes,
-                config='--psm 6'
-            )
-            return text.strip()
-        except Exception as e:
-            logger.error(f"OCR failed for {image_path}: {e}")
-            return ""
-
-    @staticmethod
-    def extract_text_from_pdf_images(pdf_path: str) -> str:
-        """Convert PDF pages to images and extract text"""
-        if not OCR_AVAILABLE:
-            raise Exception("OCR dependencies not available")
-
-        try:
-            pages = convert_from_path(pdf_path, dpi=300)
-            extracted_text = ""
-
-            for i, page in enumerate(pages):
-                temp_image_path = f"/tmp/page_{i}.png"
-                page.save(temp_image_path, 'PNG')
-
-                page_text = OCRService.extract_text_from_image(temp_image_path)
-                extracted_text += f"\n\n--- Page {i+1} ---\n{page_text}"
-
-                os.unlink(temp_image_path)
-
-            return extracted_text.strip()
-        except Exception as e:
-            logger.error(f"PDF OCR failed for {pdf_path}: {e}")
-            return ""
-
-class WhatsAppParser:
-    """Parses WhatsApp chat exports"""
-
-    @staticmethod
-    def parse_whatsapp_export(content: str) -> tuple[List[Dict], str, Dict]:
-        """Parse WhatsApp chat export into structured messages"""
-
-        # Various WhatsApp timestamp patterns
-        patterns = [
-            r'(\d{1,2}/\d{1,2}/\d{2,4}, \d{1,2}:\d{2}(?::\d{2})?) - ([^:]+): (.*)',  # US format
-            r'(\d{1,2}\.\d{1,2}\.\d{2,4}, \d{1,2}:\d{2}(?::\d{2})?) - ([^:]+): (.*)',  # EU format
-            r'(\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}(?::\d{2})?) - ([^:]+): (.*)',  # ISO format
-            r'\[(\d{1,2}/\d{1,2}/\d{2,4}, \d{1,2}:\d{2}(?::\d{2})?)\] ([^:]+): (.*)'  # Bracket format
-        ]
-
-        messages = []
-        participants = set()
-
-        for pattern in patterns:
-            matches = re.finditer(pattern, content, re.MULTILINE)
-            for match in matches:
-                timestamp_str, sender, message = match.groups()
-
-                try:
-                    timestamp = date_parser.parse(timestamp_str)
-                except:
-                    timestamp = datetime.now()
-
-                participants.add(sender.strip())
-                messages.append({
-                    "timestamp": timestamp,
-                    "sender": sender.strip(),
-                    "message": message.strip(),
-                    "type": "whatsapp_message"
-                })
-
-        # Sort by timestamp
-        messages.sort(key=lambda x: x["timestamp"])
-
-        # Generate conversation summary
-        summary = WhatsAppParser._generate_conversation_summary(messages, participants)
-
-        metadata = {
-            "total_messages": len(messages),
-            "participants": list(participants),
-            "date_range": {
-                "start": messages[0]["timestamp"].isoformat() if messages else None,
-                "end": messages[-1]["timestamp"].isoformat() if messages else None
-            },
-            "conversation_type": "whatsapp_chat"
-        }
-
-        return messages, summary, metadata
-
-    @staticmethod
-    def _generate_conversation_summary(messages: List[Dict], participants: set) -> str:
-        """Generate a basic summary of the conversation"""
-        if not messages:
-            return "Empty conversation"
-
-        total_messages = len(messages)
-        date_span = (messages[-1]["timestamp"] - messages[0]["timestamp"]).days
-
-        # Count messages per participant
-        message_counts = {}
-        for msg in messages:
-            sender = msg["sender"]
-            message_counts[sender] = message_counts.get(sender, 0) + 1
-
-        summary = f"WhatsApp conversation with {len(participants)} participants "
-        summary += f"({', '.join(list(participants)[:3])}{'...' if len(participants) > 3 else ''}). "
-        summary += f"Total of {total_messages} messages over {date_span} days."
-
-        return summary
-
-class DocumentProcessor:
-    """Handles various document types"""
-
-    def __init__(self, llm_service: LLMService):
-        self.llm_service = llm_service
-        self.text_splitter = SimpleTextSplitter(
-            chunk_size=CHUNK_SIZE,
-            chunk_overlap=CHUNK_OVERLAP
-        )
-
-    async def extract_text_from_file(self, file_path: str, process_ocr: bool = False) -> tuple[str, DocumentType, Dict[str, Any]]:
-        """Extract text from various file formats"""
-        file_path = Path(file_path)
-
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
-
-        # Check file size
-        file_size_mb = file_path.stat().st_size / (1024 * 1024)
-        if file_size_mb > MAX_FILE_SIZE_MB:
-            raise ValueError(f"File too large: {file_size_mb:.1f}MB (max: {MAX_FILE_SIZE_MB}MB)")
-
-        # Detect file type
-        mime_type = magic.from_file(str(file_path), mime=True)
-        file_extension = file_path.suffix.lower()
-        logger.info(f"Detected file: {file_path}, MIME type: {mime_type}, Extension: {file_extension}")
-        logger.info(f"Is .docx or .doc: {file_extension in ['.docx', '.doc']}")
-        metadata = {}
-
-        # PDF processing
-        if mime_type == "application/pdf" or file_extension == ".pdf":
-            text, doc_type = await self._process_pdf(file_path, process_ocr)
-            return text, doc_type, metadata
-
-        # Office documents
-        elif file_extension in ['.docx', '.doc']:
-            text, metadata = await self._process_word_document(file_path)
-            return text, DocumentType.office, metadata
-        elif file_extension in ['.pptx', '.ppt']:
-            text = await self._process_powerpoint(file_path)
-            return text, DocumentType.office, metadata
-        elif file_extension in ['.xlsx', '.xls']:
-            text = await self._process_excel(file_path)
-            return text, DocumentType.office, metadata
-
-        # Images
-        elif mime_type.startswith("image/") or file_extension in ['.png', '.jpg', '.jpeg', '.tiff', '.bmp']:
-            if process_ocr or USE_OCR:
-                text = OCRService.extract_text_from_image(str(file_path))
-                return text, DocumentType.scanned, metadata
-            else:
-                return f"Image file: {file_path.name}", DocumentType.image, metadata
-
-        # Text-based files
-        elif (mime_type.startswith("text/") or
-              file_extension in ['.txt', '.md', '.py', '.js', '.json', '.yaml', '.yml', '.xml', '.html', '.css']):
-            async with aiofiles.open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                content = await f.read()
-
-            # Check if it's a WhatsApp export
-            if self._is_whatsapp_export(content):
-                return content, DocumentType.whatsapp, metadata
-            elif file_extension in ['.py', '.js', '.java', '.cpp', '.c', '.cs', '.php']:
-                return content, DocumentType.code, metadata
-            else:
-                return content, DocumentType.text, metadata
-
-        # Email files
-        elif file_extension in ['.eml', '.msg']:
-            text = await self._process_email(file_path)
-            return text, DocumentType.email, metadata
-
-        # HTML/Web content
-        elif mime_type.startswith("text/html") or file_extension in ['.html', '.htm']:
-            text = await self._process_html(file_path)
-            return text, DocumentType.webpage, metadata
-
-        else:
-            raise ValueError(f"Unsupported file type: {mime_type} ({file_extension})")
-
-    async def _process_pdf(self, file_path: Path, process_ocr: bool) -> tuple[str, DocumentType]:
-        """Process PDF files with optional OCR"""
-        try:
-            # Try text extraction first
-            text = ""
-            with open(file_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
-                for page in pdf_reader.pages:
-                    page_text = page.extract_text()
-                    if page_text.strip():
-                        text += page_text + "\n"
-
-            # If no text extracted or OCR requested, use OCR
-            if (not text.strip() or process_ocr) and USE_OCR and OCR_AVAILABLE:
-                logger.info(f"Using OCR for PDF: {file_path}")
-                ocr_text = OCRService.extract_text_from_pdf_images(str(file_path))
-                text = ocr_text if ocr_text.strip() else text
-                return text, DocumentType.scanned
-
-            return text, DocumentType.pdf
-
-        except Exception as e:
-            logger.error(f"PDF processing failed for {file_path}: {e}")
-            if USE_OCR and OCR_AVAILABLE:
-                return OCRService.extract_text_from_pdf_images(str(file_path)), DocumentType.scanned
-            else:
-                raise
-
-    async def _process_word_document(self, file_path: Path) -> str:
-        """Process Word documents"""
-        logger.info(f"Attempting to process Word document: {file_path}")
-        try:
-            doc = DocxDocument(str(file_path))
-            text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
-            title = doc.core_properties.title if doc.core_properties.title else file_path.stem
-            logger.info(f"Successfully extracted text from {file_path}")
-            return text, {"title": title}
-        except Exception as e:
-            logger.error(f"Word document processing failed for {file_path}: {e}")
-            return f"Failed to process Word document: {file_path.name}", {}
-
-    async def _process_powerpoint(self, file_path: Path) -> str:
-        """Process PowerPoint presentations"""
-        try:
-            prs = Presentation(str(file_path))
-            text = ""
-            for slide_num, slide in enumerate(prs.slides, 1):
-                text += f"\n--- Slide {slide_num} ---\n"
-                for shape in slide.shapes:
-                    if hasattr(shape, "text"):
-                        text += shape.text + "\n"
-            return text
-        except Exception as e:
-            logger.error(f"PowerPoint processing failed: {e}")
-            return f"Failed to process PowerPoint: {file_path.name}"
-
-    async def _process_excel(self, file_path: Path) -> str:
-        """Process Excel spreadsheets"""
-        try:
-            if file_path.suffix.lower() == '.xlsx':
-                workbook = openpyxl.load_workbook(str(file_path))
-                text = ""
-                for sheet_name in workbook.sheetnames:
-                    sheet = workbook[sheet_name]
-                    text += f"\n--- Sheet: {sheet_name} ---\n"
-                    for row in sheet.iter_rows(values_only=True):
-                        row_text = "\t".join([str(cell) if cell is not None else "" for cell in row])
-                        if row_text.strip():
-                            text += row_text + "\n"
-            else:  # .xls
-                workbook = xlrd.open_workbook(str(file_path))
-                text = ""
-                for sheet in workbook.sheets():
-                    text += f"\n--- Sheet: {sheet.name} ---\n"
-                    for row_idx in range(sheet.nrows):
-                        row = sheet.row_values(row_idx)
-                        row_text = "\t".join([str(cell) for cell in row if cell])
-                        if row_text.strip():
-                            text += row_text + "\n"
-            return text
-        except Exception as e:
-            logger.error(f"Excel processing failed: {e}")
-            return f"Failed to process Excel file: {file_path.name}"
-
-    async def _process_email(self, file_path: Path) -> str:
-        """Process email files"""
-        try:
-            with open(file_path, 'rb') as f:
-                msg = email.message_from_bytes(f.read())
-
-            text = f"From: {msg.get('From', 'Unknown')}\n"
-            text += f"To: {msg.get('To', 'Unknown')}\n"
-            text += f"Subject: {msg.get('Subject', 'No Subject')}\n"
-            text += f"Date: {msg.get('Date', 'Unknown')}\n\n"
-
-            # Extract body
-            if msg.is_multipart():
-                for part in msg.walk():
-                    if part.get_content_type() == "text/plain":
-                        text += part.get_payload(decode=True).decode('utf-8', errors='ignore')
-            else:
-                text += msg.get_payload(decode=True).decode('utf-8', errors='ignore')
-
-            return text
-        except Exception as e:
-            logger.error(f"Email processing failed: {e}")
-            return f"Failed to process email: {file_path.name}"
-
-    async def _process_html(self, file_path: Path) -> str:
-        """Process HTML files"""
-        try:
-            async with aiofiles.open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                html_content = await f.read()
-
-            soup = BeautifulSoup(html_content, 'html.parser')
-
-            # Remove script and style elements
-            for script in soup(["script", "style"]):
-                script.decompose()
-
-            text = soup.get_text()
-            # Clean up whitespace
-            lines = (line.strip() for line in text.splitlines())
-            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-            text = '\n'.join(chunk for chunk in chunks if chunk)
-
-            return text
-        except Exception as e:
-            logger.error(f"HTML processing failed: {e}")
-            return f"Failed to process HTML: {file_path.name}"
-
-    def _is_whatsapp_export(self, content: str) -> bool:
-        """Check if content is a WhatsApp export"""
-        whatsapp_patterns = [
-            r'\d{1,2}/\d{1,2}/\d{2,4}, \d{1,2}:\d{2} - .+: .*',
-            r'\d{1,2}\.\d{1,2}\.\d{2,4}, \d{1,2}:\d{2} - .+: .*',
-            r'\[\d{1,2}/\d{1,2}/\d{2,4}, \d{1,2}:\d{2}\] .+: .*'
-        ]
-
-        for pattern in whatsapp_patterns:
-            if re.search(pattern, content[:1000]):  # Check first 1000 chars
-                return True
-        return False
-
-    async def enrich_with_llm(self, content: str, filename: str, document_type: DocumentType, title: str = None) -> ObsidianMetadata:
-        """Enhanced LLM enrichment for metadata extraction"""
-
-        # Determine content sample for LLM analysis
-        content_sample = content[:3000] if len(content) > 3000 else content
-
-        # Handle different document types
-        if document_type == DocumentType.whatsapp:
-            messages, summary, metadata = WhatsAppParser.parse_whatsapp_export(content)
-            return await self._enrich_whatsapp_chat(messages, summary, metadata, filename)
-
-        # Standard document enrichment
-        prompt = f"""Analyze this document and provide detailed metadata in JSON format.
-
-Document: {filename}
-Type: {document_type}
-Content Sample: {content_sample}
-
-Provide a JSON response with this exact structure:
-{{
-    "title": "{title or 'Descriptive title for the document'}",
-    "summary": "2-3 sentence executive summary",
-    "abstract": "Detailed paragraph abstract",
-    "keywords": {{
-        "primary": ["main topic 1", "main topic 2"],
-        "secondary": ["related topic 1", "related topic 2"],
-        "related": ["broader topic 1", "broader topic 2"]
-    }},
-    "tags": ["#tag1", "#tag2", "#tag3"],
-    "key_points": ["Important insight 1", "Important insight 2"],
-    "entities": {{
-        "people": ["Person 1", "Person 2"],
-        "organizations": ["Org 1", "Org 2"],
-        "locations": ["Location 1", "Location 2"],
-        "technologies": ["Tech 1", "Tech 2"]
-    }},
-    "complexity": "beginner|intermediate|advanced",
-    "reading_time": "X minutes",
-    "document_type": "{document_type}",
-    "links": ["[[Related Topic 1]]", "[[Related Topic 2]]"]
-}}
-
-Respond only with valid JSON."""
-
-        try:
-            response = await self.llm_service.call_llm(prompt)
-            metadata_dict = json.loads(response)
-
-            # Create ObsidianMetadata object with safe parsing
-            links = metadata_dict.get("links", [])
-            # Ensure links are strings, not nested lists
-            if isinstance(links, list):
-                safe_links = []
-                for link in links:
-                    if isinstance(link, list):
-                        safe_links.extend([str(item) for item in link])
-                    else:
-                        safe_links.append(str(link))
-                links = safe_links
-
-            obsidian_metadata = ObsidianMetadata(
-                title=metadata_dict.get("title", filename),
-                summary=metadata_dict.get("summary", ""),
-                abstract=metadata_dict.get("abstract", ""),
-                keywords=Keywords(**metadata_dict.get("keywords", {})),
-                tags=metadata_dict.get("tags", []),
-                key_points=metadata_dict.get("key_points", []),
-                entities=Entities(**metadata_dict.get("entities", {})),
-                complexity=ComplexityLevel(metadata_dict.get("complexity", "intermediate")),
-                reading_time=metadata_dict.get("reading_time", "Unknown"),
-                document_type=document_type,
-                links=links,
-                source=filename,
-                created_at=datetime.now()
-            )
-
-            return obsidian_metadata
-
-        except Exception as e:
-            logger.error(f"LLM enrichment failed: {e}")
-            # Return basic metadata as fallback
-            return ObsidianMetadata(
-                title=title or filename,
-                summary=f"Document: {filename}",
-                keywords=Keywords(primary=["document"], secondary=[], related=[]),
-                entities=Entities(),
-                document_type=document_type,
-                source=filename
-            )
-
-    async def _enrich_whatsapp_chat(self, messages: List[Dict], summary: str, metadata: Dict, filename: str) -> ObsidianMetadata:
-        """Enrich WhatsApp chat with LLM analysis"""
-
-        # Sample recent messages for analysis
-        recent_messages = messages[-50:] if len(messages) > 50 else messages
-        message_text = "\n".join([f"{msg['sender']}: {msg['message']}" for msg in recent_messages])
-
-        prompt = f"""Analyze this WhatsApp conversation and extract metadata in JSON format.
-
-Conversation: {filename}
-Participants: {', '.join(metadata['participants'])}
-Total Messages: {metadata['total_messages']}
-Date Range: {metadata['date_range']['start']} to {metadata['date_range']['end']}
-
-Recent Messages Sample:
-{message_text}
-
-Provide JSON with:
-{{
-    "title": "Descriptive title for the conversation",
-    "summary": "Brief summary of the conversation topic/purpose",
-    "keywords": {{
-        "primary": ["main topics discussed"],
-        "secondary": ["secondary topics"],
-        "related": ["related themes"]
-    }},
-    "tags": ["#whatsapp", "#conversation", "#topic-tags"],
-    "key_points": ["Important points discussed"],
-    "entities": {{
-        "people": {metadata['participants']},
-        "organizations": [],
-        "locations": [],
-        "technologies": []
-    }},
-    "complexity": "beginner",
-    "reading_time": "5 minutes"
-}}
-
-Respond only with valid JSON."""
-
-        try:
-            response = await self.llm_service.call_llm(prompt)
-            metadata_dict = json.loads(response)
-
-            return ObsidianMetadata(
-                title=metadata_dict.get("title", f"WhatsApp Chat - {filename}"),
-                summary=metadata_dict.get("summary", summary),
-                keywords=Keywords(**metadata_dict.get("keywords", {})),
-                tags=metadata_dict.get("tags", ["#whatsapp"]),
-                key_points=metadata_dict.get("key_points", []),
-                entities=Entities(**metadata_dict.get("entities", {})),
-                complexity=ComplexityLevel.beginner,
-                reading_time="5 minutes",
-                document_type=DocumentType.whatsapp,
-                source=filename
-            )
-
-        except Exception as e:
-            logger.error(f"WhatsApp enrichment failed: {e}")
-            return ObsidianMetadata(
-                title=f"WhatsApp Chat - {filename}",
-                summary=summary,
-                keywords=Keywords(primary=["whatsapp", "conversation"]),
-                tags=["#whatsapp"],
-                entities=Entities(people=metadata['participants']),
-                document_type=DocumentType.whatsapp,
-                source=filename
-            )
-
-    async def create_obsidian_markdown(self, content: str, metadata: ObsidianMetadata, doc_id: str) -> str:
-        """Create Obsidian-optimized markdown file"""
-
-        os.makedirs(PATHS['obsidian_path'], exist_ok=True)
-
-        # Create safe filename
-        safe_title = "".join(c for c in metadata.title if c.isalnum() or c in (' ', '-', '_')).rstrip()
-        safe_title = re.sub(r'\s+', '_', safe_title)
-        markdown_filename = f"{safe_title}_{doc_id[:8]}.md"
-        markdown_path = Path(PATHS['obsidian_path']) / markdown_filename
-
-        # Create frontmatter
-        frontmatter = {
-            'title': metadata.title,
-            'id': doc_id,
-            'created': metadata.created_at.isoformat(),
-            'tags': metadata.tags,
-            'type': metadata.document_type,
-            'source': metadata.source,
-            'summary': metadata.summary,
-            'abstract': metadata.abstract,
-            'keywords': {
-                'primary': metadata.keywords.primary,
-                'secondary': metadata.keywords.secondary,
-                'related': metadata.keywords.related
-            },
-            'entities': {
-                'people': metadata.entities.people,
-                'organizations': metadata.entities.organizations,
-                'locations': metadata.entities.locations,
-                'technologies': metadata.entities.technologies
-            },
-            'complexity': metadata.complexity,
-            'reading_time': metadata.reading_time,
-            'links': metadata.links
-        }
-
-        # Create markdown content
-        markdown_content = "---\n"
-        markdown_content += yaml.dump(frontmatter, default_flow_style=False, allow_unicode=True)
-        markdown_content += "---\n\n"
-
-        # Add title
-        markdown_content += f"# {metadata.title}\n\n"
-
-        # Add summary section
-        if metadata.summary:
-            markdown_content += "## Summary\n\n"
-            markdown_content += f"{metadata.summary}\n\n"
-
-        # Add key insights
-        if metadata.key_points:
-            markdown_content += "## Key Insights\n\n"
-            for point in metadata.key_points:
-                markdown_content += f"- {point}\n"
-            markdown_content += "\n"
-
-        # Add entities section
-        if any([metadata.entities.people, metadata.entities.organizations,
-                metadata.entities.locations, metadata.entities.technologies]):
-            markdown_content += "## Entities\n\n"
-
-            if metadata.entities.people:
-                markdown_content += "**People:** " + ", ".join([f"[[{person}]]" for person in metadata.entities.people]) + "\n\n"
-            if metadata.entities.organizations:
-                markdown_content += "**Organizations:** " + ", ".join([f"[[{org}]]" for org in metadata.entities.organizations]) + "\n\n"
-            if metadata.entities.locations:
-                markdown_content += "**Locations:** " + ", ".join([f"[[{loc}]]" for loc in metadata.entities.locations]) + "\n\n"
-            if metadata.entities.technologies:
-                markdown_content += "**Technologies:** " + ", ".join([f"[[{tech}]]" for tech in metadata.entities.technologies]) + "\n\n"
-
-        # Add content section
-        markdown_content += "## Content\n\n"
-
-        # Format content based on document type
-        if metadata.document_type == DocumentType.whatsapp:
-            markdown_content += await self._format_whatsapp_content(content)
-        else:
-            markdown_content += content
-
-        # Add related notes section
-        if metadata.links:
-            markdown_content += "\n\n## Related Notes\n\n"
-            for link in metadata.links:
-                markdown_content += f"- {link}\n"
-
-        # Add tags section
-        if metadata.tags:
-            markdown_content += "\n\n## Tags\n\n"
-            markdown_content += " ".join(metadata.tags)
-
-        # Write file
-        async with aiofiles.open(markdown_path, 'w', encoding='utf-8') as f:
-            await f.write(markdown_content)
-
-        logger.info(f"Created Obsidian markdown: {markdown_path}")
-        return str(markdown_path)
-
-    async def _format_whatsapp_content(self, content: str) -> str:
-        """Format WhatsApp content for better readability"""
-        messages, summary, metadata = WhatsAppParser.parse_whatsapp_export(content)
-
-        formatted = f"**Conversation Summary:** {summary}\n\n"
-        formatted += f"**Participants:** {', '.join(metadata['participants'])}\n\n"
-        formatted += f"**Message Count:** {metadata['total_messages']}\n\n"
-        formatted += f"**Date Range:** {metadata['date_range']['start']} to {metadata['date_range']['end']}\n\n"
-        formatted += "## Messages\n\n"
-
-        # Group messages by date
-        current_date = None
-        for msg in messages[-100:]:  # Show last 100 messages
-            msg_date = msg['timestamp'].date()
-            if current_date != msg_date:
-                formatted += f"\n### {msg_date}\n\n"
-                current_date = msg_date
-
-            time_str = msg['timestamp'].strftime("%H:%M")
-            formatted += f"**{msg['sender']}** ({time_str}): {msg['message']}\n\n"
-
-        return formatted
-
-# File watcher for auto-processing
 class FileWatchHandler(FileSystemEventHandler):
     def __init__(self, rag_service):
         self.rag_service = rag_service
@@ -1307,28 +596,30 @@ class FileWatchHandler(FileSystemEventHandler):
             logger.info(f"New file detected: {event.src_path}")
             asyncio.create_task(self.rag_service.process_file_from_watch(event.src_path))
 
-# Main RAG Service
+# ============================================================================
+# MAIN RAG SERVICE
+# ============================================================================
+# Note: Old LLMService, OCRService, and DocumentProcessor classes removed.
+# All functionality now handled by new service layer in src/services/
+# ============================================================================
+
 class RAGService:
     def __init__(self):
-        # Keep old services for backward compatibility
-        self.llm_service = LLMService()
-        self.document_processor = DocumentProcessor(self.llm_service)
+        # Setup ChromaDB first
         self.setup_chromadb()
 
-        # Use new service layer if available, otherwise fallback to old implementation
+        # Initialize new service layer
         if NEW_SERVICES_AVAILABLE:
             logger.info("✅ Using new service layer architecture")
             settings = get_settings()
-            self.new_llm_service = NewLLMService(settings)
-            # VectorService needs the collection, so initialize it after chromadb setup
-            self.new_vector_service = NewVectorService(collection, settings)
-            self.new_document_service = NewDocumentService(settings)
-            # OCRService takes optional languages
-            self.new_ocr_service = NewOCRService(languages=['eng', 'deu', 'fra', 'spa'])
+            self.llm_service = NewLLMService(settings)
+            self.vector_service = NewVectorService(collection, settings)
+            self.document_service = NewDocumentService(settings)
+            self.ocr_service = NewOCRService(languages=['eng', 'deu', 'fra', 'spa'])
             self.using_new_services = True
         else:
-            logger.info("⚠️  Using legacy service implementation")
-            self.using_new_services = False
+            logger.error("❌ New service layer not available - cannot start!")
+            raise RuntimeError("New service layer is required but not available")
 
     def setup_chromadb(self):
         global chroma_client, collection
@@ -1493,18 +784,12 @@ class RAGService:
     async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True) -> IngestResponse:
         """Process a file from path"""
         try:
-            # Use new service layer if available
-            if self.using_new_services:
-                logger.info(f"🔄 Processing file with NEW service layer: {file_path}")
-                # Extract text using new document service
-                content, document_type, metadata = await self.new_document_service.extract_text_from_file(
-                    file_path,
-                    process_ocr=process_ocr
-                )
-            else:
-                # Fallback to old implementation
-                logger.info(f"🔄 Processing file with LEGACY implementation: {file_path}")
-                content, document_type, metadata = await self.document_processor.extract_text_from_file(file_path, process_ocr)
+            # Extract text using document service
+            logger.info(f"🔄 Processing file: {file_path}")
+            content, document_type, metadata = await self.document_service.extract_text_from_file(
+                file_path,
+                process_ocr=process_ocr
+            )
 
             filename = Path(file_path).name
 
@@ -1546,50 +831,25 @@ class RAGService:
 
         start_time = time.time()
 
-        # Use new service layer if available
-        if self.using_new_services:
-            logger.info(f"🔍 Searching with NEW service layer: {query}")
-            results_list = await self.new_vector_service.search(
-                query=query,
-                top_k=top_k,
-                filter=filter_dict
-            )
+        # Search using vector service
+        logger.info(f"🔍 Searching: {query}")
+        results_list = await self.vector_service.search(
+            query=query,
+            top_k=top_k,
+            filter=filter_dict
+        )
 
-            search_time_ms = (time.time() - start_time) * 1000
+        search_time_ms = (time.time() - start_time) * 1000
 
-            # Convert new service format to SearchResult format
-            search_results = []
-            for result in results_list:
-                search_results.append(SearchResult(
-                    content=result['content'],
-                    metadata=result['metadata'],
-                    relevance_score=result['relevance_score'],
-                    chunk_id=result.get('chunk_id', result['metadata'].get('chunk_id', 'unknown'))
-                ))
-        else:
-            # Fallback to old implementation
-            logger.info(f"🔍 Searching with LEGACY implementation: {query}")
-            results = collection.query(
-                query_texts=[query],
-                n_results=top_k,
-                where=filter_dict
-            )
-
-            search_time_ms = (time.time() - start_time) * 1000
-
-            search_results = []
-            if results['documents'] and results['documents'][0]:
-                for i, (doc, metadata, distance) in enumerate(zip(
-                    results['documents'][0],
-                    results['metadatas'][0],
-                    results['distances'][0]
-                )):
-                    search_results.append(SearchResult(
-                        content=doc,
-                        metadata=metadata,
-                        relevance_score=1.0 - distance,
-                        chunk_id=metadata.get('chunk_id', f'chunk_{i}')
-                    ))
+        # Convert service format to SearchResult format
+        search_results = []
+        for result in results_list:
+            search_results.append(SearchResult(
+                content=result['content'],
+                metadata=result['metadata'],
+                relevance_score=result['relevance_score'],
+                chunk_id=result.get('chunk_id', result['metadata'].get('chunk_id', 'unknown'))
+            ))
 
         return SearchResponse(
             query=query,
@@ -1992,48 +1252,22 @@ Answer:"""
         cost = 0.0
         model_used = None
 
-        # Use new service layer if available
-        if rag_service.using_new_services:
-            logger.info(f"💬 Generating chat response with NEW LLM service")
-            try:
-                # Determine which model to use
-                model_to_use = request.llm_model.value if request.llm_model else None
-
-                # NewLLMService.call_llm returns (response, cost, model_used)
-                answer, cost, model_used = await rag_service.new_llm_service.call_llm(
-                    prompt=rag_prompt,
-                    model_id=model_to_use
-                )
-                provider_used = model_used.split('/')[0] if '/' in model_used else "unknown"
-
-            except Exception as e:
-                logger.error(f"New LLM service failed: {e}")
-                raise HTTPException(status_code=500, detail=f"Failed to generate answer: {str(e)}")
-        else:
-            # Fallback to old implementation
-            logger.info(f"💬 Generating chat response with LEGACY LLM service")
-            llm_service = LLMService()
-
+        # Generate answer using LLM service
+        logger.info(f"💬 Generating chat response")
+        try:
             # Determine which model to use
-            if request.llm_model:
-                model_to_use = request.llm_model.value
-                try:
-                    answer, cost = await llm_service.call_llm_with_model(rag_prompt, model_to_use)
-                    provider_used = model_to_use.split('/')[0]
-                    model_used = model_to_use
-                except Exception as e:
-                    logger.error(f"LLM call failed for {model_to_use}: {e}")
-                    raise HTTPException(status_code=500, detail=f"Failed to generate answer with {model_to_use}: {str(e)}")
-            else:
-                # Use legacy fallback method
-                provider_to_use = request.llm_provider.value if request.llm_provider else None
-                try:
-                    answer = await llm_service.call_llm(rag_prompt, provider_to_use)
-                    provider_used = provider_to_use or DEFAULT_LLM
-                    model_used = f"{provider_used}/default"
-                except Exception as e:
-                    logger.error(f"LLM call failed: {e}")
-                    raise HTTPException(status_code=500, detail=f"Failed to generate answer: {str(e)}")
+            model_to_use = request.llm_model.value if request.llm_model else None
+
+            # LLMService.call_llm returns (response, cost, model_used)
+            answer, cost, model_used = await rag_service.llm_service.call_llm(
+                prompt=rag_prompt,
+                model_id=model_to_use
+            )
+            provider_used = model_used.split('/')[0] if '/' in model_used else "unknown"
+
+        except Exception as e:
+            logger.error(f"LLM service failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to generate answer: {str(e)}")
 
         # Step 5: Prepare response
         sources = search_response.results if request.include_sources else []
