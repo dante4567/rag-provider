@@ -57,10 +57,17 @@ def upload_document(files):
                     if metadata.get('is_duplicate'):
                         result += f"  • ⚠️ DUPLICATE DETECTED\n"
 
-                    # Show top 3 tags
-                    tags = metadata.get('tags', [])
+                    # Show top 3 tags (handle both string and list formats)
+                    tags_raw = metadata.get('tags', '')
+                    if isinstance(tags_raw, str):
+                        # Tags stored as comma-separated string
+                        tags = [t.strip() for t in tags_raw.split(',') if t.strip()][:3]
+                    else:
+                        # Already a list
+                        tags = tags_raw[:3]
+
                     if tags:
-                        result += f"  • Tags: {', '.join(tags[:3])}\n"
+                        result += f"  • Tags: {', '.join(tags)}\n"
 
                     results.append(result)
                     total_success += 1
@@ -111,8 +118,15 @@ def search_documents(query, max_results=5):
                 preview = content[:200] + "..." if len(content) > 200 else content
                 results_text += f"  Content: {preview}\n"
 
-                # Tags
-                tags = metadata.get('tags', [])[:5]
+                # Tags (handle both string and list formats)
+                tags_raw = metadata.get('tags', '')
+                if isinstance(tags_raw, str):
+                    # Tags stored as comma-separated string in ChromaDB
+                    tags = [t.strip() for t in tags_raw.split(',') if t.strip()][:5]
+                else:
+                    # Already a list
+                    tags = tags_raw[:5]
+
                 if tags:
                     results_text += f"  Tags: {', '.join(tags)}\n"
 
@@ -163,23 +177,36 @@ def get_stats():
 
             stats_text = "📊 **Service Statistics**\n\n"
 
-            # Collections
-            if 'collections' in data:
-                stats_text += "**Collections:**\n"
-                for coll_name, coll_data in data['collections'].items():
-                    count = coll_data.get('count', 0)
-                    stats_text += f"  • {coll_name}: {count} documents\n"
+            # Documents
+            if 'total_documents' in data:
+                stats_text += f"**Documents:** {data['total_documents']}\n"
 
-            # Costs
-            if 'total_cost' in data:
-                stats_text += f"\n**Total Cost:** ${data['total_cost']:.4f}\n"
+            # Chunks
+            if 'total_chunks' in data:
+                stats_text += f"**Total Chunks:** {data['total_chunks']}\n"
+                if data['total_documents'] > 0:
+                    avg_chunks = data['total_chunks'] / data['total_documents']
+                    stats_text += f"**Average Chunks/Doc:** {avg_chunks:.1f}\n"
 
-            # Document stats
-            if 'document_stats' in data:
-                doc_stats = data['document_stats']
-                stats_text += f"\n**Document Statistics:**\n"
-                stats_text += f"  • Total Processed: {doc_stats.get('total', 0)}\n"
-                stats_text += f"  • Average Chunks: {doc_stats.get('avg_chunks', 0):.1f}\n"
+            # Storage
+            if 'storage_used_mb' in data:
+                stats_text += f"**Storage Used:** {data['storage_used_mb']:.2f} MB\n"
+
+            # Last ingestion
+            if 'last_ingestion' in data:
+                stats_text += f"\n**Last Ingestion:** {data['last_ingestion']}\n"
+
+            # LLM providers
+            if 'llm_provider_status' in data:
+                stats_text += f"\n**LLM Providers:**\n"
+                for provider, status in data['llm_provider_status'].items():
+                    icon = "✅" if status else "❌"
+                    stats_text += f"  {icon} {provider}\n"
+
+            # OCR
+            if 'ocr_available' in data:
+                icon = "✅" if data['ocr_available'] else "❌"
+                stats_text += f"\n**OCR Available:** {icon}\n"
 
             return stats_text
         return f"❌ Failed to get stats: {response.status_code}"
