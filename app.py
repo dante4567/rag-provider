@@ -281,6 +281,25 @@ class ObsidianMetadata(BaseModel):
     source: str = ""
     created_at: datetime = Field(default_factory=datetime.now)
 
+    # Enrichment quality metrics
+    domain: str = "general"
+    significance_score: float = 0.0
+    quality_tier: str = "medium"
+    entity_richness: float = 0.0
+    content_depth: float = 0.0
+    extraction_confidence: float = 0.0
+
+    # Entity counts
+    people_count: int = 0
+    organizations_count: int = 0
+    concepts_count: int = 0
+
+    # Triage information
+    triage_category: str = "unknown"
+    triage_confidence: float = 0.0
+    is_duplicate: bool = False
+    is_actionable: bool = False
+
 class Document(BaseModel):
     content: str
     filename: Optional[str] = None
@@ -794,7 +813,26 @@ class RAGService:
                 links=[],
                 document_type=document_type,
                 source=filename or "",
-                created_at=datetime.now()
+                created_at=datetime.now(),
+
+                # Add enrichment quality metrics
+                domain=enriched_metadata.get("domain", "general"),
+                significance_score=float(enriched_metadata.get("significance_score", 0.0)),
+                quality_tier=enriched_metadata.get("quality_tier", "medium"),
+                entity_richness=float(enriched_metadata.get("entity_richness", 0.0)),
+                content_depth=float(enriched_metadata.get("content_depth", 0.0)),
+                extraction_confidence=float(enriched_metadata.get("extraction_confidence", 0.0)),
+
+                # Add entity counts
+                people_count=enriched_metadata.get("people_count", 0),
+                organizations_count=enriched_metadata.get("organizations_count", 0),
+                concepts_count=enriched_metadata.get("concepts_count", 0),
+
+                # Add triage information
+                triage_category=enriched_metadata.get("triage_category", "unknown"),
+                triage_confidence=float(enriched_metadata.get("triage_confidence", 0.0)),
+                is_duplicate=enriched_metadata.get("is_duplicate", False),
+                is_actionable=enriched_metadata.get("is_actionable", False)
             )
 
             # ============================================================
