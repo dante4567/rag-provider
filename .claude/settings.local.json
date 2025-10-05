@@ -41,7 +41,13 @@
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
       "Bash(ssh:*)",
-      "Bash(GIT_SSH_COMMAND=\"gh ssh git\" git push -u origin main)"
+      "Bash(GIT_SSH_COMMAND=\"gh ssh git\" git push -u origin main)",
+      "Bash(cat:*)",
+      "Bash(if [ -f .env ])",
+      "Bash(then echo \".env exists\")",
+      "Bash(else echo \".env does not exist\")",
+      "Bash(fi)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": []

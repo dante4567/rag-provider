@@ -1,0 +1,291 @@
+# Hierarchical Tag Taxonomy
+# Controls consistent tagging across all documents
+
+taxonomy:
+  # === MAIN CATEGORIES ===
+
+  # Technology & IT
+  tech:
+    ml:
+      operations: "Machine Learning Operations (MLOps)"
+      infrastructure: "ML Infrastructure & Platforms"
+      models: "Model Development & Training"
+      deployment: "Model Deployment & Serving"
+
+    cloud:
+      aws: "Amazon Web Services"
+      azure: "Microsoft Azure"
+      gcp: "Google Cloud Platform"
+      multi: "Multi-cloud & Hybrid"
+
+    data:
+      engineering: "Data Engineering & Pipelines"
+      science: "Data Science & Analytics"
+      warehouse: "Data Warehousing"
+      quality: "Data Quality & Governance"
+
+    devops:
+      ci-cd: "Continuous Integration/Deployment"
+      infrastructure: "Infrastructure as Code"
+      monitoring: "Monitoring & Observability"
+      security: "DevSecOps"
+
+    software:
+      backend: "Backend Development"
+      frontend: "Frontend Development"
+      mobile: "Mobile Development"
+      api: "API Development"
+
+  # Business & Finance
+  business:
+    finance:
+      taxes:
+        personal: "Personal Tax Documents"
+        business: "Business Tax Filings"
+        property: "Property Taxes"
+      income:
+        salary: "Employment Income"
+        investment: "Investment Income"
+        rental: "Rental Income"
+        business: "Business Income"
+      expenses:
+        receipts: "Purchase Receipts"
+        invoices: "Invoices & Bills"
+        subscriptions: "Recurring Subscriptions"
+        travel: "Travel Expenses"
+
+    legal:
+      contracts: "Contracts & Agreements"
+      compliance: "Regulatory Compliance"
+      intellectual-property: "IP & Patents"
+      corporate: "Corporate Governance"
+
+    hr:
+      hiring: "Recruitment & Hiring"
+      performance: "Performance Management"
+      benefits: "Benefits & Compensation"
+      training: "Training & Development"
+
+    strategy:
+      planning: "Strategic Planning"
+      analysis: "Business Analysis"
+      reporting: "Business Reports"
+
+  # Work & Projects
+  work:
+    projects:
+      active: "Active Projects"
+      planning: "Project Planning"
+      archived: "Completed Projects"
+      proposals: "Project Proposals"
+
+    meetings:
+      minutes: "Meeting Minutes"
+      agendas: "Meeting Agendas"
+      notes: "Meeting Notes"
+      actions: "Action Items"
+
+    documents:
+      reports: "Reports & Analysis"
+      presentations: "Presentations"
+      proposals: "Business Proposals"
+      specifications: "Technical Specs"
+
+  # Personal & Life
+  personal:
+    health:
+      medical: "Medical Records"
+      insurance: "Health Insurance"
+      prescriptions: "Prescriptions"
+      fitness: "Fitness & Wellness"
+
+    education:
+      courses: "Courses & Classes"
+      certificates: "Certificates & Degrees"
+      research: "Research & Papers"
+      notes: "Study Notes"
+
+    legal:
+      identification: "IDs & Documents"
+      contracts: "Personal Contracts"
+      property: "Property Documents"
+      estate: "Estate Planning"
+
+    finance:
+      banking: "Banking Documents"
+      investments: "Investment Records"
+      insurance: "Insurance Policies"
+      retirement: "Retirement Planning"
+
+  # Reference & Knowledge
+  reference:
+    technical:
+      documentation: "Technical Documentation"
+      tutorials: "How-to Guides"
+      specifications: "Technical Specs"
+      api: "API Documentation"
+
+    research:
+      papers: "Research Papers"
+      articles: "Articles & Publications"
+      books: "Book Notes & Summaries"
+      whitepapers: "Whitepapers"
+
+    resources:
+      templates: "Templates & Boilerplates"
+      guides: "Reference Guides"
+      checklists: "Checklists"
+      best-practices: "Best Practices"
+
+  # === DIMENSIONAL TAGS ===
+
+  # Temporal (auto-generated from dates)
+  time:
+    year: ["2023", "2024", "2025", "2026"]
+    quarter: ["Q1", "Q2", "Q3", "Q4"]
+    month: ["january", "february", "march", "april", "may", "june",
+            "july", "august", "september", "october", "november", "december"]
+
+  # Geographic
+  location:
+    germany:
+      cities: ["munich", "berlin", "hamburg", "frankfurt", "cologne"]
+
+    europe:
+      countries: ["france", "spain", "italy", "uk", "netherlands"]
+
+    usa:
+      states: ["california", "new-york", "texas", "washington"]
+
+    asia:
+      countries: ["japan", "singapore", "china", "india"]
+
+  # === STATUS & METADATA ===
+
+  # Document Status
+  status:
+    draft: "Work in Progress"
+    review: "Under Review"
+    approved: "Approved & Final"
+    processed: "Processed by RAG"
+    archived: "Archived"
+    pending: "Pending Action"
+
+  # Importance Level
+  importance:
+    critical: "Mission Critical"
+    high: "High Priority"
+    medium: "Medium Priority"
+    low: "Low Priority"
+    reference: "Reference Only"
+
+  # Document Type
+  type:
+    document:
+      report: "Reports"
+      presentation: "Presentations"
+      spreadsheet: "Spreadsheets"
+      form: "Forms"
+
+    communication:
+      email: "Email"
+      memo: "Memos"
+      letter: "Letters"
+      message: "Messages"
+
+    media:
+      image: "Images"
+      video: "Videos"
+      audio: "Audio"
+
+    code:
+      source: "Source Code"
+      notebook: "Jupyter Notebooks"
+      documentation: "Code Documentation"
+
+  # Confidence Level (auto-generated)
+  confidence:
+    verified: "95-100% confidence"
+    high: "85-95% confidence"
+    medium: "70-85% confidence"
+    low: "Below 70% confidence"
+    needs-review: "Manual review needed"
+
+# === MAPPING RULES ===
+# How to map extracted entities to taxonomy
+
+mapping_rules:
+  # Map common technologies to categories
+  technologies:
+    "TensorRT": "tech/ml/deployment"
+    "Kubernetes": "tech/devops/infrastructure"
+    "AWS": "tech/cloud/aws"
+    "Azure": "tech/cloud/azure"
+    "Google Cloud": "tech/cloud/gcp"
+    "Docker": "tech/devops/infrastructure"
+    "Python": "tech/software/backend"
+    "React": "tech/software/frontend"
+    "PostgreSQL": "tech/data/warehouse"
+    "MongoDB": "tech/data/engineering"
+
+  # Map document patterns to categories
+  patterns:
+    - pattern: "tax return|steuererklärung"
+      tags: ["business/finance/taxes/personal"]
+
+    - pattern: "invoice|rechnung"
+      tags: ["business/finance/expenses/invoices"]
+
+    - pattern: "meeting minutes|protokoll"
+      tags: ["work/meetings/minutes"]
+
+    - pattern: "research paper|wissenschaftliche arbeit"
+      tags: ["reference/research/papers"]
+
+    - pattern: "project proposal"
+      tags: ["work/projects/proposals"]
+
+  # Map file types to categories
+  file_types:
+    ".pdf": "document/report"
+    ".xlsx": "document/spreadsheet"
+    ".pptx": "document/presentation"
+    ".eml": "communication/email"
+    ".py": "code/source"
+    ".ipynb": "code/notebook"
+
+# === TAG GENERATION RULES ===
+
+tag_rules:
+  # Maximum tags per document
+  max_tags_per_document: 10
+
+  # Minimum confidence to auto-tag
+  min_confidence_for_auto_tag: 0.70
+
+  # Always add temporal tags
+  always_add_temporal: true
+
+  # Add location tags if detected
+  add_location_tags: true
+
+  # Create hierarchical paths (tech/ml/operations vs flat tech-ml-operations)
+  hierarchical_format: true
+
+  # Separator for hierarchical tags (Obsidian standard)
+  separator: "/"
+
+# === OBSIDIAN COMPATIBILITY ===
+
+obsidian:
+  # Tag prefix (Obsidian uses #)
+  tag_prefix: "#"
+
+  # Support nested tags
+  nested_tags: true
+
+  # Create tag MOCs
+  create_tag_mocs: true
+
+  # Tag format in frontmatter (array or string)
+  frontmatter_format: "array"  # or "string" for comma-separated
