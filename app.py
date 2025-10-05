@@ -86,6 +86,7 @@ try:
     from src.services.enrichment_service_v2 import EnrichmentServiceV2
     from src.services.obsidian_service_v2 import ObsidianServiceV2
     from src.services.vocabulary_service import VocabularyService
+    from src.services.chunking_service import ChunkingService
     V2_SERVICES_AVAILABLE = True
 
     NEW_SERVICES_AVAILABLE = True
@@ -673,6 +674,7 @@ class RAGService:
             self.enrichment_v2 = None
             self.obsidian_v2 = None
             self.vocabulary_service = None
+            self.chunking_service = None
             if V2_SERVICES_AVAILABLE and USE_ENRICHMENT_V2:
                 try:
                     logger.info("🔄 Initializing Enrichment V2 with controlled vocabulary...")
@@ -682,10 +684,20 @@ class RAGService:
                         vocab_service=self.vocabulary_service
                     )
                     self.obsidian_v2 = ObsidianServiceV2(output_dir=obsidian_output_dir)
+
+                    # Initialize structure-aware chunking
+                    self.chunking_service = ChunkingService(
+                        target_size=512,    # ~512 tokens per chunk
+                        min_size=100,       # Minimum chunk size
+                        max_size=800,       # Maximum chunk size
+                        overlap=50          # Token overlap between chunks
+                    )
+
                     logger.info("✅ Enrichment V2 initialized with controlled vocabulary")
                     logger.info(f"   📚 Topics: {len(self.vocabulary_service.get_all_topics())}")
                     logger.info(f"   🏗️  Projects: {len(self.vocabulary_service.get_active_projects())}")
                     logger.info(f"   📍 Places: {len(self.vocabulary_service.get_all_places())}")
+                    logger.info("✅ Structure-aware chunking enabled")
                 except Exception as e:
                     logger.warning(f"⚠️  V2 services initialization failed: {e}")
                     logger.info("   Falling back to standard enrichment")
@@ -839,8 +851,28 @@ class RAGService:
             if enriched_metadata.get('recommended_for_review', False):
                 logger.info(f"   ⚠️  Recommended for manual review (confidence/significance flags)")
 
-            # Split into chunks using new document service
-            chunks = self.document_service.chunk_text(content)
+            # Split into chunks using structure-aware chunking if available
+            if self.chunking_service:
+                logger.info("   📐 Using structure-aware chunking...")
+                chunk_dicts = self.chunking_service.chunk_text(content, preserve_structure=True)
+                # Extract just the content strings for backward compatibility
+                chunks = [c['content'] for c in chunk_dicts]
+                # Store full chunk metadata for later use
+                chunk_metadata_list = chunk_dicts
+                logger.info(f"   ✅ Created {len(chunks)} structure-aware chunks")
+            else:
+                logger.info("   Using standard text splitting...")
+                chunks = self.document_service.chunk_text(content)
+                # Create basic metadata for backward compatibility
+                chunk_metadata_list = [
+                    {
+                        'content': chunk,
+                        'metadata': {'chunk_type': 'paragraph'},
+                        'sequence': i,
+                        'estimated_tokens': len(chunk) // 4
+                    }
+                    for i, chunk in enumerate(chunks)
+                ]
 
             # Create ObsidianMetadata for response (using enriched data)
             # Extract lists from flat metadata
@@ -910,10 +942,19 @@ class RAGService:
 
             for i, chunk in enumerate(chunks):
                 chunk_id = f"{doc_id}_chunk_{i}"
+
+                # Get structure metadata for this chunk
+                chunk_struct_meta = chunk_metadata_list[i]['metadata']
+
                 chunk_metadata = {
                     **base_metadata,
                     "chunk_index": i,
-                    "chunk_id": chunk_id
+                    "chunk_id": chunk_id,
+                    # Add structure-aware metadata
+                    "chunk_type": chunk_struct_meta.get('chunk_type', 'paragraph'),
+                    "section_title": chunk_struct_meta.get('section_title', ''),
+                    "parent_sections": ','.join(chunk_struct_meta.get('parent_sections', [])),
+                    "estimated_tokens": chunk_metadata_list[i].get('estimated_tokens', 0)
                 }
 
                 chunk_ids.append(chunk_id)
