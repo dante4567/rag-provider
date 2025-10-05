@@ -1,0 +1,26 @@
+# Known Places
+# Use these for location tagging
+
+cities:
+  - Essen
+  - Köln
+  - Düsseldorf
+  - Berlin
+  - München
+
+districts:
+  - Essen Rüttenscheid
+  - Essen Stadtwald
+  - Köln Südstadt
+  - Köln Innenstadt
+
+institutions:
+  - Florianschule Essen
+  - Grundschule XY
+  - Kita Astronauten
+  - Jugendamt Essen
+
+# Meta
+meta:
+  version: 1.0
+  last_updated: 2025-10-05

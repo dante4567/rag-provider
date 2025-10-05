@@ -1,0 +1,36 @@
+# Active Projects
+# Time-bound focus areas with associated watchlist topics
+
+active:
+  school-2026:
+    description: "School enrollment and transition 2026"
+    start: 2025-09-01
+    end: 2026-09-01
+    watchlist:
+      - school/admin
+      - school/admin/enrollment
+      - school/info-day
+      - school/concept
+    priority: high
+
+  custody-2025:
+    description: "Custody arrangements 2025"
+    start: 2025-01-01
+    end: 2026-01-01
+    watchlist:
+      - legal/custody
+      - legal/court
+      - kita/handover
+    priority: high
+
+archived:
+  kita-transition-2024:
+    description: "Kita transition completed"
+    start: 2024-01-01
+    end: 2025-01-01
+    archived_date: 2025-08-01
+
+# Meta
+meta:
+  version: 1.0
+  last_updated: 2025-10-05

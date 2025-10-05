@@ -1,0 +1,53 @@
+# Controlled Topic Vocabulary
+# Hierarchical structure: category/subcategory/detail
+# Only use topics from this list during enrichment
+
+school:
+  - school/admin
+  - school/admin/enrollment
+  - school/admin/schedule
+  - school/admin/events
+  - school/concept
+  - school/curriculum
+  - school/letter
+  - school/report
+  - school/info-day
+
+kita:
+  - kita/admin
+  - kita/handover
+  - kita/schedule
+  - kita/pickup
+  - kita/events
+  - kita/transition
+
+legal:
+  - legal/custody
+  - legal/court
+  - legal/judgment
+  - legal/motion
+  - legal/agreement
+
+personal:
+  - personal/health
+  - personal/finance
+  - personal/travel
+  - personal/documents
+
+administrative:
+  - admin/registration
+  - admin/form
+  - admin/certificate
+  - admin/notice
+
+education:
+  - education/concept
+  - education/methodology
+  - education/assessment
+  - education/support
+
+# Meta
+meta:
+  version: 1.0
+  last_updated: 2025-10-05
+  auto_promote_threshold: 5  # Suggested tags appearing 5+ times get auto-promoted

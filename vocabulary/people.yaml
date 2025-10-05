@@ -1,0 +1,20 @@
+# Known People
+# PRIVACY: Use role-based identifiers, not real names
+
+family:
+  - Parent1  # Replace with actual identifiers as needed
+  - Parent2
+  - Child
+
+professionals:
+  - Teacher
+  - Principal
+  - Lawyer
+  - Judge
+  - Case-Worker
+
+# Meta
+meta:
+  version: 1.0
+  last_updated: 2025-10-05
+  privacy_notice: "Use role-based identifiers to protect privacy"
