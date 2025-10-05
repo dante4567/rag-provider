@@ -67,6 +67,20 @@ from rich.console import Console
 from rich.table import Table
 from tqdm import tqdm
 
+# New service layer imports
+try:
+    from src.core.dependencies import get_settings
+    from src.services import (
+        DocumentService as NewDocumentService,
+        LLMService as NewLLMService,
+        VectorService as NewVectorService,
+        OCRService as NewOCRService
+    )
+    NEW_SERVICES_AVAILABLE = True
+except ImportError as e:
+    NEW_SERVICES_AVAILABLE = False
+    logging.warning(f"New service layer not available: {e}")
+
 # Simple text splitter to replace langchain dependency
 class SimpleTextSplitter:
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
@@ -1296,9 +1310,25 @@ class FileWatchHandler(FileSystemEventHandler):
 # Main RAG Service
 class RAGService:
     def __init__(self):
+        # Keep old services for backward compatibility
         self.llm_service = LLMService()
         self.document_processor = DocumentProcessor(self.llm_service)
         self.setup_chromadb()
+
+        # Use new service layer if available, otherwise fallback to old implementation
+        if NEW_SERVICES_AVAILABLE:
+            logger.info("✅ Using new service layer architecture")
+            settings = get_settings()
+            self.new_llm_service = NewLLMService(settings)
+            # VectorService needs the collection, so initialize it after chromadb setup
+            self.new_vector_service = NewVectorService(collection, settings)
+            self.new_document_service = NewDocumentService(settings)
+            # OCRService takes optional languages
+            self.new_ocr_service = NewOCRService(languages=['eng', 'deu', 'fra', 'spa'])
+            self.using_new_services = True
+        else:
+            logger.info("⚠️  Using legacy service implementation")
+            self.using_new_services = False
 
     def setup_chromadb(self):
         global chroma_client, collection
@@ -1463,7 +1493,19 @@ class RAGService:
     async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True) -> IngestResponse:
         """Process a file from path"""
         try:
-            content, document_type, metadata = await self.document_processor.extract_text_from_file(file_path, process_ocr)
+            # Use new service layer if available
+            if self.using_new_services:
+                logger.info(f"🔄 Processing file with NEW service layer: {file_path}")
+                # Extract text using new document service
+                content, document_type, metadata = await self.new_document_service.extract_text_from_file(
+                    file_path,
+                    process_ocr=process_ocr
+                )
+            else:
+                # Fallback to old implementation
+                logger.info(f"🔄 Processing file with LEGACY implementation: {file_path}")
+                content, document_type, metadata = await self.document_processor.extract_text_from_file(file_path, process_ocr)
+
             filename = Path(file_path).name
 
             return await self.process_document(
