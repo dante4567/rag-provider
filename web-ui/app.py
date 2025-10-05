@@ -57,7 +57,7 @@ def upload_document(files):
                     if metadata.get('is_duplicate'):
                         result += f"  • ⚠️ DUPLICATE DETECTED\n"
 
-                    # Show top 3 tags (handle both string and list formats)
+                    # Show top 3 tags (handle both string and list formats, add # prefix)
                     tags_raw = metadata.get('tags', '')
                     if isinstance(tags_raw, str):
                         # Tags stored as comma-separated string
@@ -67,7 +67,9 @@ def upload_document(files):
                         tags = tags_raw[:3]
 
                     if tags:
-                        result += f"  • Tags: {', '.join(tags)}\n"
+                        # Add # prefix to tags
+                        formatted_tags = [f"#{tag}" if not tag.startswith('#') else tag for tag in tags]
+                        result += f"  • Tags: {', '.join(formatted_tags)}\n"
 
                     results.append(result)
                     total_success += 1
@@ -109,7 +111,10 @@ def search_documents(query, max_results=5):
             for i, result in enumerate(results, 1):
                 metadata = result.get('metadata', {})
                 results_text += f"**{i}. {metadata.get('title', 'Untitled')}**\n"
-                results_text += f"  Score: {result.get('score', 0):.4f}\n"
+
+                # Use relevance_score (API field name) instead of score
+                relevance = result.get('relevance_score', 0)
+                results_text += f"  Relevance: {relevance:.4f}\n"
                 results_text += f"  Domain: {metadata.get('domain', 'N/A')}\n"
                 results_text += f"  Significance: {metadata.get('significance_score', 0):.3f}\n"
 
@@ -118,7 +123,7 @@ def search_documents(query, max_results=5):
                 preview = content[:200] + "..." if len(content) > 200 else content
                 results_text += f"  Content: {preview}\n"
 
-                # Tags (handle both string and list formats)
+                # Tags (handle both string and list formats, add # prefix)
                 tags_raw = metadata.get('tags', '')
                 if isinstance(tags_raw, str):
                     # Tags stored as comma-separated string in ChromaDB
@@ -128,7 +133,9 @@ def search_documents(query, max_results=5):
                     tags = tags_raw[:5]
 
                 if tags:
-                    results_text += f"  Tags: {', '.join(tags)}\n"
+                    # Add # prefix to tags
+                    formatted_tags = [f"#{tag}" if not tag.startswith('#') else tag for tag in tags]
+                    results_text += f"  Tags: {', '.join(formatted_tags)}\n"
 
                 results_text += "\n"
 
