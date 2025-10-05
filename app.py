@@ -1989,30 +1989,51 @@ Instructions:
 Answer:"""
 
         # Step 4: Generate answer using LLM
-        llm_service = LLMService()
         cost = 0.0
         model_used = None
 
-        # Determine which model to use
-        if request.llm_model:
-            model_to_use = request.llm_model.value
+        # Use new service layer if available
+        if rag_service.using_new_services:
+            logger.info(f"💬 Generating chat response with NEW LLM service")
             try:
-                answer, cost = await llm_service.call_llm_with_model(rag_prompt, model_to_use)
-                provider_used = model_to_use.split('/')[0]
-                model_used = model_to_use
+                # Determine which model to use
+                model_to_use = request.llm_model.value if request.llm_model else None
+
+                # NewLLMService.call_llm returns (response, cost, model_used)
+                answer, cost, model_used = await rag_service.new_llm_service.call_llm(
+                    prompt=rag_prompt,
+                    model_id=model_to_use
+                )
+                provider_used = model_used.split('/')[0] if '/' in model_used else "unknown"
+
             except Exception as e:
-                logger.error(f"LLM call failed for {model_to_use}: {e}")
-                raise HTTPException(status_code=500, detail=f"Failed to generate answer with {model_to_use}: {str(e)}")
-        else:
-            # Use legacy fallback method
-            provider_to_use = request.llm_provider.value if request.llm_provider else None
-            try:
-                answer = await llm_service.call_llm(rag_prompt, provider_to_use)
-                provider_used = provider_to_use or DEFAULT_LLM
-                model_used = f"{provider_used}/default"
-            except Exception as e:
-                logger.error(f"LLM call failed: {e}")
+                logger.error(f"New LLM service failed: {e}")
                 raise HTTPException(status_code=500, detail=f"Failed to generate answer: {str(e)}")
+        else:
+            # Fallback to old implementation
+            logger.info(f"💬 Generating chat response with LEGACY LLM service")
+            llm_service = LLMService()
+
+            # Determine which model to use
+            if request.llm_model:
+                model_to_use = request.llm_model.value
+                try:
+                    answer, cost = await llm_service.call_llm_with_model(rag_prompt, model_to_use)
+                    provider_used = model_to_use.split('/')[0]
+                    model_used = model_to_use
+                except Exception as e:
+                    logger.error(f"LLM call failed for {model_to_use}: {e}")
+                    raise HTTPException(status_code=500, detail=f"Failed to generate answer with {model_to_use}: {str(e)}")
+            else:
+                # Use legacy fallback method
+                provider_to_use = request.llm_provider.value if request.llm_provider else None
+                try:
+                    answer = await llm_service.call_llm(rag_prompt, provider_to_use)
+                    provider_used = provider_to_use or DEFAULT_LLM
+                    model_used = f"{provider_used}/default"
+                except Exception as e:
+                    logger.error(f"LLM call failed: {e}")
+                    raise HTTPException(status_code=500, detail=f"Failed to generate answer: {str(e)}")
 
         # Step 5: Prepare response
         sources = search_response.results if request.include_sources else []
