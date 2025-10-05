@@ -208,7 +208,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         payload = {
             "question": question,
-            "llm_model": "anthropic/claude-3-5-sonnet-latest",  # High quality
+            "llm_model": "anthropic/claude-3-5-sonnet-20241022",  # High quality (use specific version)
             "max_context_chunks": 10  # Get more context for better answers
         }
 
