@@ -81,9 +81,17 @@ try:
     from src.services.tag_taxonomy_service import TagTaxonomyService
     from src.services.smart_triage_service import SmartTriageService
     from src.services.obsidian_service import ObsidianService
+
+    # V2 Services (Controlled Vocabulary)
+    from src.services.enrichment_service_v2 import EnrichmentServiceV2
+    from src.services.obsidian_service_v2 import ObsidianServiceV2
+    from src.services.vocabulary_service import VocabularyService
+    V2_SERVICES_AVAILABLE = True
+
     NEW_SERVICES_AVAILABLE = True
 except ImportError as e:
     NEW_SERVICES_AVAILABLE = False
+    V2_SERVICES_AVAILABLE = False
     logging.warning(f"New service layer not available: {e}")
 
 # Simple text splitter to replace langchain dependency
@@ -195,6 +203,10 @@ OCR_LANGUAGES = os.getenv("OCR_LANGUAGES", "eng").split(",")
 # Obsidian Configuration
 CREATE_OBSIDIAN_LINKS = os.getenv("CREATE_OBSIDIAN_LINKS", "true").lower() == "true"
 HIERARCHY_DEPTH = int(os.getenv("HIERARCHY_DEPTH", "3"))
+
+# Enrichment Configuration
+USE_ENRICHMENT_V2 = os.getenv("USE_ENRICHMENT_V2", "true").lower() == "true"
+VOCABULARY_DIR = os.getenv("VOCABULARY_DIR", "vocabulary")
 
 # API Keys
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
@@ -657,15 +669,39 @@ class RAGService:
                 output_dir=obsidian_output_dir
             )
 
+            # Initialize V2 services if available and enabled
+            self.enrichment_v2 = None
+            self.obsidian_v2 = None
+            self.vocabulary_service = None
+            if V2_SERVICES_AVAILABLE and USE_ENRICHMENT_V2:
+                try:
+                    logger.info("🔄 Initializing Enrichment V2 with controlled vocabulary...")
+                    self.vocabulary_service = VocabularyService(VOCABULARY_DIR)
+                    self.enrichment_v2 = EnrichmentServiceV2(
+                        llm_service=self.llm_service,
+                        vocab_service=self.vocabulary_service
+                    )
+                    self.obsidian_v2 = ObsidianServiceV2(output_dir=obsidian_output_dir)
+                    logger.info("✅ Enrichment V2 initialized with controlled vocabulary")
+                    logger.info(f"   📚 Topics: {len(self.vocabulary_service.get_all_topics())}")
+                    logger.info(f"   🏗️  Projects: {len(self.vocabulary_service.get_active_projects())}")
+                    logger.info(f"   📍 Places: {len(self.vocabulary_service.get_all_places())}")
+                except Exception as e:
+                    logger.warning(f"⚠️  V2 services initialization failed: {e}")
+                    logger.info("   Falling back to standard enrichment")
+
             self.using_new_services = True
             logger.info("✅ Advanced multi-stage enrichment initialized (Groq + Claude + Triage)")
             logger.info(f"✅ Obsidian export enabled → {obsidian_output_dir}")
-            logger.info("   - Stage 1: Fast classification (Groq)")
-            logger.info("   - Stage 2: Entity extraction (Claude)")
-            logger.info("   - Stage 3: OCR quality assessment")
-            logger.info("   - Stage 4: Significance scoring")
-            logger.info("   - Stage 5: Evolving tag taxonomy")
-            logger.info("   - Stage 6: Smart triage & duplicate detection")
+            if self.enrichment_v2:
+                logger.info("   🎯 Using Enrichment V2 (controlled vocabulary)")
+            else:
+                logger.info("   - Stage 1: Fast classification (Groq)")
+                logger.info("   - Stage 2: Entity extraction (Claude)")
+                logger.info("   - Stage 3: OCR quality assessment")
+                logger.info("   - Stage 4: Significance scoring")
+                logger.info("   - Stage 5: Evolving tag taxonomy")
+                logger.info("   - Stage 6: Smart triage & duplicate detection")
         else:
             logger.error("❌ New service layer not available - cannot start!")
             raise RuntimeError("New service layer is required but not available")
@@ -763,12 +799,34 @@ class RAGService:
             # STEP 1: LLM ENRICHMENT - Extract high-quality metadata
             # ============================================================
             logger.info(f"🤖 Enriching document with LLM: {filename}")
-            enriched_metadata = await self.enrichment_service.enrich_document(
-                content=content,
-                filename=filename or f"document_{doc_id}",
-                document_type=document_type,
-                existing_metadata=file_metadata
-            )
+
+            # Use V2 enrichment if available, otherwise fall back to standard
+            if self.enrichment_v2:
+                logger.info("   Using Enrichment V2 (controlled vocabulary)")
+                # Extract date from file metadata if available
+                from datetime import date as date_type
+                created_date = None
+                if file_metadata and 'created_date' in file_metadata:
+                    try:
+                        created_date = date_type.fromisoformat(file_metadata['created_date'])
+                    except:
+                        pass
+
+                enriched_metadata = await self.enrichment_v2.enrich_document(
+                    content=content,
+                    filename=filename or f"document_{doc_id}",
+                    document_type=document_type,
+                    created_at=created_date,
+                    existing_metadata=file_metadata
+                )
+            else:
+                logger.info("   Using standard multi-stage enrichment")
+                enriched_metadata = await self.enrichment_service.enrich_document(
+                    content=content,
+                    filename=filename or f"document_{doc_id}",
+                    document_type=document_type,
+                    existing_metadata=file_metadata
+                )
 
             # Use LLM-improved title
             title = enriched_metadata.get("title", filename or f"document_{doc_id}")
@@ -873,20 +931,37 @@ class RAGService:
             # STEP 3: OBSIDIAN EXPORT (if enabled)
             # ============================================================
             obsidian_path = None
-            if generate_obsidian and self.obsidian_service:
+            if generate_obsidian:
                 try:
                     logger.info(f"📝 Exporting to Obsidian vault...")
-                    file_path, export_data = await self.obsidian_service.export_to_obsidian(
-                        doc_id=doc_id,
-                        content=content,
-                        enriched_metadata=enriched_metadata,
-                        document_type=document_type,
-                        source=filename or ""
-                    )
-                    obsidian_path = str(file_path)
-                    logger.info(f"✅ Obsidian export: {file_path.name}")
+
+                    # Use V2 Obsidian export if available
+                    if self.obsidian_v2:
+                        logger.info("   Using Obsidian V2 (clean YAML)")
+                        file_path = self.obsidian_v2.export_document(
+                            title=title,
+                            content=content,
+                            metadata=enriched_metadata,
+                            document_type=document_type,
+                            created_at=datetime.now()
+                        )
+                        obsidian_path = str(file_path)
+                        logger.info(f"✅ Obsidian V2 export: {file_path.name}")
+                    elif self.obsidian_service:
+                        logger.info("   Using standard Obsidian export")
+                        file_path, export_data = await self.obsidian_service.export_to_obsidian(
+                            doc_id=doc_id,
+                            content=content,
+                            enriched_metadata=enriched_metadata,
+                            document_type=document_type,
+                            source=filename or ""
+                        )
+                        obsidian_path = str(file_path)
+                        logger.info(f"✅ Obsidian export: {file_path.name}")
                 except Exception as e:
                     logger.warning(f"⚠️ Obsidian export failed: {e}")
+                    import traceback
+                    traceback.print_exc()
                     # Don't fail the whole operation if Obsidian export fails
 
             logger.info(f"✅ Processed document {doc_id}: {len(chunks)} chunks, Obsidian: {bool(obsidian_path)}")
