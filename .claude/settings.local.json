@@ -71,7 +71,11 @@
       "Bash(timeout 30 python3:*)",
       "Bash(git mv:*)",
       "Bash(git cherry-pick:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Read(//Users/danielteckentrup/Downloads/**)",
+      "Bash(timeout 180 python3 tests/test_with_real_user_data.py)",
+      "Bash(timeout:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

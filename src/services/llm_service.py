@@ -26,22 +26,27 @@ except ImportError:
     logger.warning("Google Generative AI not available")
 
 
-# Model pricing (per 1M tokens) - Updated 2024
+# Model pricing (per 1M tokens) - Updated October 2025
 MODEL_PRICING = {
     # Groq - Lightning fast inference
     "groq/llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},
+    "groq/llama-3.1-70b-versatile": {"input": 0.59, "output": 0.79},
 
     # Anthropic - High quality reasoning
     "anthropic/claude-3-haiku-20240307": {"input": 0.25, "output": 1.25},
     "anthropic/claude-3-5-sonnet-20241022": {"input": 3.0, "output": 15.0},
+    "anthropic/claude-3-5-sonnet-latest": {"input": 3.0, "output": 15.0},  # Same as 20241022
     "anthropic/claude-3-opus-20240229": {"input": 15.0, "output": 75.0},
 
     # OpenAI - Reliable general purpose
     "openai/gpt-4o-mini": {"input": 0.15, "output": 0.60},
     "openai/gpt-4o": {"input": 5.0, "output": 15.0},
+    "openai/gpt-4-turbo": {"input": 10.0, "output": 30.0},
 
     # Google - Long context specialist
-    "google/gemini-1.5-pro": {"input": 1.25, "output": 5.0}
+    "google/gemini-1.5-pro": {"input": 1.25, "output": 5.0},
+    "google/gemini-2.0-flash": {"input": 0.10, "output": 0.40},
+    "google/gemini-2.5-pro": {"input": 1.25, "output": 5.0}
 }
 
 

@@ -11,6 +11,7 @@ httpx>=0.25.2
 chromadb>=0.4.18
 
 # Text processing (simplified to avoid conflicts)
+python-Levenshtein>=0.21.0  # For fuzzy string matching in triage
 
 # LLM providers
 anthropic>=0.7.8

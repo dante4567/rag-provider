@@ -76,6 +76,11 @@ try:
         VectorService as NewVectorService,
         OCRService as NewOCRService
     )
+    from src.services.enrichment_service import EnrichmentService
+    from src.services.advanced_enrichment_service import AdvancedEnrichmentService
+    from src.services.tag_taxonomy_service import TagTaxonomyService
+    from src.services.smart_triage_service import SmartTriageService
+    from src.services.obsidian_service import ObsidianService
     NEW_SERVICES_AVAILABLE = True
 except ImportError as e:
     NEW_SERVICES_AVAILABLE = False
@@ -616,7 +621,32 @@ class RAGService:
             self.vector_service = NewVectorService(collection, settings)
             self.document_service = NewDocumentService(settings)
             self.ocr_service = NewOCRService(languages=['eng', 'deu', 'fra', 'spa'])
+
+            # Initialize tag taxonomy, triage, and advanced enrichment
+            self.tag_taxonomy = TagTaxonomyService(collection=collection)
+            self.triage_service = SmartTriageService(collection=collection)
+            self.enrichment_service = AdvancedEnrichmentService(
+                llm_service=self.llm_service,
+                tag_taxonomy=self.tag_taxonomy,
+                triage_service=self.triage_service
+            )
+
+            # Initialize Obsidian export service
+            obsidian_output_dir = os.getenv("OBSIDIAN_VAULT_PATH", "./obsidian_vault")
+            self.obsidian_service = ObsidianService(
+                llm_service=self.llm_service,
+                output_dir=obsidian_output_dir
+            )
+
             self.using_new_services = True
+            logger.info("✅ Advanced multi-stage enrichment initialized (Groq + Claude + Triage)")
+            logger.info(f"✅ Obsidian export enabled → {obsidian_output_dir}")
+            logger.info("   - Stage 1: Fast classification (Groq)")
+            logger.info("   - Stage 2: Entity extraction (Claude)")
+            logger.info("   - Stage 3: OCR quality assessment")
+            logger.info("   - Stage 4: Significance scoring")
+            logger.info("   - Stage 5: Evolving tag taxonomy")
+            logger.info("   - Stage 6: Smart triage & duplicate detection")
         else:
             logger.error("❌ New service layer not available - cannot start!")
             raise RuntimeError("New service layer is required but not available")
@@ -710,54 +740,77 @@ class RAGService:
             logger.debug(f"Duplicate check failed, proceeding with ingestion: {e}")
 
         try:
+            # ============================================================
+            # STEP 1: LLM ENRICHMENT - Extract high-quality metadata
+            # ============================================================
+            logger.info(f"🤖 Enriching document with LLM: {filename}")
+            enriched_metadata = await self.enrichment_service.enrich_document(
+                content=content,
+                filename=filename or f"document_{doc_id}",
+                document_type=document_type,
+                existing_metadata=file_metadata
+            )
+
+            # Use LLM-improved title
+            title = enriched_metadata.get("title", filename or f"document_{doc_id}")
+            logger.info(f"✅ Multi-stage enrichment complete: {title}")
+            logger.info(f"   📊 Significance: {enriched_metadata.get('significance_score', 0):.2f} ({enriched_metadata.get('quality_tier', 'unknown')})")
+            logger.info(f"   🏷️  Tags ({enriched_metadata.get('tag_count', 0)}): {enriched_metadata.get('tags', 'none')[:100]}")
+            logger.info(f"   🎯 Domain: {enriched_metadata.get('domain', 'general')}")
+            logger.info(f"   👥 Entities: {enriched_metadata.get('people_count', 0)} people, {enriched_metadata.get('organizations_count', 0)} orgs, {enriched_metadata.get('concepts_count', 0)} concepts")
+            logger.info(f"   💰 Enrichment cost: ${enriched_metadata.get('enrichment_cost_usd', 0):.6f}")
+            if enriched_metadata.get('recommended_for_review', False):
+                logger.info(f"   ⚠️  Recommended for manual review (confidence/significance flags)")
+
             # Split into chunks using new document service
             chunks = self.document_service.chunk_text(content)
 
-            # Create proper ObsidianMetadata for response using app.py models
-            # Ensure title is always a string
-            title = (
-                file_metadata.get("title") if file_metadata and file_metadata.get("title")
-                else filename if filename
-                else f"document_{doc_id}"
-            )
+            # Create ObsidianMetadata for response (using enriched data)
+            # Extract lists from flat metadata
+            enriched_lists = self.enrichment_service.extract_enriched_lists(enriched_metadata)
+
+            tags_list = enriched_lists.get("tags", [])
+            key_points_list = enriched_lists.get("key_points", [])
+            people_list = [p.get("name") if isinstance(p, dict) else p for p in enriched_lists.get("people", [])]
+            orgs_list = enriched_lists.get("organizations", [])
+            locs_list = enriched_lists.get("locations", [])
+            dates_list = enriched_lists.get("dates", [])
 
             obsidian_metadata = ObsidianMetadata(
                 title=title,
-                keywords=Keywords(primary=[], secondary=[]),
-                tags=[],
-                summary=content[:200] + "..." if len(content) > 200 else content,
-                abstract="",
-                key_points=[],
-                entities=Entities(people=[], organizations=[], locations=[], dates=[]),
-                reading_time="",
-                complexity=ComplexityLevel.intermediate,
+                keywords=Keywords(primary=tags_list[:3], secondary=tags_list[3:] if len(tags_list) > 3 else []),
+                tags=[f"#{tag}" if not tag.startswith("#") else tag for tag in tags_list],
+                summary=enriched_metadata.get("summary", ""),
+                abstract=enriched_metadata.get("summary", ""),
+                key_points=key_points_list,
+                entities=Entities(
+                    people=people_list,
+                    organizations=orgs_list,
+                    locations=locs_list,
+                    dates=dates_list
+                ),
+                reading_time=f"{enriched_metadata.get('estimated_reading_time_min', 1)} min",
+                complexity=ComplexityLevel[enriched_metadata.get("complexity", "intermediate")],
                 links=[],
                 document_type=document_type,
                 source=filename or "",
                 created_at=datetime.now()
             )
 
-            # Store chunks in ChromaDB
+            # ============================================================
+            # STEP 2: STORE IN CHROMADB - Use enriched metadata
+            # ============================================================
             chunk_ids = []
             chunk_metadatas = []
             chunk_contents = []
 
-            # Simple metadata for ChromaDB (only strings, numbers, booleans)
+            # Use enriched metadata for ChromaDB (already flat key-value)
             base_metadata = {
+                **enriched_metadata,  # All the LLM-enriched fields
                 "doc_id": doc_id,
                 "filename": str(filename or f"document_{doc_id}"),
                 "chunks": int(len(chunks)),
-                "created_at": datetime.now().isoformat(),
-                "document_type": str(document_type),
-                "title": str(title),
-                "content_hash": content_hash
             }
-
-            # Add simple file_metadata fields
-            if file_metadata:
-                for k, v in file_metadata.items():
-                    if isinstance(v, (str, int, float, bool)):
-                        base_metadata[k] = v
 
             for i, chunk in enumerate(chunks):
                 chunk_id = f"{doc_id}_chunk_{i}"
@@ -778,13 +831,27 @@ class RAGService:
                 metadatas=chunk_metadatas
             )
 
-            # Create Obsidian markdown (simplified - skip for now)
+            # ============================================================
+            # STEP 3: OBSIDIAN EXPORT (if enabled)
+            # ============================================================
             obsidian_path = None
-            # if generate_obsidian:
-            #     # Obsidian generation can be added later
-            #     pass
+            if generate_obsidian and self.obsidian_service:
+                try:
+                    logger.info(f"📝 Exporting to Obsidian vault...")
+                    file_path, export_data = await self.obsidian_service.export_to_obsidian(
+                        doc_id=doc_id,
+                        content=content,
+                        enriched_metadata=enriched_metadata,
+                        document_type=document_type,
+                        source=filename or ""
+                    )
+                    obsidian_path = str(file_path)
+                    logger.info(f"✅ Obsidian export: {file_path.name}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Obsidian export failed: {e}")
+                    # Don't fail the whole operation if Obsidian export fails
 
-            logger.info(f"Processed document {doc_id}: {len(chunks)} chunks, Obsidian: {bool(obsidian_path)}")
+            logger.info(f"✅ Processed document {doc_id}: {len(chunks)} chunks, Obsidian: {bool(obsidian_path)}")
 
             return IngestResponse(
                 success=True,

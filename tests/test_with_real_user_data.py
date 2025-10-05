@@ -94,19 +94,35 @@ def upload_document(file_path: str):
             result = resp.json()
             doc_id = result.get('doc_id', 'unknown')
             chunks = result.get('chunks', 0)
-            doc_type = result.get('metadata', {}).get('document_type', 'unknown')
+            metadata = result.get('metadata', {})
+            doc_type = metadata.get('document_type', 'unknown')
+
+            # Extract enriched metadata
+            title = metadata.get('title', path.name)
+            summary = metadata.get('summary', '')
+            tags = metadata.get('tags', [])
+            key_points = metadata.get('key_points', [])
 
             print(f"   ✅ Uploaded successfully")
             print(f"      Document ID: {doc_id[:30]}...")
+            print(f"      Title: {title}")
             print(f"      Type: {doc_type}")
             print(f"      Chunks: {chunks}")
+            if tags:
+                print(f"      Tags: {', '.join(tags[:5])}")
+            if summary:
+                print(f"      Summary: {summary[:80]}...")
+            if key_points:
+                print(f"      Key Points: {len(key_points)} extracted")
 
             test_results["uploaded"] += 1
             test_results["documents"].append({
                 "file": path.name,
                 "doc_id": doc_id,
                 "chunks": chunks,
-                "type": doc_type
+                "type": doc_type,
+                "title": title,
+                "tags": len(tags)
             })
 
             return doc_id
@@ -248,7 +264,9 @@ def main():
         print(f"\n✅ Successfully tested with real user data!")
         print(f"\nUploaded documents:")
         for doc in test_results["documents"]:
-            print(f"  - {doc['file']} ({doc['type']}, {doc['chunks']} chunks)")
+            tags_info = f", {doc['tags']} tags" if doc.get('tags', 0) > 0 else ""
+            title_info = f" - {doc['title']}" if doc.get('title') != doc['file'] else ""
+            print(f"  - {doc['file']}{title_info} ({doc['type']}, {doc['chunks']} chunks{tags_info})")
 
     # Email support instructions
     print("\n" + "="*70)
