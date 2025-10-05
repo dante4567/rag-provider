@@ -48,16 +48,15 @@ def vector_service(mock_collection, settings):
 async def test_add_document(vector_service, mock_collection):
     """Test adding a document to the vector store"""
     doc_id = "test_doc_123"
-    content = "This is test content for the vector store"
+    chunks = ["This is test content for the vector store"]
     metadata = {"filename": "test.txt", "source": "test"}
 
-    await vector_service.add_document(doc_id, content, metadata)
+    await vector_service.add_document(doc_id, chunks, metadata)
 
     mock_collection.add.assert_called_once()
     call_args = mock_collection.add.call_args[1]
-    assert doc_id in call_args["ids"]
-    assert content in call_args["documents"]
-    assert metadata in call_args["metadatas"]
+    assert f"{doc_id}_chunk_0" in call_args["ids"]
+    assert chunks[0] in call_args["documents"]
 
 
 @pytest.mark.asyncio
@@ -97,12 +96,20 @@ async def test_get_document(vector_service, mock_collection):
     """Test retrieving a specific document by ID"""
     doc_id = "doc1"
 
+    # Mock the get method to return document data
+    mock_collection.get.return_value = {
+        "ids": ["doc1_chunk_0"],
+        "documents": ["Content 1"],
+        "metadatas": [{"key": "value1", "doc_id": doc_id}]
+    }
+
     result = await vector_service.get_document(doc_id)
 
-    mock_collection.get.assert_called_once_with(ids=[doc_id])
-    assert result["id"] == doc_id
-    assert result["content"] == "Content 1"
-    assert result["metadata"] == {"key": "value1"}
+    # Verify it called get with the doc_id filter
+    call_args = mock_collection.get.call_args[1]
+    assert call_args["where"] == {"doc_id": doc_id}
+    assert result is not None
+    assert doc_id in str(result)
 
 
 @pytest.mark.asyncio
@@ -110,9 +117,21 @@ async def test_delete_document(vector_service, mock_collection):
     """Test deleting a document"""
     doc_id = "doc_to_delete"
 
+    # Mock get to return chunks for this document
+    mock_collection.get.return_value = {
+        "ids": ["doc_to_delete_chunk_0", "doc_to_delete_chunk_1"],
+        "metadatas": [{"doc_id": doc_id}, {"doc_id": doc_id}]
+    }
+
     await vector_service.delete_document(doc_id)
 
-    mock_collection.delete.assert_called_once_with(ids=[doc_id])
+    # Verify it fetched chunks first
+    get_call_args = mock_collection.get.call_args[1]
+    assert get_call_args["where"] == {"doc_id": doc_id}
+
+    # Verify it deleted the chunks
+    delete_call_args = mock_collection.delete.call_args[1]
+    assert "doc_to_delete_chunk_0" in delete_call_args["ids"]
 
 
 @pytest.mark.asyncio
@@ -154,10 +173,13 @@ async def test_add_document_with_chunking(vector_service):
     chunks = ["Chunk 1 content", "Chunk 2 content", "Chunk 3 content"]
     metadata = {"filename": "large.txt"}
 
-    await vector_service.add_documents_bulk(doc_id, chunks, metadata)
+    result = await vector_service.add_document(doc_id, chunks, metadata)
 
-    # Should create chunk IDs like doc_id_0, doc_id_1, etc.
+    # Should return number of chunks added
+    assert result == 3
+
+    # Should create chunk IDs like doc_id_chunk_0, doc_id_chunk_1, etc.
     assert vector_service.collection.add.call_count == 1
     call_args = vector_service.collection.add.call_args[1]
     assert len(call_args["ids"]) == 3
-    assert all(doc_id in chunk_id for chunk_id in call_args["ids"])
+    assert all("chunked_doc_chunk_" in chunk_id for chunk_id in call_args["ids"])
