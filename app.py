@@ -713,16 +713,29 @@ class RAGService:
             # Split into chunks using new document service
             chunks = self.document_service.chunk_text(content)
 
-            # Simplified metadata (enrichment can be added later if needed)
-            title = file_metadata.get("title") if file_metadata else (filename or f"document_{doc_id}")
-            obsidian_metadata = type('obj', (object,), {
-                'title': title,
-                'tags': [],
-                'keywords': type('obj', (object,), {'primary': [], 'secondary': []})(),
-                'entities': type('obj', (object,), {'people': [], 'organizations': []})(),
-                'complexity': 'intermediate',
-                'summary': content[:200] + "..." if len(content) > 200 else content
-            })()
+            # Create proper ObsidianMetadata for response using app.py models
+            # Ensure title is always a string
+            title = (
+                file_metadata.get("title") if file_metadata and file_metadata.get("title")
+                else filename if filename
+                else f"document_{doc_id}"
+            )
+
+            obsidian_metadata = ObsidianMetadata(
+                title=title,
+                keywords=Keywords(primary=[], secondary=[]),
+                tags=[],
+                summary=content[:200] + "..." if len(content) > 200 else content,
+                abstract="",
+                key_points=[],
+                entities=Entities(people=[], organizations=[], locations=[], dates=[]),
+                reading_time="",
+                complexity=ComplexityLevel.intermediate,
+                links=[],
+                document_type=document_type,
+                source=filename or "",
+                created_at=datetime.now()
+            )
 
             # Store chunks in ChromaDB
             chunk_ids = []
@@ -736,11 +749,11 @@ class RAGService:
                 "chunks": int(len(chunks)),
                 "created_at": datetime.now().isoformat(),
                 "document_type": str(document_type),
-                "title": str(getattr(obsidian_metadata, 'title', title)),
+                "title": str(title),
                 "content_hash": content_hash
             }
 
-            # Add file_metadata if it contains simple types
+            # Add simple file_metadata fields
             if file_metadata:
                 for k, v in file_metadata.items():
                     if isinstance(v, (str, int, float, bool)):

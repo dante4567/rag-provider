@@ -92,9 +92,9 @@ def upload_document(file_path: str):
 
         if resp.status_code == 200:
             result = resp.json()
-            doc_id = result.get('document_id', 'unknown')
-            chunks = result.get('chunks_created', 0)
-            doc_type = result.get('document_type', 'unknown')
+            doc_id = result.get('doc_id', 'unknown')
+            chunks = result.get('chunks', 0)
+            doc_type = result.get('metadata', {}).get('document_type', 'unknown')
 
             print(f"   ✅ Uploaded successfully")
             print(f"      Document ID: {doc_id[:30]}...")

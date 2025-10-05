@@ -69,7 +69,9 @@
       "Bash(echo:*)",
       "Read(//Users/danielteckentrup/Documents/**)",
       "Bash(timeout 30 python3:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
