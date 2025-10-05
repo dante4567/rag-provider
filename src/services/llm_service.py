@@ -247,7 +247,8 @@ class LLMService:
         if self.settings.google_api_key and GOOGLE_AVAILABLE:
             try:
                 genai.configure(api_key=self.settings.google_api_key)
-                self.clients["google"] = genai.GenerativeModel('gemini-1.5-pro-latest')
+                # Note: Model is selected per-call, just store genai module
+                self.clients["google"] = genai
                 logger.info("Initialized Google Gemini client")
             except Exception as e:
                 logger.error(f"Failed to initialize Google: {e}")
@@ -261,9 +262,9 @@ class LLMService:
                         "max_tokens": 4000,
                         "model_name": "claude-3-haiku-20240307"
                     },
-                    "anthropic/claude-3-5-sonnet-20241022": {
+                    "anthropic/claude-3-5-sonnet-latest": {
                         "max_tokens": 4000,
-                        "model_name": "claude-3-5-sonnet-20241022"
+                        "model_name": "claude-3-5-sonnet-latest"
                     },
                     "anthropic/claude-3-opus-20240229": {
                         "max_tokens": 4000,
@@ -297,9 +298,17 @@ class LLMService:
             },
             "google": {
                 "models": {
-                    "google/gemini-1.5-pro": {
+                    "google/gemini-pro-latest": {
                         "max_tokens": 8000,
-                        "model_name": "gemini-1.5-pro-latest"
+                        "model_name": "models/gemini-pro-latest"
+                    },
+                    "google/gemini-2.5-pro": {
+                        "max_tokens": 8000,
+                        "model_name": "models/gemini-2.5-pro"
+                    },
+                    "google/gemini-2.0-flash": {
+                        "max_tokens": 8000,
+                        "model_name": "models/gemini-2.0-flash"
                     }
                 }
             }
@@ -451,7 +460,9 @@ class LLMService:
                 output_tokens = self.cost_tracker.estimate_tokens(result)
 
             elif provider == "google":
-                response = client.generate_content(prompt)
+                # Create model instance per-call with specific model_name
+                model = client.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
                 result = response.text
                 output_tokens = self.cost_tracker.estimate_tokens(result)
 
