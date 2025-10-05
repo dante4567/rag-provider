@@ -246,11 +246,12 @@ class TagTaxonomyService:
 - Projects: project/active, project/idle, project/finished
 
 **Tag Guidelines**:
-1. Use existing tags when applicable (check list above)
-2. Create NEW specific tags only when existing ones don't fit
-3. Use hierarchical structure: category/subcategory (e.g., "psychology/cognitive", "tech/ai/ml")
-4. Avoid overly generic single-word tags (e.g., prefer "health/mental" over just "health")
-5. Domain-specific tags are encouraged (e.g., "legal/custody", "adhd/executive-function")
+1. Create APPROPRIATE tags that accurately describe this specific document
+2. Use existing tags ONLY if they truly fit the content (check list above)
+3. Don't force-fit existing tags - create new ones when needed
+4. Use hierarchical structure: category/subcategory (e.g., "psychology/cognitive", "tech/ai/ml")
+5. Avoid overly generic single-word tags (e.g., prefer "health/mental" over just "health")
+6. Domain-specific tags are encouraged (e.g., "legal/custody", "school/administration")
 """
         else:
             suggestion_text = f"""
