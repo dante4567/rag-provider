@@ -1,6 +1,7 @@
 import gradio as gr
 import requests
 import json
+import os
 from datetime import datetime
 
 RAG_URL = "http://localhost:8001"
@@ -16,52 +17,64 @@ def check_health():
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
-def upload_document(file):
-    """Upload document to RAG service"""
+def upload_document(files):
+    """Upload document(s) to RAG service"""
     try:
-        if file is None:
+        if files is None:
             return "❌ No file selected"
 
-        with open(file.name, 'rb') as f:
-            files = {"file": (file.name, f)}
-            response = requests.post(f"{RAG_URL}/ingest/file", files=files, timeout=120)
+        # Handle both single file and multiple files
+        if not isinstance(files, list):
+            files = [files]
 
-        if response.status_code == 200:
-            data = response.json()
+        results = []
+        total_success = 0
+        total_failed = 0
 
-            # Format response nicely
-            metadata = data.get('metadata', {})
-            result_text = f"✅ Upload successful!\n\n"
-            result_text += f"**Document ID:** {data.get('doc_id', 'N/A')}\n"
-            result_text += f"**Chunks:** {data.get('chunks', 0)}\n\n"
-            result_text += f"**Metadata:**\n"
-            result_text += f"  • Title: {metadata.get('title', 'N/A')}\n"
-            result_text += f"  • Domain: {metadata.get('domain', 'N/A')}\n"
-            result_text += f"  • Significance: {metadata.get('significance_score', 0):.3f}\n"
-            result_text += f"  • Quality: {metadata.get('quality_tier', 'N/A')}\n"
-            result_text += f"  • Complexity: {metadata.get('complexity', 'N/A')}\n"
-            result_text += f"  • Reading Time: {metadata.get('reading_time', 'N/A')}\n"
+        for file in files:
+            try:
+                # Gradio provides the full path in file.name, extract just the filename
+                filename = os.path.basename(file.name)
 
-            # Tags
-            tags = metadata.get('tags', [])
-            if tags:
-                result_text += f"\n**Tags ({len(tags)}):**\n{', '.join(tags[:10])}\n"
-                if len(tags) > 10:
-                    result_text += f"... and {len(tags) - 10} more\n"
+                with open(file.name, 'rb') as f:
+                    file_data = {"file": (filename, f, 'application/octet-stream')}
+                    response = requests.post(f"{RAG_URL}/ingest/file", files=file_data, timeout=120)
 
-            # Triage info
-            if metadata.get('is_duplicate'):
-                result_text += f"\n⚠️ **DUPLICATE DETECTED**\n"
-                result_text += f"Confidence: {metadata.get('triage_confidence', 0):.2f}\n"
+                if response.status_code == 200:
+                    data = response.json()
+                    metadata = data.get('metadata', {})
 
-            result_text += f"\n**Triage:** {metadata.get('triage_category', 'N/A')}\n"
+                    result = f"✅ **{filename}**\n"
+                    result += f"  • Chunks: {data.get('chunks', 0)}\n"
+                    result += f"  • Domain: {metadata.get('domain', 'N/A')}\n"
+                    result += f"  • Significance: {metadata.get('significance_score', 0):.3f}\n"
+                    result += f"  • Quality: {metadata.get('quality_tier', 'N/A')}\n"
 
-            # Obsidian export
-            if data.get('obsidian_path'):
-                result_text += f"\n📝 **Obsidian Export:** {data.get('obsidian_path')}\n"
+                    # Show duplicate warning
+                    if metadata.get('is_duplicate'):
+                        result += f"  • ⚠️ DUPLICATE DETECTED\n"
 
-            return result_text
-        return f"❌ Upload failed: {response.status_code}\n{response.text}"
+                    # Show top 3 tags
+                    tags = metadata.get('tags', [])
+                    if tags:
+                        result += f"  • Tags: {', '.join(tags[:3])}\n"
+
+                    results.append(result)
+                    total_success += 1
+                else:
+                    results.append(f"❌ **{filename}**: Failed ({response.status_code})")
+                    total_failed += 1
+            except Exception as e:
+                results.append(f"❌ **{filename}**: {str(e)[:100]}")
+                total_failed += 1
+
+        # Summary
+        summary = f"## Upload Summary\n"
+        summary += f"✅ Success: {total_success} | ❌ Failed: {total_failed}\n\n"
+        summary += "---\n\n"
+        summary += "\n\n".join(results)
+
+        return summary
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
@@ -194,16 +207,17 @@ with gr.Blocks(title="RAG Service Interface", theme=gr.themes.Soft()) as demo:
             with gr.Row():
                 with gr.Column(scale=1):
                     file_input = gr.File(
-                        label="Select Document",
-                        file_types=[".pdf", ".txt", ".md", ".docx", ".doc", ".eml", ".rtf", ".html", ".xml"]
+                        label="Select Document(s)",
+                        file_types=[".pdf", ".txt", ".md", ".docx", ".doc", ".eml", ".rtf", ".html", ".xml"],
+                        file_count="multiple"
                     )
                     upload_btn = gr.Button("📤 Upload & Process", variant="primary", size="lg")
                 with gr.Column(scale=2):
-                    upload_output = gr.Textbox(label="Upload Result", lines=20)
+                    upload_output = gr.Textbox(label="Upload Results", lines=20)
 
             upload_btn.click(upload_document, inputs=file_input, outputs=upload_output)
 
-            gr.Markdown("**💡 Tip:** Upload similar documents to test tag learning!")
+            gr.Markdown("**💡 Tip:** Select multiple files to batch upload! Upload similar documents to test tag learning!")
 
         # Search tab
         with gr.Tab("🔍 Search"):
