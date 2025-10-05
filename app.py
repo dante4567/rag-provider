@@ -1326,11 +1326,16 @@ async def chat_with_rag(request: ChatRequest):
     start_time = time.time()
 
     try:
-        # Step 1: Search for relevant context
+        # Import reranking service
+        from src.services.reranking_service import get_reranking_service
+
+        # Step 1: Search for relevant context (retrieve more for reranking)
         rag_service = RAGService()
+        # Retrieve 3x more results for reranking
+        initial_results_count = request.max_context_chunks * 3
         search_query = Query(
             text=request.question,
-            top_k=request.max_context_chunks
+            top_k=initial_results_count
         )
 
         search_response = await search_documents(search_query)
@@ -1346,10 +1351,32 @@ async def chat_with_rag(request: ChatRequest):
                 response_time_ms=round((time.time() - start_time) * 1000, 2)
             )
 
-        # Step 2: Prepare context from search results
-        context_chunks = []
+        # Step 1.5: Rerank results for better relevance
+        reranker = get_reranking_service()
+
+        # Convert SearchResult objects to dicts for reranking
+        results_for_reranking = []
         for result in search_response.results:
-            context_chunks.append(f"Source: {result.metadata.get('filename', 'Unknown')}\nContent: {result.content}")
+            results_for_reranking.append({
+                'content': result.content,
+                'metadata': result.metadata,
+                'relevance_score': result.relevance_score,
+                'chunk_id': result.chunk_id
+            })
+
+        # Rerank and take top K
+        reranked_results = reranker.rerank(
+            query=request.question,
+            results=results_for_reranking,
+            top_k=request.max_context_chunks
+        )
+
+        logger.info(f"🎯 Reranking: {len(results_for_reranking)} → {len(reranked_results)} results")
+
+        # Step 2: Prepare context from reranked results
+        context_chunks = []
+        for result in reranked_results:
+            context_chunks.append(f"Source: {result['metadata'].get('filename', 'Unknown')}\nContent: {result['content']}")
 
         context = "\n\n---\n\n".join(context_chunks)
 
@@ -1391,8 +1418,18 @@ Answer:"""
             logger.error(f"LLM service failed: {e}")
             raise HTTPException(status_code=500, detail=f"Failed to generate answer: {str(e)}")
 
-        # Step 5: Prepare response
-        sources = search_response.results if request.include_sources else []
+        # Step 5: Prepare response - convert reranked results back to SearchResult objects
+        if request.include_sources:
+            sources = []
+            for reranked in reranked_results:
+                sources.append(SearchResult(
+                    content=reranked['content'],
+                    metadata=reranked['metadata'],
+                    relevance_score=reranked.get('rerank_score', reranked.get('relevance_score', 0.0)),
+                    chunk_id=reranked['chunk_id']
+                ))
+        else:
+            sources = []
 
         response_time = round((time.time() - start_time) * 1000, 2)
 

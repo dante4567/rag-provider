@@ -75,7 +75,13 @@
       "Read(//Users/danielteckentrup/Downloads/**)",
       "Bash(timeout 180 python3 tests/test_with_real_user_data.py)",
       "Bash(timeout:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(pkill:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(then grep -i \"TELEGRAM\" .env)",
+      "Bash(else echo \"No .env file found\")",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

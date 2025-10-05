@@ -9,8 +9,14 @@ For unified ecosystem bot, see ai-ecosystem-integrated repo.
 import os
 import logging
 import aiohttp
+from pathlib import Path
+from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+
+# Load .env from parent directory
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(env_path)
 
 # Configuration
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -196,12 +202,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle natural language messages (chat with documents)"""
     question = update.message.text
 
-    await update.message.reply_text("💬 Thinking...")
+    # Send thinking message and save it for editing
+    thinking_msg = await update.message.reply_text("💬 Thinking...")
 
     try:
         payload = {
             "question": question,
-            "llm_model": "groq/llama-3.1-8b-instant"  # Fast, cheap default
+            "llm_model": "anthropic/claude-3-5-sonnet-latest",  # High quality
+            "max_context_chunks": 10  # Get more context for better answers
         }
 
         async with http_session.post(
@@ -215,18 +223,37 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 cost = data.get('cost', 0)
                 sources = data.get('sources', [])
 
-                response_text = f"{answer}\n\n"
+                # Build response
+                response_text = f"💬 **Answer:**\n\n{answer}\n\n"
                 response_text += f"💰 Cost: ${cost:.6f}\n"
 
+                # Show actual source documents
                 if sources:
-                    response_text += f"\n**Sources:** {len(sources)} documents used"
+                    response_text += f"\n📚 **Sources ({len(sources)}):**\n"
+                    for i, source in enumerate(sources[:5], 1):  # Show top 5
+                        title = source.get('title', 'Untitled')
+                        # Truncate long titles
+                        if len(title) > 50:
+                            title = title[:47] + "..."
+                        response_text += f"{i}. {title}\n"
+                    if len(sources) > 5:
+                        response_text += f"... and {len(sources) - 5} more"
 
-                await update.message.reply_text(response_text)
+                # Split if too long (Telegram limit: 4096 chars)
+                if len(response_text) > 4000:
+                    # Send answer in chunks
+                    chunks = [response_text[i:i+4000] for i in range(0, len(response_text), 4000)]
+                    await thinking_msg.edit_text(chunks[0])
+                    for chunk in chunks[1:]:
+                        await update.message.reply_text(chunk)
+                else:
+                    # Edit the thinking message with the answer
+                    await thinking_msg.edit_text(response_text)
             else:
-                await update.message.reply_text(f"❌ Chat failed: {response.status}")
+                await thinking_msg.edit_text(f"❌ Chat failed: {response.status}")
     except Exception as e:
         logger.error(f"Chat failed: {e}")
-        await update.message.reply_text(f"❌ Error: {str(e)}")
+        await thinking_msg.edit_text(f"❌ Error: {str(e)[:200]}")
 
 async def post_init(application: Application):
     """Initialize HTTP session"""
