@@ -200,6 +200,10 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle natural language messages (chat with documents)"""
+    # Skip if no text message (photo, video, etc.)
+    if not update.message or not update.message.text:
+        return
+
     question = update.message.text
 
     # Send thinking message and save it for editing
