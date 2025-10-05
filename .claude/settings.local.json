@@ -66,7 +66,9 @@
       "Bash(DOCKER_BUILDKIT=0 docker build -t rag-service:latest -f Dockerfile .)",
       "Read(//nix/store/**)",
       "Bash(DOCKER_HOST=unix:///Users/danielteckentrup/.docker/run/docker.sock DOCKER_BUILDKIT=0 docker build -t rag-service:latest -f Dockerfile .)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Read(//Users/danielteckentrup/Documents/**)",
+      "Bash(timeout 30 python3:*)"
     ],
     "deny": [],
     "ask": []
