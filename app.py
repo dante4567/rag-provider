@@ -1546,27 +1546,50 @@ class RAGService:
 
         start_time = time.time()
 
-        results = collection.query(
-            query_texts=[query],
-            n_results=top_k,
-            where=filter_dict
-        )
+        # Use new service layer if available
+        if self.using_new_services:
+            logger.info(f"🔍 Searching with NEW service layer: {query}")
+            results_list = await self.new_vector_service.search(
+                query=query,
+                top_k=top_k,
+                filter=filter_dict
+            )
 
-        search_time_ms = (time.time() - start_time) * 1000
+            search_time_ms = (time.time() - start_time) * 1000
 
-        search_results = []
-        if results['documents'] and results['documents'][0]:
-            for i, (doc, metadata, distance) in enumerate(zip(
-                results['documents'][0],
-                results['metadatas'][0],
-                results['distances'][0]
-            )):
+            # Convert new service format to SearchResult format
+            search_results = []
+            for result in results_list:
                 search_results.append(SearchResult(
-                    content=doc,
-                    metadata=metadata,
-                    relevance_score=1.0 - distance,
-                    chunk_id=metadata.get('chunk_id', f'chunk_{i}')
+                    content=result['content'],
+                    metadata=result['metadata'],
+                    relevance_score=result['relevance_score'],
+                    chunk_id=result.get('chunk_id', result['metadata'].get('chunk_id', 'unknown'))
                 ))
+        else:
+            # Fallback to old implementation
+            logger.info(f"🔍 Searching with LEGACY implementation: {query}")
+            results = collection.query(
+                query_texts=[query],
+                n_results=top_k,
+                where=filter_dict
+            )
+
+            search_time_ms = (time.time() - start_time) * 1000
+
+            search_results = []
+            if results['documents'] and results['documents'][0]:
+                for i, (doc, metadata, distance) in enumerate(zip(
+                    results['documents'][0],
+                    results['metadatas'][0],
+                    results['distances'][0]
+                )):
+                    search_results.append(SearchResult(
+                        content=doc,
+                        metadata=metadata,
+                        relevance_score=1.0 - distance,
+                        chunk_id=metadata.get('chunk_id', f'chunk_{i}')
+                    ))
 
         return SearchResponse(
             query=query,
