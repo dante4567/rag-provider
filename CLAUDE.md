@@ -20,42 +20,66 @@ curl -X POST http://localhost:8001/search \
   -d '{"text": "query", "top_k": 5}'
 ```
 
+## Current Status (Oct 6, 2025 - Week 2 Complete)
+
+**Grade: C+ (74/100)** - Production-ready for small-medium teams
+
+**What Works (79% test coverage):**
+- ✅ 11/14 services tested with 179 test functions
+- ✅ Core RAG pipeline: enrichment, chunking, vocabulary, vector ops
+- ✅ Export systems: Obsidian, OCR, smart triage
+- ✅ Multi-LLM fallback chain with cost tracking
+- ✅ Docker deployment
+
+**What Needs Work:**
+- ⚠️ Dependencies NOT pinned (uses >= not ==) - See DEPENDENCY_STATUS.md
+- ⚠️ app.py too large (1,904 lines) - See APP_PY_REFACTORING_NEEDED.md
+- ⚠️ 3/14 services untested (reranking, tag_taxonomy, visual_llm)
+
 ## Architecture Overview
 
-**Service-Oriented Design** - The system uses a clean service layer architecture:
+**Service-Oriented Design** - Clean service layer (Week 1 consolidation):
 
 ```
-app.py (1,625 lines)           # FastAPI application, all endpoints
-├── src/services/              # Business logic layer
-│   ├── enrichment_service_v2.py      # V2: Controlled vocabulary enrichment
-│   ├── obsidian_service_v3.py        # V3: RAG-first markdown export
-│   ├── chunking_service.py           # Structure-aware semantic chunking
-│   ├── vocabulary_service.py         # Controlled tag vocabularies
-│   ├── document_service.py           # 13+ file format extraction
-│   ├── llm_service.py                # Multi-provider LLM with fallbacks
-│   ├── vector_service.py             # ChromaDB vector operations
-│   └── ocr_service.py                # OCR for images/scanned docs
+app.py (1,904 lines)           # ⚠️ Monolithic but functional
+├── src/services/              # Business logic (11/14 tested)
+│   ├── enrichment_service.py          # Controlled vocabulary (19 tests) ✅
+│   ├── obsidian_service.py            # RAG-first export (20 tests) ✅
+│   ├── chunking_service.py            # Structure-aware (15 tests) ✅
+│   ├── vocabulary_service.py          # Controlled tags (13 tests) ✅
+│   ├── document_service.py            # 13+ formats (15 tests) ✅
+│   ├── llm_service.py                 # Multi-provider (17 tests) ✅
+│   ├── vector_service.py              # ChromaDB (8 tests) ✅
+│   ├── ocr_service.py                 # OCR processing (14 tests) ✅
+│   ├── smart_triage_service.py        # Dedup/categorize (20 tests) ✅
+│   ├── reranking_service.py           # Search quality (untested) ⚠️
+│   ├── tag_taxonomy_service.py        # Tag learning (untested) ⚠️
+│   └── visual_llm_service.py          # Visual analysis (untested) ⚠️
 ├── src/core/
 │   ├── config.py              # Settings management
 │   └── dependencies.py        # Dependency injection
-└── src/models/                # Pydantic schemas
+├── src/models/
+│   └── schemas.py             # Pydantic schemas (duplicated in app.py)
+└── tests/unit/                # 179 test functions (79% coverage)
 ```
 
 ### Key Architectural Concepts
 
-**Enrichment Pipeline V2** (active version):
+**Enrichment Pipeline** (consolidated in Week 1):
 - Uses controlled vocabulary from `vocabulary/*.yaml` (no invented tags)
 - Separates entities (people, places) from topics
 - Calculates recency scoring with exponential decay
-- Better title extraction and project auto-matching
+- Smart title extraction and project auto-matching
+- 19 tests covering hashing, scoring, title extraction
 
 **Structure-Aware Chunking**:
 - Chunks along semantic boundaries (headings, tables, code blocks)
 - Keeps section context in chunk metadata
 - Tables and code blocks = standalone chunks
-- Rich metadata: `section_title`, `parent_sections`, `chunk_type`, `sequence`
+- RAG:IGNORE blocks excluded from embeddings
+- 15 tests covering chunking logic and token estimation
 
-**Obsidian Export V3** (RAG-first):
+**Obsidian Export** (RAG-first, consolidated in Week 1):
 - Creates stub files in `refs/` for entities (people, places, projects)
 - Main doc links to entity stubs via `[[Entity Name]]`
 - Clean YAML frontmatter (no Python str representations)
@@ -76,17 +100,17 @@ docker-compose logs -f rag-service  # View logs
 docker-compose down              # Stop
 docker system prune -a -f        # Clean Docker space
 
-# Testing
-docker exec rag_service pytest tests/unit/ -v           # Unit tests
-docker exec rag_service pytest tests/integration/ -v    # Integration tests
-docker exec rag_service pytest tests/unit/test_vector_service.py -v  # Specific test
+# Testing (Week 2: 179 tests, 79% coverage)
+docker exec rag_service pytest tests/unit/ -v                      # All 179 unit tests
+docker exec rag_service pytest tests/unit/test_llm_service.py -v   # 17 tests
+docker exec rag_service pytest tests/unit/test_enrichment_service.py -v  # 19 tests
+docker exec rag_service pytest tests/unit/test_obsidian_service.py -v    # 20 tests
+docker exec rag_service pytest tests/unit/test_ocr_service.py -v         # 14 tests
+docker exec rag_service pytest tests/unit/test_smart_triage_service.py -v  # 20 tests
 
 # Copy vocabulary into container (after updates)
 docker cp vocabulary/ rag_service:/app/vocabulary/
 docker-compose restart rag-service
-
-# Verify V2 initialized
-docker logs rag_service 2>&1 | grep -A 5 "Enrichment V2"
 ```
 
 ## Environment Setup
