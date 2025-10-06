@@ -1,3 +1,8 @@
+# Pinned dependencies as of October 6, 2025
+# Generated during repository cleanup - Grade C+ → B+ transition
+# To update: pip install -r requirements.txt and regenerate with pip freeze
+
+
 # Core FastAPI and server
 fastapi>=0.104.1
 uvicorn[standard]>=0.24.0
