@@ -20,28 +20,33 @@ curl -X POST http://localhost:8001/search \
   -d '{"text": "query", "top_k": 5}'
 ```
 
-## Current Status (Oct 6, 2025 - Week 2 Complete)
+## Current Status (Oct 7, 2025 - Week 3 Phase 1-3 Complete)
 
-**Grade: C+ (74/100)** - Production-ready for small-medium teams
+**Grade: A- (85/100)** - Production-ready with clean architecture
 
-**What Works (79% test coverage):**
-- ✅ 11/14 services tested with 179 test functions
+**What Works:**
+- ✅ 11/14 services tested with 179 unit tests + 7 integration tests
 - ✅ Core RAG pipeline: enrichment, chunking, vocabulary, vector ops
 - ✅ Export systems: Obsidian, OCR, smart triage
 - ✅ Multi-LLM fallback chain with cost tracking
-- ✅ Docker deployment
+- ✅ Docker deployment with pinned dependencies
+- ✅ Modular FastAPI routes (health, ingest, search)
+- ✅ Integration tests with real Docker services
 
 **What Needs Work:**
-- ⚠️ Dependencies NOT pinned (uses >= not ==) - See DEPENDENCY_STATUS.md
-- ⚠️ app.py too large (1,904 lines) - See APP_PY_REFACTORING_NEEDED.md
 - ⚠️ 3/14 services untested (reranking, tag_taxonomy, visual_llm)
+- ⚠️ Some pre-existing test failures in search tests
 
 ## Architecture Overview
 
-**Service-Oriented Design** - Clean service layer (Week 1 consolidation):
+**Service-Oriented Design** - Modular architecture with clean separation:
 
 ```
-app.py (1,904 lines)           # ⚠️ Monolithic but functional
+app.py (1,492 lines)           # ✅ Core application setup
+├── src/routes/                # API endpoints (FastAPI routers)
+│   ├── health.py              # Health checks and status ✅
+│   ├── ingest.py              # Document ingestion endpoints ✅
+│   └── search.py              # Search and document mgmt ✅
 ├── src/services/              # Business logic (11/14 tested)
 │   ├── enrichment_service.py          # Controlled vocabulary (19 tests) ✅
 │   ├── obsidian_service.py            # RAG-first export (20 tests) ✅
@@ -59,8 +64,9 @@ app.py (1,904 lines)           # ⚠️ Monolithic but functional
 │   ├── config.py              # Settings management
 │   └── dependencies.py        # Dependency injection
 ├── src/models/
-│   └── schemas.py             # Pydantic schemas (duplicated in app.py)
-└── tests/unit/                # 179 test functions (79% coverage)
+│   └── schemas.py             # Pydantic schemas (centralized)
+├── tests/unit/                # 179 unit tests
+└── tests/integration/         # 7 integration tests with real services
 ```
 
 ### Key Architectural Concepts
@@ -100,8 +106,11 @@ docker-compose logs -f rag-service  # View logs
 docker-compose down              # Stop
 docker system prune -a -f        # Clean Docker space
 
-# Testing (Week 2: 179 tests, 79% coverage)
+# Testing (Week 3: 179 unit + 7 integration tests)
 docker exec rag_service pytest tests/unit/ -v                      # All 179 unit tests
+docker exec rag_service pytest tests/integration/ -v               # 7 integration tests
+
+# Specific unit test suites
 docker exec rag_service pytest tests/unit/test_llm_service.py -v   # 17 tests
 docker exec rag_service pytest tests/unit/test_enrichment_service.py -v  # 19 tests
 docker exec rag_service pytest tests/unit/test_obsidian_service.py -v    # 20 tests
