@@ -32,11 +32,13 @@ This is a **working RAG service with clean architecture** after October 2025 con
 
 **What Still Needs Work:**
 - ⚠️ 3/14 services untested (21%): reranking, tag_taxonomy, visual_llm, whatsapp_parser
-- ⚠️ Dependencies not pinned (needs pip freeze)
+- ⚠️ **Dependencies NOT pinned** - requirements.txt uses `>=` not `==` (works but risky for production)
+  - See `DEPENDENCY_STATUS.md` for details and how to fix
+  - Blocked by: Port conflicts with OpenWebUI containers
 - ⚠️ app.py too large (1,900 LOC, should split into routes)
 
-**Deploy if**: You accept 79% test coverage - production-ready for small-medium teams
-**Don't deploy if**: You need 100% coverage or enterprise-scale (not tested at that scale)
+**Deploy if**: You accept 79% test coverage + unpinned dependencies (works but versions may change)
+**Don't deploy if**: You need 100% coverage, guaranteed reproducibility, or enterprise-scale (not tested)
 
 ## ⚡ Quick Start
 

@@ -1,6 +1,7 @@
-# Pinned dependencies as of October 6, 2025
-# Generated during repository cleanup - Grade C+ → B+ transition
-# To update: pip install -r requirements.txt and regenerate with pip freeze
+# ⚠️ DEPENDENCIES NOT ACTUALLY PINNED (uses >= not ==)
+# Last reviewed: October 6, 2025
+# Status: Works for dev/testing, needs pip freeze for production
+# See DEPENDENCY_STATUS.md for details
 
 
 # Core FastAPI and server
