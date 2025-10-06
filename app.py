@@ -88,6 +88,15 @@ except ImportError as e:
     NEW_SERVICES_AVAILABLE = False
     logging.warning(f"New service layer not available: {e}")
 
+# Import schemas from centralized models file
+from src.models.schemas import (
+    DocumentType, LLMProvider, LLMModel, ComplexityLevel,
+    Keywords, Entities, ObsidianMetadata, Document,
+    EnrichmentSettings, IngestResponse, SearchResult, SearchResponse,
+    DocumentInfo, Stats, Query, ChatRequest, ChatResponse,
+    CostInfo, CostStats, TestLLMRequest
+)
+
 # Simple text splitter to replace langchain dependency
 class SimpleTextSplitter:
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
@@ -222,187 +231,6 @@ PUBLIC_ENDPOINTS = {"/health", "/docs", "/redoc", "/openapi.json"}
 
 # Authentication setup
 security = HTTPBearer(auto_error=False)
-
-# Enums
-class DocumentType(str, Enum):
-    text = "text"
-    pdf = "pdf"
-    image = "image"
-    whatsapp = "whatsapp"
-    email = "email"
-    webpage = "webpage"
-    scanned = "scanned"
-    office = "office"
-    code = "code"
-
-class LLMProvider(str, Enum):
-    anthropic = "anthropic"
-    openai = "openai"
-    groq = "groq"
-    google = "google"
-
-class LLMModel(str, Enum):
-    # Groq models (fast & cost-effective)
-    groq_llama3_8b = "groq/llama-3.1-8b-instant"  # Lightning fast, very cheap
-    groq_llama3_70b = "groq/llama3-70b-8192"      # Good quality, fast
-
-    # Anthropic models (high quality)
-    anthropic_claude_3_haiku = "anthropic/claude-3-haiku-20240307"   # Cheap & good
-    anthropic_claude_3_5_sonnet = "anthropic/claude-3-5-sonnet-20241022"  # Balanced, latest
-    anthropic_claude_3_opus = "anthropic/claude-3-opus-20240229"    # Ultimate quality
-
-    # OpenAI models (reliable)
-    openai_gpt_4o_mini = "openai/gpt-4o-mini"     # Very cheap
-    openai_gpt_4o = "openai/gpt-4o"               # Powerful
-
-    # Google models (long context)
-    google_gemini_15_pro = "google/gemini-1.5-pro"  # Long context processing
-
-class ComplexityLevel(str, Enum):
-    beginner = "beginner"
-    intermediate = "intermediate"
-    advanced = "advanced"
-
-# Pydantic Models
-class Keywords(BaseModel):
-    primary: List[str] = Field(default_factory=list)
-    secondary: List[str] = Field(default_factory=list)
-    related: List[str] = Field(default_factory=list)
-
-class Entities(BaseModel):
-    people: List[str] = Field(default_factory=list)
-    organizations: List[str] = Field(default_factory=list)
-    locations: List[str] = Field(default_factory=list)
-    technologies: List[str] = Field(default_factory=list)
-
-class ObsidianMetadata(BaseModel):
-    title: str
-    keywords: Keywords
-    tags: List[str] = Field(default_factory=list)
-    summary: str = ""
-    abstract: str = ""
-    key_points: List[str] = Field(default_factory=list)
-    entities: Entities
-    reading_time: str = ""
-    complexity: ComplexityLevel = ComplexityLevel.intermediate
-    links: List[str] = Field(default_factory=list)
-    document_type: DocumentType = DocumentType.text
-    source: str = ""
-    created_at: datetime = Field(default_factory=datetime.now)
-
-    # Enrichment quality metrics
-    domain: str = "general"
-    significance_score: float = 0.0
-    quality_tier: str = "medium"
-    entity_richness: float = 0.0
-    content_depth: float = 0.0
-    extraction_confidence: float = 0.0
-
-    # Entity counts
-    people_count: int = 0
-    organizations_count: int = 0
-    concepts_count: int = 0
-
-    # Triage information
-    triage_category: str = "unknown"
-    triage_confidence: float = 0.0
-    is_duplicate: bool = False
-    is_actionable: bool = False
-
-class Document(BaseModel):
-    content: str
-    filename: Optional[str] = None
-    document_type: Optional[DocumentType] = DocumentType.text
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
-    process_ocr: bool = False
-    generate_obsidian: bool = True
-
-class EnrichmentSettings(BaseModel):
-    generate_summary: bool = True
-    extract_entities: bool = True
-    create_hierarchy: bool = True
-    controlled_vocabulary: bool = True
-    max_keywords: int = 10
-    llm_provider: Optional[LLMProvider] = None
-
-class IngestResponse(BaseModel):
-    success: bool
-    doc_id: str
-    chunks: int
-    metadata: ObsidianMetadata
-    obsidian_path: Optional[str] = None
-
-class SearchResult(BaseModel):
-    content: str
-    metadata: Dict[str, Any]
-    relevance_score: float
-    chunk_id: str
-
-class SearchResponse(BaseModel):
-    query: str
-    results: List[SearchResult]
-    total_results: int
-    search_time_ms: float
-
-class DocumentInfo(BaseModel):
-    id: str
-    filename: str
-    chunks: int
-    created_at: str
-    metadata: Dict[str, Any]
-    obsidian_path: Optional[str] = None
-
-class Stats(BaseModel):
-    total_documents: int
-    total_chunks: int
-    storage_used_mb: float
-    last_ingestion: Optional[str]
-    llm_provider_status: Dict[str, bool]
-    ocr_available: bool
-
-class Query(BaseModel):
-    text: str
-    top_k: int = 5
-    filter: Optional[Dict[str, Any]] = None
-
-class ChatRequest(BaseModel):
-    question: str
-    max_context_chunks: int = 5
-    llm_model: Optional[LLMModel] = None
-    llm_provider: Optional[LLMProvider] = None
-    include_sources: bool = True
-
-class ChatResponse(BaseModel):
-    question: str
-    answer: str
-    sources: List[SearchResult]
-    llm_provider_used: str
-    llm_model_used: str
-    total_chunks_found: int
-    response_time_ms: float
-    cost_usd: Optional[float] = None
-
-class CostInfo(BaseModel):
-    provider: str
-    model: str
-    input_tokens: int
-    output_tokens: int
-    cost_usd: float
-    timestamp: datetime
-
-class CostStats(BaseModel):
-    total_cost_today: float
-    total_cost_all_time: float
-    daily_budget: float
-    budget_remaining: float
-    operations_today: int
-    most_expensive_operation: Optional[CostInfo] = None
-    cost_by_provider: Dict[str, float]
-
-class TestLLMRequest(BaseModel):
-    provider: Optional[LLMProvider] = None
-    model: Optional[LLMModel] = None
-    prompt: str = "Hello, this is a test."
 
 # Model pricing (per 1M tokens) - Updated 2024
 MODEL_PRICING = {
