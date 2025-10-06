@@ -1,292 +1,525 @@
 """
-Obsidian Service - SmartNotes/Zettelkasten Export
+Obsidian Service V3 - RAG-First, Obsidian-Happy
 
-Generates Obsidian-compatible markdown files following the user's SmartNotes methodology:
-- Descriptive filenames with content hash for deduplication
-- YAML frontmatter with bibliographic metadata
-- Dataview inline fields (project::, hub::, area::, up::)
-- Hierarchical tags (#cont/in/read, #hub/moc, #project/active)
-- LLM enrichment for summaries, tags, entities
-- Permanent note structure compatible with note-sequences
+Implements the complete RAG/Obsidian integration design:
+- Immutable, pipeline-owned MD+YAML
+- Rich graphs & dashboards "for free"
+- Zero impact on chunking/embeddings
+- Auto-generated entity stubs for backlinks
+- Read-only vault with perfect integration
+
+Filename: YYYY-MM-DD__doc_type__slug__shortid.md
+Schema: Single unified frontmatter (no Obsidian-only fields)
 """
 
 import hashlib
 import re
+import yaml
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Any
+from slugify import slugify
 
-from src.services.llm_service import LLMService
 from src.models.schemas import DocumentType
 
 
 class ObsidianService:
-    """Service for generating Obsidian-compatible markdown exports"""
+    """
+    Generate RAG-first Obsidian notes with entity stubs (formerly V3)
 
-    def __init__(self, llm_service: LLMService, output_dir: str = "./obsidian_vault"):
-        self.llm_service = llm_service
+    Philosophy:
+    - Pipeline owns the canonical MD files (immutable)
+    - Obsidian gets graph edges via auto-generated xrefs
+    - Entity stubs created automatically for backlinks
+    - Chunker ignores RAG:IGNORE blocks
+    """
+
+    def __init__(
+        self,
+        output_dir: str = "./obsidian_vault",
+        refs_dir: str = "./obsidian_vault/refs"
+    ):
         self.output_dir = Path(output_dir)
+        self.refs_dir = Path(refs_dir)
+
+        # Create directory structure
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.refs_dir.mkdir(parents=True, exist_ok=True)
 
-    def generate_content_hash(self, content: str) -> str:
-        """Generate SHA-256 hash of content for deduplication"""
-        return hashlib.sha256(content.encode('utf-8')).hexdigest()[:8]
+        # Entity stub directories
+        (self.refs_dir / "people").mkdir(exist_ok=True)
+        (self.refs_dir / "projects").mkdir(exist_ok=True)
+        (self.refs_dir / "places").mkdir(exist_ok=True)
+        (self.refs_dir / "orgs").mkdir(exist_ok=True)
+        (self.refs_dir / "days").mkdir(exist_ok=True)
 
-    def sanitize_filename(self, title: str, max_length: int = 100) -> str:
-        """Convert title to valid filename (remove special chars, limit length)"""
-        # Remove/replace invalid filename characters
-        sanitized = re.sub(r'[<>:"/\\|?*]', '', title)
-        # Replace spaces with hyphens
-        sanitized = re.sub(r'\s+', '-', sanitized)
-        # Remove leading/trailing hyphens
-        sanitized = sanitized.strip('-')
-        # Limit length
-        if len(sanitized) > max_length:
-            sanitized = sanitized[:max_length].rstrip('-')
-        return sanitized or "untitled"
+    def generate_short_id(self, content: str, length: int = 4) -> str:
+        """Generate short hash ID (e.g., 7c1a)"""
+        full_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+        return full_hash[:length]
 
-    def extract_enriched_data_from_metadata(self, metadata: Dict) -> Dict:
-        """Extract enriched data from ChromaDB metadata (already enriched by AdvancedEnrichmentService)"""
+    def create_slug(self, title: str, max_length: int = 40) -> str:
+        """Create URL-safe slug from title"""
+        slug = slugify(title, max_length=max_length)
+        return slug or "document"
 
-        # Parse comma-separated strings back to lists
-        def parse_csv(value: str) -> List[str]:
-            if not value:
-                return []
-            return [item.strip() for item in value.split(",") if item.strip()]
+    def generate_filename(
+        self,
+        title: str,
+        doc_type: DocumentType,
+        created_at: datetime,
+        content: str
+    ) -> str:
+        """
+        Generate filename: YYYY-MM-DD__doc_type__slug__shortid.md
 
-        # Extract entities
-        entities = {
-            "people": parse_csv(metadata.get("people", "")),
-            "organizations": parse_csv(metadata.get("organizations", "")),
-            "locations": parse_csv(metadata.get("locations", "")),
-            "dates": parse_csv(metadata.get("dates", ""))
-        }
+        Example: 2025-10-02__correspondence.thread__kita-handover__7c1a.md
+        """
+        date_str = created_at.strftime('%Y-%m-%d')
 
-        # Extract tags (already hierarchical from tag taxonomy)
-        tags = parse_csv(metadata.get("tags", ""))
-        tags_with_hash = [f"#{tag}" if not tag.startswith("#") else tag for tag in tags]
+        # Clean doc_type (remove 'DocumentType.' prefix if present)
+        type_str = str(doc_type).replace('DocumentType.', '')
 
-        return {
-            "title": metadata.get("title", "Untitled"),
-            "summary": metadata.get("summary", ""),
-            "key_points": [],  # Not extracted in current enrichment
-            "tags": tags_with_hash,
-            "entities": entities,
-            "complexity": metadata.get("complexity", "intermediate"),
-            "reading_time": f"{metadata.get('estimated_reading_time_min', 0)} min",
-            "significance": metadata.get("significance_score", 0.0),
-            "quality_tier": metadata.get("quality_tier", "medium")
-        }
+        # Create slug
+        slug = self.create_slug(title)
 
-    def determine_workflow_tags(self, document_type: DocumentType, source: str) -> List[str]:
-        """Determine workflow tags based on document type and source"""
+        # Generate short ID
+        short_id = self.generate_short_id(content)
+
+        return f"{date_str}__{type_str}__{slug}__{short_id}.md"
+
+    def derive_tags(
+        self,
+        doc_type: DocumentType,
+        people: List[str],
+        projects: List[str],
+        places: List[str],
+        topics: List[str],
+        organizations: List[str]
+    ) -> List[str]:
+        """
+        Auto-derive tags from metadata
+
+        Format:
+        - doc/{doc_type}
+        - project/{project}
+        - place/{place}
+        - topic/{topic}
+        - person/{person}
+        - org/{org}
+        """
         tags = []
 
-        # Input processing tags
-        if document_type in [DocumentType.pdf, DocumentType.webpage]:
-            tags.append("#cont/in/read")
-            tags.append("#literature")
-        elif document_type == DocumentType.email:
-            tags.append("#cont/in/extract")
-        else:
-            tags.append("#cont/in/add")
+        # Document type tag
+        type_str = str(doc_type).replace('DocumentType.', '')
+        tags.append(f"doc/{type_str}")
 
-        # Content type tags
-        if "transcript" in source.lower():
-            tags.append("#cont/transcript")
+        # Project tags
+        for project in projects:
+            tags.append(f"project/{slugify(project)}")
+
+        # Place tags
+        for place in places:
+            tags.append(f"place/{slugify(place)}")
+
+        # Topic tags
+        for topic in topics:
+            tags.append(f"topic/{slugify(topic)}")
+
+        # People tags
+        for person in people:
+            tags.append(f"person/{slugify(person)}")
+
+        # Organization tags
+        for org in organizations:
+            tags.append(f"org/{slugify(org)}")
 
         return tags
 
-    def generate_yaml_frontmatter(
+    def build_frontmatter(
         self,
+        id: str,
         title: str,
-        enriched_data: Dict,
-        metadata: Dict,
-        document_type: DocumentType,
         source: str,
+        doc_type: DocumentType,
+        people: List[str],
+        places: List[str],
+        projects: List[str],
+        topics: List[str],
+        organizations: List[str],
         created_at: datetime,
-        content_hash: str
+        ingested_at: datetime,
+        metadata: Dict[str, Any]
     ) -> str:
-        """Generate YAML frontmatter for Obsidian"""
+        """
+        Build unified frontmatter (RAG-first, Obsidian-happy)
 
-        # Extract author from metadata if available
-        author = metadata.get("author", "")
+        No Obsidian-only fields - everything serves RAG first.
+        """
+        # Derive tags
+        tags = self.derive_tags(doc_type, people, projects, places, topics, organizations)
 
-        # Combine enriched tags with workflow tags
-        all_tags = enriched_data.get("tags", [])
-        all_tags.extend(self.determine_workflow_tags(document_type, source))
+        # Clean doc_type
+        type_str = str(doc_type).replace('DocumentType.', '')
 
-        frontmatter = f"""---
-title: "{title}"
-author: "{author}"
-type: {document_type}
-date_added: {created_at.strftime('%Y-%m-%d')}
-source: "{source}"
-hash: {content_hash}
-tags: {all_tags}
-complexity: {enriched_data.get('complexity', 'intermediate')}
-reading_time: {enriched_data.get('reading_time', '0 min')}
----
+        # Build frontmatter dict
+        frontmatter = {
+            'id': id,
+            'title': title,
+            'source': source,
+            'doc_type': type_str,
+            'people': people if people else [],
+            'places': places if places else [],
+            'projects': projects if projects else [],
+            'topics': topics if topics else [],
+            'created_at': created_at.strftime('%Y-%m-%d'),
+            'ingested_at': ingested_at.strftime('%Y-%m-%d'),
 
-"""
-        return frontmatter
+            # Auto-derived tags (for Obsidian graph/search)
+            'tags': tags,
 
-    def generate_dataview_metadata(self, metadata: Dict) -> str:
-        """Generate dataview inline metadata fields"""
-        lines = []
+            # RAG-specific section
+            'rag': {
+                'quality_score': float(metadata.get('quality_score', 0.0)),
+                'novelty_score': float(metadata.get('novelty_score', 0.0)),
+                'actionability_score': float(metadata.get('actionability_score', 0.0)),
+                'recency_score': float(metadata.get('recency_score', 1.0)),
+                'signalness': float(metadata.get('signalness', 0.0)),
+                'do_index': metadata.get('do_index', True),
+                'canonical': metadata.get('canonical', True),
+                'page_span': metadata.get('page_span'),
+                'enrichment_version': metadata.get('enrichment_version', 'v2.0'),
+                'provenance': {
+                    'sha256': metadata.get('content_hash', '')[:16],
+                    'path': metadata.get('path', ''),
+                    'source_ref': metadata.get('source_ref', '')
+                }
+            }
+        }
 
-        # Add dataview fields if available
-        if metadata.get("project"):
-            lines.append(f"project:: [[{metadata['project']}]]")
-        if metadata.get("hub"):
-            lines.append(f"hub:: [[{metadata['hub']}]]")
-        if metadata.get("area"):
-            lines.append(f"area:: {metadata['area']}")
-        if metadata.get("up"):
-            lines.append(f"up:: [[{metadata['up']}]]")
+        # Remove empty/null values
+        frontmatter = self._remove_empty(frontmatter)
 
-        return "\n".join(lines) + "\n\n" if lines else ""
+        # Convert to YAML
+        yaml_str = yaml.dump(
+            frontmatter,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False
+        )
 
-    def generate_literature_note_header(
+        return f"---\n{yaml_str}---\n\n"
+
+    def build_xref_block(
         self,
-        title: str,
-        enriched_data: Dict,
-        metadata: Dict,
-        document_type: DocumentType,
-        source: str
+        projects: List[str],
+        places: List[str],
+        people: List[str],
+        organizations: List[str]
     ) -> str:
-        """Generate literature note header (for external sources)"""
+        """
+        Build wiki-link xref block for Obsidian graph edges
 
-        if document_type not in [DocumentType.pdf, DocumentType.webpage]:
+        Wrapped in <!-- RAG:IGNORE --> so chunker excludes it
+        """
+        if not any([projects, places, people, organizations]):
             return ""
 
-        header = f"""# Literature Note: {title}
+        lines = ["<!-- RAG:IGNORE-START -->", "## Xref", ""]
 
-## Bibliographic Information
+        # Project links
+        for project in projects:
+            lines.append(f"[[project:{project}]] ")
 
-- **Title**:: {title}
-- **Author(s)**:: {metadata.get('author', 'Unknown')}
-- **Type**:: {document_type}
-- **Publication**:: {metadata.get('publication', '')}
-- **Date**:: {metadata.get('publication_date', '')}
-- **Source**:: {source}
+        # Place links
+        for place in places:
+            lines.append(f"[[place:{place}]] ")
 
-## Summary
+        # People links
+        for person in people:
+            lines.append(f"[[person:{person}]] ")
 
-{enriched_data.get('summary', '')}
+        # Organization links
+        for org in organizations:
+            lines.append(f"[[org:{org}]] ")
 
-## Key Points
+        lines.append("")
+        lines.append("<!-- RAG:IGNORE-END -->")
 
-"""
-        for i, point in enumerate(enriched_data.get('key_points', []), 1):
-            header += f"{i}. {point}\n"
+        return "\n".join(lines)
 
-        return header + "\n"
-
-    def format_content_as_permanent_note(self, content: str, enriched_data: Dict) -> str:
-        """Format content as Zettelkasten permanent note structure"""
-
-        # Split content into paragraphs (atomic ideas)
-        paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
-
-        formatted = "## Notes\n\n"
-
-        for i, para in enumerate(paragraphs[:10], 1):  # Limit to first 10 paragraphs
-            # Each paragraph is an atomic note within the note-sequence
-            formatted += f"### {i}. Atomic Note\n\n"
-            formatted += f"{para}\n\n"
-
-        # Add entities section if available
-        entities = enriched_data.get('entities', {})
-        if any(entities.values()):
-            formatted += "## Entities\n\n"
-            if entities.get('people'):
-                formatted += f"**People**: {', '.join([f'[[{p}]]' for p in entities['people']])}\n\n"
-            if entities.get('organizations'):
-                formatted += f"**Organizations**: {', '.join([f'[[{o}]]' for o in entities['organizations']])}\n\n"
-            if entities.get('locations'):
-                formatted += f"**Locations**: {', '.join(entities['locations'])}\n\n"
-
-        return formatted
-
-    async def export_to_obsidian(
+    def build_body(
         self,
-        doc_id: str,
         content: str,
-        enriched_metadata: Dict,
+        summary: str,
+        key_facts: List[str],
+        outcomes: List[str],
+        next_actions: List[str],
+        timeline: List[Dict[str, str]]
+    ) -> str:
+        """
+        Build structured body (helps both humans and RAG)
+
+        Sections:
+        - Summary
+        - Key Facts
+        - Evidence/Excerpts
+        - Outcomes/Decisions
+        - Next Actions (optional)
+        - Timeline (optional)
+        """
+        body_parts = []
+
+        # Title (added by caller)
+        # Main content will have title
+
+        # Summary
+        if summary:
+            body_parts.append(f"> **Summary:** {summary}\n")
+
+        # Key Facts
+        if key_facts:
+            body_parts.append("## Key Facts\n")
+            for fact in key_facts:
+                body_parts.append(f"- {fact}")
+            body_parts.append("")
+
+        # Evidence/Excerpts (main content)
+        body_parts.append("## Evidence / Excerpts\n")
+        body_parts.append(content)
+        body_parts.append("")
+
+        # Outcomes/Decisions
+        if outcomes:
+            body_parts.append("## Outcomes / Decisions\n")
+            for outcome in outcomes:
+                body_parts.append(f"- {outcome}")
+            body_parts.append("")
+
+        # Next Actions
+        if next_actions:
+            body_parts.append("## Next Actions\n")
+            for action in next_actions:
+                body_parts.append(f"- [ ] {action}")
+            body_parts.append("")
+
+        # Timeline
+        if timeline:
+            body_parts.append("## Timeline\n")
+            for event in timeline:
+                timestamp = event.get('timestamp', '')
+                description = event.get('description', '')
+                body_parts.append(f"- {timestamp} -- {description}")
+            body_parts.append("")
+
+        return "\n".join(body_parts)
+
+    def create_entity_stub(
+        self,
+        entity_type: str,  # person, project, place, org
+        name: str,
+        aliases: List[str] = None
+    ):
+        """
+        Create/update entity stub for backlinks
+
+        Example: refs/people/Mother.md
+        """
+        aliases = aliases or []
+
+        # Determine directory
+        entity_dir = self.refs_dir / f"{entity_type}s"
+        entity_dir.mkdir(exist_ok=True)
+
+        # Create filename
+        safe_name = slugify(name) or name.replace(' ', '-')
+        file_path = entity_dir / f"{safe_name}.md"
+
+        # Don't overwrite if exists (stubs are created once)
+        if file_path.exists():
+            return file_path
+
+        # Build stub frontmatter
+        stub_frontmatter = {
+            'type': entity_type,
+            'name': name,
+            'aliases': aliases
+        }
+
+        stub_yaml = yaml.dump(stub_frontmatter, default_flow_style=False, allow_unicode=True)
+
+        # Build stub body with Dataview query
+        stub_body = f"""# {name}
+
+```dataview
+LIST FROM "10_normalized_md"
+WHERE contains({entity_type}s, "{name}")
+SORT created_at DESC
+```
+"""
+
+        # Write stub
+        stub_content = f"---\n{stub_yaml}---\n\n{stub_body}"
+        file_path.write_text(stub_content, encoding='utf-8')
+
+        return file_path
+
+    def export_document(
+        self,
+        title: str,
+        content: str,
+        metadata: Dict[str, Any],
         document_type: DocumentType,
-        source: str
-    ) -> Tuple[Path, Dict]:
+        created_at: Optional[datetime] = None,
+        source: str = "rag_pipeline"
+    ) -> Path:
         """
-        Export document to Obsidian-compatible markdown using already-enriched metadata
+        Main export function
 
-        Args:
-            doc_id: Document ID
-            content: Document content
-            enriched_metadata: Metadata already enriched by AdvancedEnrichmentService
-            document_type: Type of document
-            source: Source filename or URL
-
-        Returns:
-            Tuple of (file_path, enriched_data)
+        Returns: Path to created markdown file
         """
+        created_at = created_at or datetime.now()
+        ingested_at = datetime.now()
 
-        # Generate content hash for deduplication
-        content_hash = self.generate_content_hash(content)
+        # Parse metadata lists
+        people = self._parse_csv(metadata.get('people_roles', ''))
+        places = self._parse_csv(metadata.get('places', ''))
+        projects = self._parse_csv(metadata.get('projects', ''))
+        topics = self._parse_csv(metadata.get('topics', ''))
+        organizations = self._parse_csv(metadata.get('organizations', ''))
 
-        # Extract enriched data from metadata (already processed by AdvancedEnrichmentService)
-        enriched_data = self.extract_enriched_data_from_metadata(enriched_metadata)
-        title = enriched_data.get("title", "Untitled")
+        # Generate ID and filename
+        date_str = created_at.strftime('%Y-%m-%d')
+        slug = self.create_slug(title)
+        short_id = self.generate_short_id(content)
+        doc_id = f"{created_at.strftime('%Y%m%d')}_{slug}_{short_id}"
 
-        # Generate filename: {descriptive-title}_{hash}.md
-        sanitized_title = self.sanitize_filename(title)
-        filename = f"{sanitized_title}_{content_hash}.md"
+        filename = self.generate_filename(title, document_type, created_at, content)
         file_path = self.output_dir / filename
 
-        # Check for duplicates
-        if file_path.exists():
-            # File already exists (same content hash) - skip
-            return file_path, enriched_data
-
-        # Build markdown document
-        markdown_content = ""
-
-        # 1. YAML frontmatter
-        markdown_content += self.generate_yaml_frontmatter(
+        # Build frontmatter
+        frontmatter = self.build_frontmatter(
+            id=doc_id,
             title=title,
-            enriched_data=enriched_data,
-            metadata=enriched_metadata,
-            document_type=document_type,
             source=source,
-            created_at=datetime.now(),
-            content_hash=content_hash
+            doc_type=document_type,
+            people=people,
+            places=places,
+            projects=projects,
+            topics=topics,
+            organizations=organizations,
+            created_at=created_at,
+            ingested_at=ingested_at,
+            metadata=metadata
         )
 
-        # 2. Dataview inline metadata (enriched_metadata has all fields)
-        markdown_content += self.generate_dataview_metadata(enriched_metadata)
+        # Build body
+        summary = metadata.get('summary', '')
+        key_facts = []  # TODO: Extract from metadata if available
+        outcomes = []   # TODO: Extract from metadata
+        next_actions = []  # TODO: Extract from metadata
+        timeline = []   # TODO: Extract from metadata
 
-        # 3. Literature note header (if applicable)
-        markdown_content += self.generate_literature_note_header(
-            title=title,
-            enriched_data=enriched_data,
-            metadata=enriched_metadata,
-            document_type=document_type,
-            source=source
+        body = self.build_body(
+            content=content,
+            summary=summary,
+            key_facts=key_facts,
+            outcomes=outcomes,
+            next_actions=next_actions,
+            timeline=timeline
         )
 
-        # 4. Content formatted as permanent notes
-        markdown_content += self.format_content_as_permanent_note(content, enriched_data)
+        # Build xref block
+        xref = self.build_xref_block(projects, places, people, organizations)
 
-        # 5. Footer with metadata
-        markdown_content += f"\n\n---\n*Document ID*: `{doc_id}`\n*Content Hash*: `{content_hash}`\n"
+        # Combine
+        full_content = f"{frontmatter}# {title}\n\n{body}\n\n{xref}"
 
-        # Write to file
-        file_path.write_text(markdown_content, encoding='utf-8')
+        # Write file
+        file_path.write_text(full_content, encoding='utf-8')
 
-        return file_path, enriched_data
+        # Create entity stubs
+        for person in people:
+            self.create_entity_stub('person', person)
 
-    def find_duplicate(self, content_hash: str) -> Optional[Path]:
-        """Check if a document with this content hash already exists"""
-        for md_file in self.output_dir.glob(f"*_{content_hash}.md"):
-            return md_file
-        return None
+        for project in projects:
+            self.create_entity_stub('project', project)
+
+        for place in places:
+            self.create_entity_stub('place', place)
+
+        for org in organizations:
+            self.create_entity_stub('org', org)
+
+        return file_path
+
+    def _parse_csv(self, value: str) -> List[str]:
+        """Parse comma-separated string into list"""
+        if not value or value == "":
+            return []
+        return [item.strip() for item in value.split(",") if item.strip()]
+
+    def _remove_empty(self, d: Dict) -> Dict:
+        """Recursively remove empty values from dict"""
+        if not isinstance(d, dict):
+            return d
+
+        return {
+            k: self._remove_empty(v) if isinstance(v, dict) else v
+            for k, v in d.items()
+            if v not in [[], {}, "", None] and not (isinstance(v, dict) and not v)
+        }
+
+
+# Test
+if __name__ == "__main__":
+    test_metadata = {
+        "summary": "Discussion about kita handover schedule changes for autumn break.",
+        "people_roles": "Daniel,Mother",
+        "places": "Köln Südstadt,Essen Rüttenscheid",
+        "projects": "custody-2025,school-2026",
+        "topics": "kita,handover,schedule,pickup",
+        "organizations": "Kita Astronauten",
+        "quality_score": 0.94,
+        "novelty_score": 0.72,
+        "actionability_score": 0.80,
+        "recency_score": 0.95,
+        "signalness": 0.85,
+        "content_hash": "abc123def456",
+        "enrichment_version": "v2.0"
+    }
+
+    service = ObsidianService("./test_obsidian_v3")
+
+    content = """
+This is a test email thread about kita handover schedules.
+
+## Discussion Points
+
+1. Late pickup on October 2nd approved
+2. Schedule changes after autumn break
+3. New handover times starting October 15th
+
+Contact information: handover@kita-astronauten.de
+"""
+
+    result = service.export_document(
+        title="Kita handover schedule discussion (Sep-Oct 2025)",
+        content=content,
+        metadata=test_metadata,
+        document_type=DocumentType.email,
+        created_at=datetime(2025, 10, 2),
+        source="email"
+    )
+
+    print(f"\n✅ Exported to: {result}")
+    print(f"\n📄 Content preview:")
+    print("=" * 60)
+    print(result.read_text()[:800])
+    print("=" * 60)
+
+    # Check entity stubs
+    refs_created = list((Path("./test_obsidian_v3/refs")).rglob("*.md"))
+    print(f"\n📁 Created {len(refs_created)} entity stubs:")
+    for ref in refs_created:
+        print(f"   - {ref.relative_to('./test_obsidian_v3')}")

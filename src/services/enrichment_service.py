@@ -1,175 +1,290 @@
 """
-Document Enrichment Service
+Enrichment Service V2 - Controlled Vocabulary & Advanced Features
 
-Core enrichment for RAG pipeline:
-- LLM-based summarization, tagging, entity extraction
-- Content hash generation for deduplication
-- Meaningful title generation
-- Hierarchical tag assignment
-- Signal-to-noise improvement for better RAG quality
-
-This enrichment improves:
-1. Search quality (better embeddings from cleaned content)
-2. Retrieval relevance (rich metadata for filtering)
-3. LLM context (summaries reduce token usage)
-4. User experience (meaningful filenames, organized tags)
+Major improvements:
+- Controlled vocabulary (no invented tags)
+- Entities vs Topics separation
+- Suggested tags for review
+- Recency scoring
+- Better title extraction
+- Document type routing
 """
 
 import hashlib
 import json
 import re
-from datetime import datetime
-from typing import Dict, List, Optional
+import math
+from datetime import datetime, date
+from typing import Dict, List, Optional, Tuple
+from pathlib import Path
 
 from src.services.llm_service import LLMService
+from src.services.vocabulary_service import VocabularyService
 from src.models.schemas import DocumentType
 
 
 class EnrichmentService:
-    """Service for enriching documents with LLM-generated metadata"""
+    """Enhanced enrichment with controlled vocabulary (formerly V2)"""
 
-    def __init__(self, llm_service: LLMService):
+    def __init__(self, llm_service: LLMService, vocab_service: Optional[VocabularyService] = None):
         self.llm_service = llm_service
+
+        # Load vocabulary service
+        if vocab_service:
+            self.vocab = vocab_service
+        else:
+            # Try to load from default location
+            try:
+                self.vocab = VocabularyService("vocabulary")
+            except Exception as e:
+                print(f"Warning: Could not load vocabulary service: {e}")
+                self.vocab = None
 
     def generate_content_hash(self, content: str) -> str:
         """Generate SHA-256 hash for deduplication"""
         return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
+    def calculate_recency_score(self, created_at: Optional[date] = None) -> float:
+        """
+        Calculate recency score with exponential decay
+
+        - Today = 1.0
+        - 1 month ago = 0.9
+        - 6 months ago = 0.6
+        - 1 year ago = 0.4
+        - 2 years ago = 0.2
+        - 5+ years ago = 0.05
+        """
+        if not created_at:
+            created_at = date.today()
+
+        today = date.today()
+        age_days = (today - created_at).days
+
+        # Exponential decay: score = e^(-lambda * age_days)
+        # lambda = 0.003 gives ~6 month half-life
+        decay_rate = 0.003
+        score = math.exp(-decay_rate * age_days)
+
+        return max(0.05, min(1.0, score))  # Clamp to [0.05, 1.0]
+
+    def extract_title_from_content(self, content: str, filename: str) -> str:
+        """
+        Extract title using multiple strategies
+
+        1. Look for title markers (# heading, Title:, etc.)
+        2. Use first meaningful sentence
+        3. Fall back to filename
+        """
+        # Strategy 1: Markdown heading
+        heading_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+        if heading_match:
+            title = heading_match.group(1).strip()
+            if 5 <= len(title.split()) <= 15:
+                return self.sanitize_title(title)
+
+        # Strategy 2: Title: field
+        title_field = re.search(r'^Title:\s*(.+)$', content, re.MULTILINE | re.IGNORECASE)
+        if title_field:
+            title = title_field.group(1).strip()
+            if 5 <= len(title.split()) <= 15:
+                return self.sanitize_title(title)
+
+        # Strategy 3: First meaningful sentence (not too short, not too long)
+        sentences = re.split(r'[.!?]\s+', content[:500])
+        for sentence in sentences:
+            words = sentence.strip().split()
+            if 5 <= len(words) <= 15:
+                return self.sanitize_title(sentence.strip())
+
+        # Strategy 4: Clean up filename
+        # Remove extension and common prefixes
+        title = Path(filename).stem
+        title = re.sub(r'^(document|file|untitled|scan)[-_\s]*', '', title, flags=re.IGNORECASE)
+        title = title.replace('_', ' ').replace('-', ' ')
+        title = re.sub(r'\s+', ' ', title).strip()
+
+        return self.sanitize_title(title) if title else "Document"
+
     def sanitize_title(self, title: str, max_length: int = 100) -> str:
         """Clean and normalize title"""
         # Remove extra whitespace
         sanitized = re.sub(r'\s+', ' ', title).strip()
+
+        # Remove special characters that cause issues
+        sanitized = re.sub(r'[<>:"/\\|?*]', '', sanitized)
+
         # Limit length
         if len(sanitized) > max_length:
             sanitized = sanitized[:max_length].rstrip()
-        return sanitized or "Untitled"
+
+        return sanitized or "Document"
 
     async def enrich_document(
         self,
         content: str,
         filename: str,
         document_type: DocumentType,
+        created_at: Optional[date] = None,
         existing_metadata: Optional[Dict] = None
     ) -> Dict:
         """
-        Main enrichment function - uses LLM to extract high-quality metadata
+        Main enrichment function with controlled vocabulary
 
-        Returns enriched metadata dict compatible with ChromaDB (flat key-value)
+        Returns enriched metadata compatible with ChromaDB
         """
-
         existing_metadata = existing_metadata or {}
 
-        # Generate content hash first (for deduplication)
+        # Generate content hash
         content_hash = self.generate_content_hash(content)
 
-        # Prepare enrichment prompt
-        prompt = self._build_enrichment_prompt(content, filename, document_type)
+        # Extract title first (don't rely on LLM for this)
+        extracted_title = self.extract_title_from_content(content, filename)
+
+        # Calculate recency score
+        recency_score = self.calculate_recency_score(created_at)
+
+        # Build controlled vocabulary prompt
+        prompt = self._build_controlled_enrichment_prompt(
+            content=content,
+            filename=filename,
+            document_type=document_type,
+            extracted_title=extracted_title
+        )
 
         try:
-            # Use Groq (cheapest at $0.000001/query)
+            # Use Groq for enrichment
             llm_response_text, cost, model_used = await self.llm_service.call_llm(
                 prompt=prompt,
                 model_id="groq/llama-3.1-8b-instant",
-                temperature=0.1  # Low temperature for consistent JSON output
+                temperature=0.1
             )
-            print(f"[DEBUG] LLM raw response length: {len(llm_response_text)}")
-            print(f"[DEBUG] LLM raw response preview: {llm_response_text[:500]}")
 
             llm_data = self._parse_llm_response(llm_response_text)
 
-            print(f"[DEBUG] Parsed LLM data keys: {list(llm_data.keys())}")
-            print(f"[DEBUG] Parsed title: {llm_data.get('title', 'NONE')}")
-            print(f"[DEBUG] Parsed tags: {llm_data.get('tags', [])}")
+            # Validate and clean with controlled vocabulary
+            validated = self._validate_with_vocabulary(llm_data, created_at)
 
-            # Build enriched metadata (flat structure for ChromaDB)
-            enriched = self._build_flat_metadata(
-                llm_data=llm_data,
+            # Build enriched metadata
+            enriched = self._build_enriched_metadata(
+                validated_data=validated,
                 content_hash=content_hash,
                 filename=filename,
                 document_type=document_type,
+                extracted_title=extracted_title,
+                recency_score=recency_score,
+                content=content,
                 existing_metadata=existing_metadata,
-                content_preview=content[:500]
+                enrichment_cost=cost
             )
 
             return enriched
 
         except Exception as e:
-            # Log the error
-            print(f"[ERROR] Enrichment failed: {str(e)}")
+            print(f"[ERROR] Enrichment V2 failed: {str(e)}")
             import traceback
             traceback.print_exc()
 
-            # Fallback to basic metadata if LLM fails
+            # Fallback
             return self._fallback_metadata(
                 content=content,
                 content_hash=content_hash,
                 filename=filename,
                 document_type=document_type,
+                extracted_title=extracted_title,
+                recency_score=recency_score,
                 existing_metadata=existing_metadata
             )
 
-    def _build_enrichment_prompt(
+    def _build_controlled_enrichment_prompt(
         self,
         content: str,
         filename: str,
-        document_type: DocumentType
+        document_type: DocumentType,
+        extracted_title: str
     ) -> str:
-        """Build LLM prompt for metadata extraction"""
+        """Build enrichment prompt with controlled vocabulary"""
 
-        # Truncate content to avoid token limits (use first ~3000 chars)
+        # Get vocabulary lists
+        all_topics = self.vocab.get_all_topics() if self.vocab else []
+        all_places = self.vocab.get_all_places() if self.vocab else []
+
+        # Truncate content
         content_sample = content[:3000]
         if len(content) > 3000:
             content_sample += "\n\n[...content truncated...]"
 
-        prompt = f"""Extract metadata from this document for a knowledge management system.
+        # Build topic list for prompt
+        topic_examples = all_topics[:20] if all_topics else [
+            "school/admin", "kita/handover", "legal/custody",
+            "education/concept", "admin/registration"
+        ]
+
+        prompt = f"""Extract metadata from this document using CONTROLLED VOCABULARIES.
 
 **Filename**: {filename}
 **Type**: {document_type}
+**Extracted Title**: {extracted_title}
 
 **Content**:
 {content_sample}
 
+IMPORTANT: Use ONLY the provided controlled vocabulary. Do not invent new tags.
+
 Extract the following (return as JSON):
 
-1. **title**: Descriptive title (5-12 words, captures core idea)
-2. **summary**: 2-3 sentence summary of main points
-3. **key_points**: Array of 3-5 key takeaways (short phrases)
-4. **tags**: Array of relevant hierarchical tags. Use these categories:
-   - Content workflow: cont/in/read, cont/in/extract, cont/zk/connect
-   - Content type: literature, permanent, fleeting
-   - Navigation: hub, project/active, index
-   - Domain-specific tags based on content
-5. **entities**: Object with arrays for people, organizations, locations, dates
-6. **complexity**: One of: beginner, intermediate, advanced
-7. **domain**: Main topic domain (e.g., technology, science, business)
+1. **summary**: 2-3 sentence summary of main content
+2. **topics**: Array of topics from this CONTROLLED list:
+   {json.dumps(topic_examples)}
 
-Return ONLY this JSON structure (no markdown, no explanation):
+   Only use topics from this list. If content matches multiple, choose the 3-5 most relevant.
+
+3. **suggested_topics**: Array of NEW topics you think should be added to vocabulary
+   (These will be reviewed by user, not used directly)
+
+4. **entities**: Extract actual entities (NOT controlled):
+   - organizations: Company/org names found in text
+   - people_roles: Roles mentioned (e.g., "Teacher", "Principal") - NOT names
+   - dates: Dates in ISO format (YYYY-MM-DD)
+   - contacts: Email/phone if present
+
+5. **places**: Places from content that match this list:
+   {json.dumps(all_places[:15] if all_places else [])}
+   Only use exact matches.
+
+6. **quality_indicators**: Assess these (0-1 scores):
+   - ocr_quality: How clean is the text? (1.0 = perfect, 0.5 = some issues, 0.0 = gibberish)
+   - content_completeness: Is content complete? (1.0 = complete, 0.5 = partial, 0.0 = fragment)
+
+Return ONLY this JSON structure (no markdown):
 {{
-  "title": "Descriptive Title Here",
-  "summary": "Summary text here",
-  "key_points": ["point 1", "point 2", "point 3"],
-  "tags": ["cont/in/read", "literature", "technology"],
+  "summary": "Summary here",
+  "topics": ["school/admin", "education/concept"],
+  "suggested_topics": ["school/curriculum"],
   "entities": {{
-    "people": ["Name1", "Name2"],
-    "organizations": ["Org1"],
-    "locations": ["Location1"],
-    "dates": ["2025-10-05"]
+    "organizations": ["Florianschule"],
+    "people_roles": ["Principal", "Teacher"],
+    "dates": ["2025-10-05"],
+    "contacts": []
   }},
-  "complexity": "intermediate",
-  "domain": "technology"
+  "places": ["Essen"],
+  "quality_indicators": {{
+    "ocr_quality": 0.95,
+    "content_completeness": 1.0
+  }}
 }}
 """
         return prompt
 
     def _parse_llm_response(self, response: str) -> Dict:
-        """Parse LLM JSON response, handle errors gracefully"""
+        """Parse LLM JSON response"""
         try:
-            # Remove markdown code blocks if present
+            # Remove markdown code blocks
             cleaned = re.sub(r'^```json\n|\n```$', '', response.strip())
             cleaned = re.sub(r'^```\n|\n```$', '', cleaned.strip())
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            # Try to extract JSON from text
+            # Try to extract JSON
             match = re.search(r'\{.*\}', response, re.DOTALL)
             if match:
                 try:
@@ -178,55 +293,143 @@ Return ONLY this JSON structure (no markdown, no explanation):
                     pass
             return {}
 
-    def _build_flat_metadata(
+    def _validate_with_vocabulary(self, llm_data: Dict, created_at: Optional[date]) -> Dict:
+        """Validate extracted data against vocabulary, match projects"""
+
+        validated = {}
+
+        # Topics: Only keep valid ones
+        proposed_topics = llm_data.get("topics", [])
+        valid_topics = []
+        invalid_topics = []
+
+        if self.vocab:
+            for topic in proposed_topics:
+                if self.vocab.is_valid_topic(topic):
+                    valid_topics.append(topic)
+                else:
+                    # Try to suggest closest match
+                    suggested = self.vocab.suggest_topic(topic)
+                    if self.vocab.is_valid_topic(suggested):
+                        valid_topics.append(suggested)
+                    else:
+                        invalid_topics.append(topic)
+        else:
+            valid_topics = proposed_topics
+
+        validated["topics"] = valid_topics
+        validated["suggested_topics"] = llm_data.get("suggested_topics", []) + invalid_topics
+
+        # Track suggested tags
+        if self.vocab:
+            for tag in validated["suggested_topics"]:
+                self.vocab.track_suggestion(tag)
+
+        # Places: Only keep valid ones
+        proposed_places = llm_data.get("places", [])
+        valid_places = []
+        if self.vocab:
+            valid_places = [p for p in proposed_places if self.vocab.is_valid_place(p)]
+        else:
+            valid_places = proposed_places
+
+        validated["places"] = valid_places
+
+        # Match projects based on topics
+        matched_projects = []
+        if self.vocab and valid_topics:
+            matched_projects = self.vocab.match_projects_for_doc(valid_topics, created_at)
+
+        validated["projects"] = matched_projects
+
+        # Pass through other fields
+        validated["summary"] = llm_data.get("summary", "")
+        validated["entities"] = llm_data.get("entities", {})
+        validated["quality_indicators"] = llm_data.get("quality_indicators", {})
+
+        return validated
+
+    def _build_enriched_metadata(
         self,
-        llm_data: Dict,
+        validated_data: Dict,
         content_hash: str,
         filename: str,
         document_type: DocumentType,
+        extracted_title: str,
+        recency_score: float,
+        content: str,
         existing_metadata: Dict,
-        content_preview: str
+        enrichment_cost: float
     ) -> Dict:
-        """Build flat metadata structure compatible with ChromaDB"""
+        """Build flat metadata structure for ChromaDB"""
 
-        # ChromaDB only supports: str, int, float, bool
-        # So we flatten complex structures into strings
+        # Get quality scores
+        quality = validated_data.get("quality_indicators", {})
+        ocr_quality = quality.get("ocr_quality", 0.8)
+        completeness = quality.get("content_completeness", 1.0)
+
+        # Calculate composite quality score
+        quality_score = (ocr_quality * 0.6) + (completeness * 0.4)
+
+        # Entities
+        entities = validated_data.get("entities", {})
+
+        # Define keys we're setting (to avoid duplicates from existing_metadata)
+        known_keys = {
+            "content_hash", "content_hash_short", "filename", "document_type",
+            "title", "summary", "topics", "places", "projects",
+            "suggested_topics", "organizations", "people_roles", "dates", "contacts",
+            "quality_score", "recency_score", "ocr_quality",
+            "enrichment_version", "enrichment_date", "enrichment_cost",
+            "word_count", "char_count", "created_at", "enriched"
+        }
 
         metadata = {
-            # Core identification
+            # === IDENTITY ===
             "content_hash": content_hash,
-            "content_hash_short": content_hash[:16],  # For display
+            "content_hash_short": content_hash[:16],
             "filename": filename,
             "document_type": str(document_type),
 
-            # LLM-enriched fields
-            "title": self.sanitize_title(llm_data.get("title", filename)),
-            "summary": llm_data.get("summary", content_preview)[:500],  # Limit length
-            "domain": llm_data.get("domain", "general"),
-            "complexity": llm_data.get("complexity", "intermediate"),
+            # === TITLE & SUMMARY ===
+            "title": extracted_title,
+            "summary": validated_data.get("summary", "")[:500],
 
-            # Tags as comma-separated string
-            "tags": ",".join(llm_data.get("tags", [])),
+            # === CONTROLLED VOCABULARY ===
+            "topics": ",".join(validated_data.get("topics", [])),  # Controlled
+            "places": ",".join(validated_data.get("places", [])),  # Controlled
+            "projects": ",".join(validated_data.get("projects", [])),  # Auto-matched
 
-            # Key points as numbered string
-            "key_points": " | ".join(llm_data.get("key_points", [])[:5]),
+            # === SUGGESTED (for review) ===
+            "suggested_topics": ",".join(validated_data.get("suggested_topics", [])),
 
-            # Entities as comma-separated strings
-            "people": ",".join(llm_data.get("entities", {}).get("people", [])[:10]),
-            "organizations": ",".join(llm_data.get("entities", {}).get("organizations", [])[:10]),
-            "locations": ",".join(llm_data.get("entities", {}).get("locations", [])[:10]),
-            "dates": ",".join(llm_data.get("entities", {}).get("dates", [])[:10]),
+            # === EXTRACTED ENTITIES (not controlled) ===
+            "organizations": ",".join(entities.get("organizations", [])[:10]),
+            "people_roles": ",".join(entities.get("people_roles", [])[:10]),
+            "dates": ",".join(entities.get("dates", [])[:10]),
+            "contacts": ",".join(entities.get("contacts", [])[:5]),
 
-            # Reading stats
-            "word_count": len(content_preview.split()),
-            "estimated_reading_time_min": max(1, len(content_preview.split()) // 200),
+            # === SCORING ===
+            "quality_score": round(quality_score, 3),
+            "recency_score": round(recency_score, 3),
+            "ocr_quality": round(ocr_quality, 3),
 
-            # Timestamps
+            # === PROVENANCE ===
+            "enrichment_version": "2.0",
+            "enrichment_date": datetime.now().isoformat(),
+            "enrichment_cost": round(enrichment_cost, 6),
+
+            # === STATS ===
+            "word_count": len(content.split()),
+            "char_count": len(content),
+
+            # === TIMESTAMPS ===
             "created_at": datetime.now().isoformat(),
             "enriched": True,
 
-            # Preserve existing metadata
-            **{k: str(v) for k, v in existing_metadata.items() if isinstance(v, (str, int, float, bool))}
+            # Preserve existing (that aren't in our known keys)
+            **{k: str(v) for k, v in existing_metadata.items()
+               if isinstance(v, (str, int, float, bool)) and k not in known_keys}
         }
 
         return metadata
@@ -237,42 +440,28 @@ Return ONLY this JSON structure (no markdown, no explanation):
         content_hash: str,
         filename: str,
         document_type: DocumentType,
+        extracted_title: str,
+        recency_score: float,
         existing_metadata: Dict
     ) -> Dict:
-        """Fallback metadata if LLM enrichment fails"""
+        """Fallback metadata if enrichment fails"""
 
         return {
             "content_hash": content_hash,
             "content_hash_short": content_hash[:16],
             "filename": filename,
             "document_type": str(document_type),
-            "title": filename,
-            "summary": content[:200] + "..." if len(content) > 200 else content,
-            "domain": "general",
-            "complexity": "intermediate",
-            "tags": f"{document_type}",
-            "key_points": "",
-            "people": "",
+            "title": extracted_title,
+            "summary": content[:500],
+            "topics": "",
+            "places": "",
+            "projects": "",
             "organizations": "",
-            "locations": "",
-            "dates": "",
-            "word_count": len(content.split()),
-            "estimated_reading_time_min": max(1, len(content.split()) // 200),
-            "created_at": datetime.now().isoformat(),
+            "quality_score": 0.5,
+            "recency_score": round(recency_score, 3),
+            "enrichment_version": "2.0",
             "enriched": False,
+            "word_count": len(content.split()),
+            "created_at": datetime.now().isoformat(),
             **{k: str(v) for k, v in existing_metadata.items() if isinstance(v, (str, int, float, bool))}
         }
-
-    def extract_tags_list(self, metadata: Dict) -> List[str]:
-        """Extract tags list from flat metadata (for display/export)"""
-        tags_str = metadata.get("tags", "")
-        return [t.strip() for t in tags_str.split(",") if t.strip()]
-
-    def extract_key_points_list(self, metadata: Dict) -> List[str]:
-        """Extract key points list from flat metadata (for display/export)"""
-        points_str = metadata.get("key_points", "")
-        return [p.strip() for p in points_str.split("|") if p.strip()]
-
-    def check_duplicate(self, content_hash: str, existing_hashes: List[str]) -> bool:
-        """Check if this content hash already exists"""
-        return content_hash in existing_hashes
