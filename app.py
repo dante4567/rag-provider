@@ -97,6 +97,9 @@ from src.models.schemas import (
     CostInfo, CostStats, TestLLMRequest
 )
 
+# Import route modules
+from src.routes import health, ingest, search
+
 # Simple text splitter to replace langchain dependency
 class SimpleTextSplitter:
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
@@ -355,6 +358,11 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
+
+# Include routers
+app.include_router(health.router)
+app.include_router(ingest.router)
+app.include_router(search.router)
 
 # Global variables
 chroma_client = None
@@ -894,260 +902,6 @@ for path in PATHS.values():
     os.makedirs(path, exist_ok=True)
 
 # API Endpoints
-@app.get("/health")
-async def health_check():
-    """
-    Comprehensive health check
-
-    Validates:
-    - ChromaDB connection
-    - LLM API availability and models
-    - Reranking service
-    - Model pricing info
-    - OCR and file watching
-    """
-    try:
-        # Test ChromaDB connection
-        chroma_client.heartbeat()
-        chromadb_status = "connected"
-
-        # Get LLM service info
-        available_providers = rag_service.llm_service.get_available_providers()
-        available_models = rag_service.llm_service.get_available_models()
-
-        # Build provider details with models
-        provider_details = {}
-        for provider in available_providers:
-            provider_models = [m for m in available_models if m.startswith(f"{provider}/")]
-            provider_details[provider] = {
-                "available": True,
-                "models": provider_models,
-                "model_count": len(provider_models)
-            }
-
-        # Check pricing info completeness
-        from src.services.llm_service import MODEL_PRICING
-        pricing_status = {
-            "total_models_with_pricing": len(MODEL_PRICING),
-            "missing_pricing": [m for m in available_models if m not in MODEL_PRICING]
-        }
-
-        # Check reranking service
-        try:
-            from src.services.reranking_service import get_reranking_service
-            reranker = get_reranking_service()
-            reranking_status = {
-                "available": True,
-                "model": reranker.model_name,
-                "loaded": reranker.model is not None
-            }
-        except Exception as e:
-            reranking_status = {
-                "available": False,
-                "error": str(e)
-            }
-
-        return {
-            "status": "healthy",
-            "timestamp": datetime.now().isoformat(),
-            "platform": PLATFORM,
-            "docker": IS_DOCKER,
-
-            # Database
-            "chromadb": chromadb_status,
-
-            # LLM Providers
-            "llm_providers": provider_details,
-            "total_models_available": len(available_models),
-
-            # Pricing
-            "pricing": pricing_status,
-
-            # Services
-            "reranking": reranking_status,
-            "ocr_available": OCR_AVAILABLE,
-            "file_watcher": "enabled" if ENABLE_FILE_WATCH else "disabled",
-
-            # Paths
-            "paths": PATHS
-        }
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail=f"Service unhealthy: {e}")
-
-@app.post("/ingest", response_model=IngestResponse)
-async def ingest_document(document: Document, _: bool = Depends(verify_token)):
-    """Ingest document via API"""
-    try:
-        return await rag_service.process_document(
-            content=document.content,
-            filename=document.filename,
-            document_type=document.document_type,
-            process_ocr=document.process_ocr,
-            generate_obsidian=document.generate_obsidian,
-            file_metadata=document.metadata
-        )
-    except Exception as e:
-        logger.error(f"Document ingestion failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/ingest/file", response_model=IngestResponse)
-async def ingest_file(
-    file: UploadFile = File(...),
-    process_ocr: bool = Form(False),
-    generate_obsidian: bool = Form(True),
-    _: bool = Depends(verify_token)
-):
-    """Ingest file via upload"""
-    logger.info(f"Received file for ingestion: {file.filename}, Content-Type: {file.content_type}")
-    try:
-        # Save uploaded file temporarily
-        temp_path = Path(PATHS['temp_path']) / f"upload_{uuid.uuid4()}_{file.filename}"
-
-        async with aiofiles.open(temp_path, 'wb') as f:
-            content = await file.read()
-            await f.write(content)
-
-        # Process file
-        result = await rag_service.process_file(
-            str(temp_path),
-            process_ocr=process_ocr,
-            generate_obsidian=generate_obsidian
-        )
-
-        # Clean up temp file
-        temp_path.unlink()
-
-        return result
-
-    except Exception as e:
-        if temp_path.exists():
-            temp_path.unlink()
-        logger.error(f"File ingestion failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/ingest/batch", response_model=List[IngestResponse])
-async def ingest_batch_files(
-    files: List[UploadFile] = File(...),
-    process_ocr: bool = Form(False),
-    generate_obsidian: bool = Form(True)
-):
-    """Batch file ingestion"""
-    results = []
-    temp_paths = []
-
-    try:
-        # Save all files first
-        for file in files:
-            temp_path = Path(PATHS['temp_path']) / f"batch_{uuid.uuid4()}_{file.filename}"
-            temp_paths.append(temp_path)
-
-            async with aiofiles.open(temp_path, 'wb') as f:
-                content = await file.read()
-                await f.write(content)
-
-        # Process files concurrently
-        tasks = []
-        for temp_path in temp_paths:
-            task = rag_service.process_file(str(temp_path), process_ocr, generate_obsidian)
-            tasks.append(task)
-
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # Handle any exceptions
-        processed_results = []
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                logger.error(f"Batch processing failed for file {i}: {result}")
-                processed_results.append(IngestResponse(
-                    success=False,
-                    doc_id="",
-                    chunks=0,
-                    metadata=ObsidianMetadata(title=f"Failed: {files[i].filename}")
-                ))
-            else:
-                processed_results.append(result)
-
-        return processed_results
-
-    finally:
-        # Clean up temp files
-        for temp_path in temp_paths:
-            if temp_path.exists():
-                temp_path.unlink()
-
-@app.post("/search", response_model=SearchResponse)
-async def search_documents(query: Query):
-    """Search documents"""
-    try:
-        return await rag_service.search_documents(
-            query=query.text,
-            top_k=query.top_k,
-            filter_dict=query.filter
-        )
-    except Exception as e:
-        logger.error(f"Search failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/documents", response_model=List[DocumentInfo])
-async def list_documents():
-    """List all documents"""
-    try:
-        results = collection.get()
-
-        docs = {}
-        for metadata in results['metadatas']:
-            doc_id = metadata.get('doc_id')
-            if doc_id and doc_id not in docs:
-                # Find Obsidian file
-                obsidian_path = None
-                title = metadata.get('title', metadata.get('filename', ''))
-                safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).rstrip()
-                safe_title = re.sub(r'\s+', '_', safe_title)
-                potential_path = Path(PATHS['obsidian_path']) / f"{safe_title}_{doc_id[:8]}.md"
-                if potential_path.exists():
-                    obsidian_path = str(potential_path)
-
-                docs[doc_id] = DocumentInfo(
-                    id=doc_id,
-                    filename=metadata.get('filename', ''),
-                    chunks=metadata.get('chunks', 0),
-                    created_at=metadata.get('created_at', ''),
-                    metadata=metadata,
-                    obsidian_path=obsidian_path
-                )
-
-        return list(docs.values())
-
-    except Exception as e:
-        logger.error(f"Failed to list documents: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/documents/{doc_id}")
-async def delete_document(doc_id: str):
-    """Delete document and associated files"""
-    try:
-        # Get document info first
-        results = collection.get(where={"doc_id": doc_id})
-        if not results['ids']:
-            raise HTTPException(status_code=404, detail="Document not found")
-
-        # Delete from ChromaDB
-        collection.delete(where={"doc_id": doc_id})
-
-        # Delete Obsidian files
-        obsidian_files = list(Path(PATHS['obsidian_path']).glob(f"*_{doc_id[:8]}.md"))
-        for md_file in obsidian_files:
-            md_file.unlink()
-            logger.info(f"Deleted Obsidian file: {md_file}")
-
-        return {"success": True, "message": f"Document {doc_id} deleted"}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to delete document {doc_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/stats", response_model=Stats)
 async def get_stats():
