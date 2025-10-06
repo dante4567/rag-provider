@@ -374,6 +374,16 @@ Return ONLY this JSON structure (no markdown):
         # Entities
         entities = validated_data.get("entities", {})
 
+        # Define keys we're setting (to avoid duplicates from existing_metadata)
+        known_keys = {
+            "content_hash", "content_hash_short", "filename", "document_type",
+            "title", "summary", "topics", "places", "projects",
+            "suggested_topics", "organizations", "people_roles", "dates", "contacts",
+            "quality_score", "recency_score", "ocr_quality",
+            "enrichment_version", "enrichment_date", "enrichment_cost",
+            "word_count", "char_count", "created_at", "enriched"
+        }
+
         metadata = {
             # === IDENTITY ===
             "content_hash": content_hash,
@@ -417,9 +427,9 @@ Return ONLY this JSON structure (no markdown):
             "created_at": datetime.now().isoformat(),
             "enriched": True,
 
-            # Preserve existing
+            # Preserve existing (that aren't in our known keys)
             **{k: str(v) for k, v in existing_metadata.items()
-               if isinstance(v, (str, int, float, bool)) and k not in metadata}
+               if isinstance(v, (str, int, float, bool)) and k not in known_keys}
         }
 
         return metadata

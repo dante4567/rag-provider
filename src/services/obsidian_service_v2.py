@@ -247,7 +247,7 @@ class ObsidianServiceV2:
         title: str,
         content: str,
         metadata: Dict,
-        document_type: DocumentType = DocumentType.note,
+        document_type: DocumentType = DocumentType.text,
         created_at: Optional[datetime] = None
     ) -> str:
         """

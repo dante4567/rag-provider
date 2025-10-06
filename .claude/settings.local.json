@@ -81,7 +81,11 @@
       "Bash(xargs kill:*)",
       "Bash(then grep -i \"TELEGRAM\" .env)",
       "Bash(else echo \"No .env file found\")",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(tree:*)",
+      "Bash(pytest:*)",
+      "Bash(awk:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []
