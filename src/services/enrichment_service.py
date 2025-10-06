@@ -76,18 +76,29 @@ class EnrichmentService:
         2. Use first meaningful sentence
         3. Fall back to filename
         """
-        # Strategy 1: Markdown heading
-        heading_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+        # Strategy 1: Markdown heading (handle both with and without newlines)
+        # Try with proper newlines first
+        heading_match = re.search(r'^#\s+([^\n#]+)', content, re.MULTILINE)
         if heading_match:
             title = heading_match.group(1).strip()
-            if 5 <= len(title.split()) <= 15:
+            # Accept shorter titles (3+ words instead of 5+) for headings
+            if 3 <= len(title.split()) <= 20:
                 return self.sanitize_title(title)
+
+        # Fallback: If newlines are stripped, look for first # up to next #
+        heading_match_alt = re.search(r'#\s+([^#]+?)(?:\s*#{2,}|$)', content)
+        if heading_match_alt:
+            title = heading_match_alt.group(1).strip()
+            # Take first reasonable chunk of words
+            words = title.split()[:20]
+            if 3 <= len(words) <= 20:
+                return self.sanitize_title(' '.join(words))
 
         # Strategy 2: Title: field
         title_field = re.search(r'^Title:\s*(.+)$', content, re.MULTILINE | re.IGNORECASE)
         if title_field:
             title = title_field.group(1).strip()
-            if 5 <= len(title.split()) <= 15:
+            if 3 <= len(title.split()) <= 20:
                 return self.sanitize_title(title)
 
         # Strategy 3: First meaningful sentence (not too short, not too long)
