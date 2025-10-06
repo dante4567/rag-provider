@@ -228,7 +228,7 @@ class ChunkingService:
                         'content': [line],
                         'title': 'Table',
                         'level': 0,
-                        'parent_titles': heading_stack.copy()
+                        'parent_titles': [h['title'] for h in heading_stack]
                     }
                 else:
                     current_section['content'].append(line)

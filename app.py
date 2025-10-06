@@ -82,6 +82,7 @@ try:
     from src.services.obsidian_service import ObsidianService
     from src.services.vocabulary_service import VocabularyService
     from src.services.chunking_service import ChunkingService
+    from src.services.quality_scoring_service import QualityScoringService
 
     NEW_SERVICES_AVAILABLE = True
 except ImportError as e:
@@ -512,6 +513,9 @@ class RAGService:
                 refs_dir=f"{obsidian_output_dir}/refs"
             )
 
+            # Initialize quality scoring service (blueprint do_index gates)
+            self.quality_scoring_service = QualityScoringService()
+
             self.using_new_services = True
             logger.info("✅ EnrichmentService initialized with controlled vocabulary")
             logger.info(f"   📚 Topics: {len(self.vocabulary_service.get_all_topics())}")
@@ -653,6 +657,76 @@ class RAGService:
             if enriched_metadata.get('recommended_for_review', False):
                 logger.info(f"   ⚠️  Recommended for manual review (confidence/significance flags)")
 
+            # ============================================================
+            # QUALITY GATES - Blueprint do_index scoring
+            # ============================================================
+            try:
+                # Get existing document count for novelty scoring
+                existing_docs_count = collection.count()
+
+                # Extract watchlists from vocabulary service (if available)
+                watchlist_people = None
+                watchlist_projects = None
+                watchlist_topics = None
+                if hasattr(self, 'vocabulary_service'):
+                    try:
+                        # Get active projects as watchlist
+                        watchlist_projects = [p['name'] for p in self.vocabulary_service.get_active_projects()]
+                    except:
+                        pass
+
+                # Calculate quality scores
+                quality_scores = self.quality_scoring_service.score_document(
+                    content=content,
+                    document_type=document_type,
+                    metadata=enriched_metadata,
+                    existing_docs_count=existing_docs_count,
+                    watchlist_people=watchlist_people,
+                    watchlist_projects=watchlist_projects,
+                    watchlist_topics=watchlist_topics
+                )
+
+                # Add quality scores to metadata
+                enriched_metadata.update({
+                    "quality_score": quality_scores["quality_score"],
+                    "novelty_score": quality_scores["novelty_score"],
+                    "actionability_score": quality_scores["actionability_score"],
+                    "signalness": quality_scores["signalness"],
+                    "do_index": quality_scores["do_index"]
+                })
+
+                logger.info(f"   🎯 Quality Scores: Q={quality_scores['quality_score']:.2f} N={quality_scores['novelty_score']:.2f} A={quality_scores['actionability_score']:.2f} → Signal={quality_scores['signalness']:.2f}")
+
+                # Check quality gate
+                if not quality_scores["do_index"]:
+                    logger.warning(f"   ⛔ Document GATED (not indexed): {quality_scores.get('gate_reason', 'Failed quality threshold')}")
+                    return IngestResponse(
+                        success=True,
+                        doc_id=doc_id,
+                        chunks=0,
+                        metadata={
+                            "gated": True,
+                            "gate_reason": quality_scores.get("gate_reason"),
+                            "quality_score": quality_scores["quality_score"],
+                            "signalness": quality_scores["signalness"],
+                            "filename": str(filename or f"document_{doc_id}")
+                        },
+                        obsidian_path=None
+                    )
+                else:
+                    logger.info(f"   ✅ Quality gate passed - proceeding with indexing")
+
+            except Exception as e:
+                logger.warning(f"   ⚠️  Quality scoring failed, proceeding with indexing: {e}")
+                # Add default scores if quality scoring fails
+                enriched_metadata.update({
+                    "quality_score": 0.8,
+                    "novelty_score": 0.7,
+                    "actionability_score": 0.5,
+                    "signalness": 0.7,
+                    "do_index": True
+                })
+
             # Split into chunks using structure-aware chunking if available
             if self.chunking_service:
                 logger.info("   📐 Using structure-aware chunking...")
@@ -754,6 +828,15 @@ class RAGService:
                 # Get structure metadata for this chunk
                 chunk_struct_meta = chunk_metadata_list[i]['metadata']
 
+                # Safely extract parent_sections (might be strings or dicts)
+                parent_secs = chunk_struct_meta.get('parent_sections', [])
+                if parent_secs and isinstance(parent_secs[0], dict):
+                    # Extract titles from dict format
+                    parent_secs_str = ','.join(p.get('title', str(p)) for p in parent_secs)
+                else:
+                    # Already strings
+                    parent_secs_str = ','.join(str(p) for p in parent_secs)
+
                 chunk_metadata = {
                     **base_metadata,
                     "chunk_index": i,
@@ -761,7 +844,7 @@ class RAGService:
                     # Add structure-aware metadata
                     "chunk_type": chunk_struct_meta.get('chunk_type', 'paragraph'),
                     "section_title": chunk_struct_meta.get('section_title') or '',
-                    "parent_sections": ','.join(chunk_struct_meta.get('parent_sections', [])),
+                    "parent_sections": parent_secs_str,
                     "estimated_tokens": chunk_metadata_list[i].get('estimated_tokens', 0)
                 }
 
