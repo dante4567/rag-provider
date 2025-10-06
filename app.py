@@ -561,8 +561,14 @@ class RAGService:
             except Exception:
                 content = str(content)
 
-        # Remove excessive whitespace
-        content = re.sub(r'\s+', ' ', content)
+        # Remove excessive whitespace WITHIN lines, but preserve newlines
+        # This is critical for structure-aware chunking
+        lines = content.split('\n')
+        cleaned_lines = [re.sub(r'[ \t]+', ' ', line).strip() for line in lines]
+        content = '\n'.join(cleaned_lines)
+
+        # Remove excessive blank lines (more than 2 consecutive)
+        content = re.sub(r'\n{3,}', '\n\n', content)
         content = content.strip()
 
         return content
