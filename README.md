@@ -35,7 +35,10 @@ This is a **working RAG service with clean architecture** after October 2025 con
 - ⚠️ **Dependencies NOT pinned** - requirements.txt uses `>=` not `==` (works but risky for production)
   - See `DEPENDENCY_STATUS.md` for details and how to fix
   - Blocked by: Port conflicts with OpenWebUI containers
-- ⚠️ app.py too large (1,900 LOC, should split into routes)
+- ⚠️ **app.py too large (1,904 LOC)** - Needs splitting but risky without route integration tests
+  - See `APP_PY_REFACTORING_NEEDED.md` for analysis
+  - Blocked by: No integration tests for routes (would break during refactor)
+  - NOT blocking production - works fine, just messy
 
 **Deploy if**: You accept 79% test coverage + unpinned dependencies (works but versions may change)
 **Don't deploy if**: You need 100% coverage, guaranteed reproducibility, or enterprise-scale (not tested)
