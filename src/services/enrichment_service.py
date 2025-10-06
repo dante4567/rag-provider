@@ -349,6 +349,17 @@ Return ONLY this JSON structure (no markdown):
 
         return validated
 
+    def extract_enriched_lists(self, metadata: Dict) -> Dict:
+        """Convert comma-separated strings in metadata back to lists"""
+        return {
+            "tags": [t.strip() for t in metadata.get("topics", "").split(",") if t.strip()],
+            "key_points": [],  # Not stored in flat metadata
+            "people": [p.strip() for p in metadata.get("people_roles", "").split(",") if p.strip()],
+            "organizations": [o.strip() for o in metadata.get("organizations", "").split(",") if o.strip()],
+            "locations": [l.strip() for l in metadata.get("places", "").split(",") if l.strip()],
+            "dates": [d.strip() for d in metadata.get("dates", "").split(",") if d.strip()],
+        }
+
     def _build_enriched_metadata(
         self,
         validated_data: Dict,

@@ -892,9 +892,15 @@ class RAGService:
             chunk_metadatas = []
             chunk_contents = []
 
+            # Sanitize enriched metadata for ChromaDB (remove None values)
+            sanitized_enriched = {
+                k: v for k, v in enriched_metadata.items()
+                if v is not None and isinstance(v, (str, int, float, bool))
+            }
+
             # Use enriched metadata for ChromaDB (already flat key-value)
             base_metadata = {
-                **enriched_metadata,  # All the LLM-enriched fields
+                **sanitized_enriched,  # All the LLM-enriched fields (sanitized)
                 "doc_id": doc_id,
                 "filename": str(filename or f"document_{doc_id}"),
                 "chunks": int(len(chunks)),
@@ -912,7 +918,7 @@ class RAGService:
                     "chunk_id": chunk_id,
                     # Add structure-aware metadata
                     "chunk_type": chunk_struct_meta.get('chunk_type', 'paragraph'),
-                    "section_title": chunk_struct_meta.get('section_title', ''),
+                    "section_title": chunk_struct_meta.get('section_title') or '',
                     "parent_sections": ','.join(chunk_struct_meta.get('parent_sections', [])),
                     "estimated_tokens": chunk_metadata_list[i].get('estimated_tokens', 0)
                 }

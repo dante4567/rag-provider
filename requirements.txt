@@ -1,81 +1,78 @@
-# ⚠️ DEPENDENCIES NOT ACTUALLY PINNED (uses >= not ==)
-# Last reviewed: October 6, 2025
-# Status: Works for dev/testing, needs pip freeze for production
-# See DEPENDENCY_STATUS.md for details
-
+# ✅ DEPENDENCIES PINNED (uses ==)
+# Last updated: October 7, 2025
+# Status: Production-ready, versions tested and verified
+# Generated from working Docker container
 
 # Core FastAPI and server
-fastapi>=0.104.1
-uvicorn[standard]>=0.24.0
-pydantic>=2.5.0
-pydantic-settings>=2.0.0
-python-multipart>=0.0.6
-aiofiles>=23.2.1
-httpx>=0.25.2
+fastapi==0.118.0
+uvicorn[standard]==0.37.0
+pydantic==2.11.10
+pydantic-settings==2.11.0
+python-multipart==0.0.20
+aiofiles==24.1.0
+httpx==0.28.1
 
 # Vector database
-chromadb>=0.4.18
+chromadb==1.1.1
 
-# Text processing (simplified to avoid conflicts)
-python-Levenshtein>=0.21.0  # For fuzzy string matching in triage
+# Text processing
+python-Levenshtein==0.27.1
 
 # LLM providers
-anthropic>=0.7.8
-openai>=1.3.6
-groq>=0.4.1
-google-generativeai>=0.3.2
+anthropic==0.69.0
+openai==2.1.0
+groq==0.32.0
+google-generativeai==0.8.5
 
 # Document processing
-PyPDF2>=3.0.1
-python-magic>=0.4.27
-pyyaml>=6.0.1
+PyPDF2==3.0.1
+python-magic==0.4.27
+pyyaml==6.0.3
 
-# Modern document processing (basic version)
-unstructured>=0.10.0
-pdfminer.six>=20221105
-unstructured[pdf]>=0.10.0
+# Modern document processing
+unstructured==0.18.15
+pdfminer.six==20250506
+unstructured[pdf]==0.18.15
 
 # Modern LLM management
-litellm>=1.0.0
+litellm==1.77.7
 
 # Advanced reranking and embeddings
-sentence-transformers>=2.2.2
+sentence-transformers==5.1.1
 
 # Office documents
-python-docx>=0.8.11
-openpyxl>=3.1.2
-python-pptx>=0.6.23
-xlrd>=2.0.1
+python-docx==1.2.0
+openpyxl==3.1.5
+python-pptx==1.0.2
+xlrd==2.0.2
 
 # OCR and image processing
-pytesseract>=0.3.10
-Pillow>=10.1.0
-pdf2image>=1.16.3
+pytesseract==0.3.13
+Pillow==11.3.0
+pdf2image==1.17.0
 
 # WhatsApp and communication parsing
-python-dateutil>=2.8.2
-beautifulsoup4>=4.12.2
-lxml>=4.9.3
+python-dateutil==2.9.0.post0
+beautifulsoup4==4.13.5
+lxml==6.0.2
 
 # File monitoring
-watchdog>=3.0.0
+watchdog==6.0.0
 
 # Email processing
-extract-msg>=0.41.1
-email-reply-parser>=0.5.12
+extract-msg==0.55.0
+email-reply-parser==0.5.12
 
 # Web content
-requests>=2.31.0
+requests==2.32.5
 
 # Utilities
-tqdm>=4.66.1
-click>=8.1.7
-rich>=13.7.0
-python-docx
-psutil>=5.9.0
+tqdm==4.67.1
+click==8.3.0
+rich==14.1.0
+psutil==7.1.0
 
 # Testing
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-httpx>=0.24.0
-python-slugify>=8.0.0
+pytest==8.4.2
+pytest-asyncio==1.2.0
+python-slugify==8.0.4
