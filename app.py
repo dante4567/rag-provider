@@ -99,7 +99,7 @@ from src.models.schemas import (
 )
 
 # Import route modules
-from src.routes import health, ingest, search, stats, chat, admin
+from src.routes import health, ingest, search, stats, chat, admin, email_threading, evaluation, monitoring
 
 # Simple text splitter to replace langchain dependency
 class SimpleTextSplitter:
@@ -367,6 +367,9 @@ app.include_router(search.router)
 app.include_router(stats.router)
 app.include_router(chat.router)
 app.include_router(admin.router)
+app.include_router(email_threading.router)
+app.include_router(evaluation.router)
+app.include_router(monitoring.router)
 
 # Global variables
 chroma_client = None
