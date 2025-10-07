@@ -179,21 +179,31 @@ class ObsidianService:
             # Auto-derived tags (for Obsidian graph/search)
             'tags': tags,
 
-            # RAG-specific section
+            # RAG-specific section (technical metadata)
             'rag': {
+                # Quality metrics (0-1 scores)
                 'quality_score': float(metadata.get('quality_score', 0.0)),
                 'novelty_score': float(metadata.get('novelty_score', 0.0)),
                 'actionability_score': float(metadata.get('actionability_score', 0.0)),
                 'recency_score': float(metadata.get('recency_score', 1.0)),
                 'signalness': float(metadata.get('signalness', 0.0)),
+
+                # Indexing flags
                 'do_index': metadata.get('do_index', True),
                 'canonical': metadata.get('canonical', True),
+
+                # Document metadata
                 'page_span': metadata.get('page_span'),
                 'enrichment_version': metadata.get('enrichment_version', 'v2.0'),
+                'enrichment_cost_usd': metadata.get('enrichment_cost', 0.0),
+
+                # Provenance (where this came from)
                 'provenance': {
                     'sha256': metadata.get('content_hash', '')[:16],
-                    'path': metadata.get('path', ''),
-                    'source_ref': metadata.get('source_ref', '')
+                    'sha256_full': metadata.get('content_hash', ''),
+                    'original_filename': source,
+                    'file_size_mb': metadata.get('file_size_mb', 0.0),
+                    'ingestion_date': ingested_at.isoformat()
                 }
             }
         }
@@ -226,7 +236,10 @@ class ObsidianService:
         if not any([projects, places, people, organizations]):
             return ""
 
-        lines = ["<!-- RAG:IGNORE-START -->", "## Xref", ""]
+        lines = ["<!-- RAG:IGNORE-START -->"]
+        lines.append("")
+        lines.append("## Xref")
+        lines.append("")
 
         # Project links
         for project in projects:
@@ -277,6 +290,13 @@ class ObsidianService:
         # Summary
         if summary:
             body_parts.append(f"> **Summary:** {summary}\n")
+
+        # Source link section (added for linking to originals)
+        # Note: Source filename is in frontmatter, this adds visibility
+        body_parts.append("## Source")
+        body_parts.append("")
+        body_parts.append("See `source` in frontmatter for original filename.")
+        body_parts.append("")
 
         # Key Facts
         if key_facts:
