@@ -152,9 +152,12 @@ class ObsidianService:
         metadata: Dict[str, Any]
     ) -> str:
         """
-        Build unified frontmatter (RAG-first, Obsidian-happy)
+        Build unified frontmatter (Blueprint-compliant v2.1)
 
-        No Obsidian-only fields - everything serves RAG first.
+        Blueprint compliance: https://github.com/.../personal_rag_pipeline_full.md
+        - Top-level scores (not nested)
+        - Separate entities section (orgs, dates, numbers)
+        - Top-level provenance
         """
         # Derive tags
         tags = self.derive_tags(doc_type, people, projects, places, topics, organizations)
@@ -162,50 +165,66 @@ class ObsidianService:
         # Clean doc_type
         type_str = str(doc_type).replace('DocumentType.', '')
 
-        # Build frontmatter dict
+        # Extract entities from metadata
+        entities_data = metadata.get('entities', {})
+        dates = entities_data.get('dates', [])
+        numbers = entities_data.get('numbers', [])
+        # Organizations go into entities section per blueprint
+        orgs = organizations if organizations else []
+
+        # Build frontmatter dict (BLUEPRINT-COMPLIANT)
         frontmatter = {
             'id': id,
             'title': title,
             'source': source,
+            'path': f"data/obsidian/{id}.md",  # Blueprint spec
             'doc_type': type_str,
-            'people': people if people else [],
-            'places': places if places else [],
-            'projects': projects if projects else [],
-            'organizations': organizations if organizations else [],
-            'topics': topics if topics else [],
             'created_at': created_at.strftime('%Y-%m-%d'),
             'ingested_at': ingested_at.strftime('%Y-%m-%d'),
 
+            # Controlled vocabulary (top-level lists)
+            'people': people if people else [],
+            'places': places if places else [],
+            'projects': projects if projects else [],
+            'topics': topics if topics else [],
+
+            # Entities section (Blueprint spec - separate from controlled vocab)
+            'entities': {
+                'orgs': orgs,
+                'dates': dates,
+                'numbers': numbers
+            },
+
+            # Summary (top-level)
+            'summary': metadata.get('summary', ''),
+
+            # Scores (TOP-LEVEL per blueprint, not nested!)
+            'quality_score': float(metadata.get('quality_score', 0.0)),
+            'novelty_score': float(metadata.get('novelty_score', 0.0)),
+            'actionability_score': float(metadata.get('actionability_score', 0.0)),
+            'recency_score': float(metadata.get('recency_score', 1.0)),
+            'signalness': float(metadata.get('signalness', 0.0)),
+            'do_index': metadata.get('do_index', True),
+
+            # Provenance (TOP-LEVEL per blueprint)
+            'provenance': {
+                'sha256': metadata.get('content_hash', '')[:16],
+                'sha256_full': metadata.get('content_hash', ''),
+                'source_ref': source,
+                'file_size_mb': metadata.get('file_size_mb', 0.0),
+                'ingestion_date': ingested_at.isoformat()
+            },
+
+            # Enrichment metadata (top-level)
+            'enrichment_version': metadata.get('enrichment_version', 'v2.1'),
+            'enrichment_cost_usd': metadata.get('enrichment_cost', 0.0),
+
+            # Optional fields
+            'page_span': metadata.get('page_span'),
+            'canonical': metadata.get('canonical', True),
+
             # Auto-derived tags (for Obsidian graph/search)
-            'tags': tags,
-
-            # RAG-specific section (technical metadata)
-            'rag': {
-                # Quality metrics (0-1 scores)
-                'quality_score': float(metadata.get('quality_score', 0.0)),
-                'novelty_score': float(metadata.get('novelty_score', 0.0)),
-                'actionability_score': float(metadata.get('actionability_score', 0.0)),
-                'recency_score': float(metadata.get('recency_score', 1.0)),
-                'signalness': float(metadata.get('signalness', 0.0)),
-
-                # Indexing flags
-                'do_index': metadata.get('do_index', True),
-                'canonical': metadata.get('canonical', True),
-
-                # Document metadata
-                'page_span': metadata.get('page_span'),
-                'enrichment_version': metadata.get('enrichment_version', 'v2.0'),
-                'enrichment_cost_usd': metadata.get('enrichment_cost', 0.0),
-
-                # Provenance (where this came from)
-                'provenance': {
-                    'sha256': metadata.get('content_hash', '')[:16],
-                    'sha256_full': metadata.get('content_hash', ''),
-                    'original_filename': source,
-                    'file_size_mb': metadata.get('file_size_mb', 0.0),
-                    'ingestion_date': ingested_at.isoformat()
-                }
-            }
+            'tags': tags
         }
 
         # Remove empty/null values

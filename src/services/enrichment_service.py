@@ -44,6 +44,107 @@ class EnrichmentService:
         """Generate SHA-256 hash for deduplication"""
         return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
+    def extract_dates_from_content(self, content: str) -> List[str]:
+        """
+        Extract dates from content using regex patterns
+
+        Patterns supported:
+        - YYYY-MM-DD (ISO format)
+        - DD.MM.YYYY (German format)
+        - DD/MM/YYYY
+        - Month DD, YYYY
+        """
+        dates = set()
+
+        # ISO format: 2025-10-07, 2024-01-20
+        iso_pattern = r'\b(\d{4}-\d{2}-\d{2})\b'
+        for match in re.finditer(iso_pattern, content):
+            dates.add(match.group(1))
+
+        # German format: 07.10.2025, 22.08.2025
+        german_pattern = r'\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b'
+        for match in re.finditer(german_pattern, content):
+            day, month, year = match.groups()
+            # Convert to ISO format
+            try:
+                iso_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+                # Validate date
+                datetime.strptime(iso_date, '%Y-%m-%d')
+                dates.add(iso_date)
+            except ValueError:
+                pass  # Invalid date, skip
+
+        # Slash format: 10/07/2025
+        slash_pattern = r'\b(\d{1,2})/(\d{1,2})/(\d{4})\b'
+        for match in re.finditer(slash_pattern, content):
+            day, month, year = match.groups()
+            try:
+                iso_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+                datetime.strptime(iso_date, '%Y-%m-%d')
+                dates.add(iso_date)
+            except ValueError:
+                pass
+
+        return sorted(list(dates))
+
+    def extract_numbers_from_content(self, content: str) -> List[str]:
+        """
+        Extract significant numbers from content
+
+        Patterns:
+        - Case numbers (e.g., "310 F 141/25")
+        - Phone numbers (e.g., "+49-123-456-789")
+        - Amounts with currency (e.g., "€1,500", "$10,472")
+        - Percentages (e.g., "79%", "64.5%")
+        - Account numbers, IBANs
+        - Times (e.g., "18:00", "7:00 Uhr")
+        """
+        numbers = set()
+
+        # Case numbers: 310 F 141/25, 12-63 Nr. 2
+        case_pattern = r'\b(\d{1,4}\s*[A-Z]?\s*\d{1,4}/\d{2,4})\b'
+        for match in re.finditer(case_pattern, content):
+            numbers.add(match.group(1))
+
+        # BASS/regulation numbers: 12-63 Nr. 2
+        reg_pattern = r'\b(\d{1,3}-\d{1,3}\s*Nr\.\s*\d+)\b'
+        for match in re.finditer(reg_pattern, content):
+            numbers.add(match.group(1))
+
+        # Phone numbers: +49-123-456-789, +49 123 456 789
+        phone_pattern = r'\+?\d{1,3}[\s-]?\(?\d{2,4}\)?[\s-]?\d{3,4}[\s-]?\d{3,4}'
+        for match in re.finditer(phone_pattern, content):
+            numbers.add(match.group(0))
+
+        # Currency amounts: €1,500 or $10,472
+        currency_pattern = r'[€$£]\s*[\d,]+(?:\.\d{2})?'
+        for match in re.finditer(currency_pattern, content):
+            numbers.add(match.group(0))
+
+        # Percentages: 79%, 64.5%
+        percentage_pattern = r'\b(\d{1,3}(?:\.\d+)?%)\b'
+        for match in re.finditer(percentage_pattern, content):
+            numbers.add(match.group(1))
+
+        # IBANs: DE89370400440532013000
+        iban_pattern = r'\b([A-Z]{2}\d{2}[A-Z0-9]{12,30})\b'
+        for match in re.finditer(iban_pattern, content):
+            numbers.add(match.group(1))
+
+        # Account numbers: 1234-5678-9012
+        account_pattern = r'\b(\d{4}-\d{4}-\d{4})\b'
+        for match in re.finditer(account_pattern, content):
+            numbers.add(match.group(1))
+
+        # Times: 18:00, 7:00 Uhr
+        time_pattern = r'\b(\d{1,2}:\d{2}(?:\s*(?:Uhr|AM|PM|am|pm))?)\b'
+        for match in re.finditer(time_pattern, content):
+            numbers.add(match.group(1))
+
+        # Limit to reasonable number of extractions (avoid spam)
+        numbers_list = sorted(list(numbers))
+        return numbers_list[:50]  # Max 50 numbers
+
     def calculate_recency_score(self, created_at: Optional[date] = None) -> float:
         """
         Calculate recency score with exponential decay
@@ -184,6 +285,24 @@ class EnrichmentService:
 
             llm_data = self._parse_llm_response(llm_response_text)
 
+            # Extract dates and numbers using regex (in addition to LLM extraction)
+            regex_dates = self.extract_dates_from_content(content)
+            regex_numbers = self.extract_numbers_from_content(content)
+
+            # Merge LLM entities with regex extractions
+            llm_entities = llm_data.get("entities", {})
+            llm_dates = llm_entities.get("dates", [])
+            llm_numbers = llm_entities.get("numbers", [])
+
+            # Combine and deduplicate
+            all_dates = list(set(llm_dates + regex_dates))
+            all_numbers = list(set(llm_numbers + regex_numbers))
+
+            # Update entities with merged data
+            llm_entities["dates"] = sorted(all_dates)[:30]  # Max 30 dates
+            llm_entities["numbers"] = sorted(all_numbers)[:50]  # Max 50 numbers
+            llm_data["entities"] = llm_entities
+
             # Validate and clean with controlled vocabulary
             validated = self._validate_with_vocabulary(llm_data, created_at)
 
@@ -268,7 +387,8 @@ Extract the following (return as JSON):
    - organizations: Company/organization names that appear in the text (leave empty if none)
    - people_roles: Role titles mentioned in the text (NOT example roles, only actual ones)
    - dates: Dates in ISO format YYYY-MM-DD (only dates found in text)
-   - contacts: Email/phone numbers (only if present in text)
+   - numbers: Significant numbers (case numbers, amounts, percentages, phone numbers, account numbers, times)
+   - contacts: Email addresses (if present in text)
 
    CRITICAL: Do NOT extract entities from examples or generic references. Only extract entities that are actual content of this specific document.
 
@@ -289,6 +409,7 @@ Return ONLY this JSON structure (no markdown, no explanations):
     "organizations": [],
     "people_roles": [],
     "dates": [],
+    "numbers": [],
     "contacts": []
   }},
   "places": [],
@@ -413,10 +534,10 @@ Return ONLY this JSON structure (no markdown, no explanations):
         known_keys = {
             "content_hash", "content_hash_short", "filename", "document_type",
             "title", "summary", "topics", "places", "projects",
-            "suggested_topics", "organizations", "people_roles", "dates", "contacts",
+            "suggested_topics", "organizations", "people_roles", "dates", "numbers", "contacts",
             "quality_score", "recency_score", "ocr_quality",
             "enrichment_version", "enrichment_date", "enrichment_cost",
-            "word_count", "char_count", "created_at", "enriched"
+            "word_count", "char_count", "created_at", "enriched", "entities"
         }
 
         metadata = {
@@ -441,8 +562,16 @@ Return ONLY this JSON structure (no markdown, no explanations):
             # === EXTRACTED ENTITIES (not controlled) ===
             "organizations": ",".join(entities.get("organizations", [])[:10]),
             "people_roles": ",".join(entities.get("people_roles", [])[:10]),
-            "dates": ",".join(entities.get("dates", [])[:10]),
+            "dates": ",".join(entities.get("dates", [])[:30]),  # Increased from 10 to 30
+            "numbers": ",".join(entities.get("numbers", [])[:50]),  # NEW: numbers
             "contacts": ",".join(entities.get("contacts", [])[:5]),
+
+            # === ENTITIES DICT (for Obsidian frontmatter) ===
+            "entities": {
+                "orgs": entities.get("organizations", [])[:10],
+                "dates": entities.get("dates", [])[:30],
+                "numbers": entities.get("numbers", [])[:50]
+            },
 
             # === SCORING ===
             "quality_score": round(quality_score, 3),
