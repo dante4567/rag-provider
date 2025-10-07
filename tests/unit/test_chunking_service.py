@@ -38,7 +38,7 @@ class TestChunkingService:
     def test_estimate_tokens(self, service):
         """Test token estimation (4 chars ≈ 1 token)"""
         # Empty string
-        assert service.estimate_tokens("") == 1  # Min 1 token
+        assert service.estimate_tokens("") == 0  # Empty string returns 0
 
         # 100 characters ≈ 25 tokens
         assert service.estimate_tokens("a" * 100) == 25

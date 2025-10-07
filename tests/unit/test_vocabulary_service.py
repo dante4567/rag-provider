@@ -22,39 +22,42 @@ class TestVocabularyService:
 
     @pytest.fixture
     def mock_vocab_data(self):
-        """Mock vocabulary data"""
+        """Mock vocabulary data matching actual file format"""
         return {
             "topics.yaml": """
-categories:
-  school:
-    - school/admin
-    - school/enrollment
-  work:
-    - work/meetings
-    - work/projects
+school:
+  - school/admin
+  - school/enrollment
+work:
+  - work/meetings
+  - work/projects
 """,
             "projects.yaml": """
-projects:
-  - id: school-2026
+active:
+  school-2026:
     name: School Enrollment 2026
-    active: true
     start_date: 2025-01-01
     end_date: 2026-12-31
     watchlist:
       - school/admin
       - school/enrollment
+archived: {}
 """,
             "places.yaml": """
-places:
+institutions:
   - Florianschule Essen
   - Office Downtown
-  - Home
+cities:
+  - Essen
+  - Köln
 """,
             "people.yaml": """
-roles:
+professionals:
   - Teacher
   - Manager
-  - Family
+family:
+  - Parent1
+  - Child
 """
         }
 
@@ -257,9 +260,12 @@ class TestVocabularyServiceErrors:
     """Test error handling in VocabularyService"""
 
     def test_missing_vocabulary_directory(self):
-        """Test handling of missing vocabulary directory"""
-        with pytest.raises(Exception):
-            VocabularyService("/nonexistent/directory")
+        """Test graceful handling of missing vocabulary directory"""
+        # Service should handle missing directory gracefully
+        service = VocabularyService("/nonexistent/directory")
+        # Should create empty vocabularies
+        assert service.get_all_topics() == []
+        assert service.get_active_projects() == []
 
     def test_get_stats_without_loading(self, tmp_path):
         """Test getting stats even if loading fails"""

@@ -85,7 +85,9 @@
       "Bash(tree:*)",
       "Bash(pytest:*)",
       "Bash(awk:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Read(///**)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
