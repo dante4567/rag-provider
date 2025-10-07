@@ -137,11 +137,16 @@ class VectorService:
 
             if results and results["ids"] and len(results["ids"]) > 0:
                 for i in range(len(results["ids"][0])):
+                    # Convert distance to similarity and clamp to [0, 1] range
+                    # ChromaDB distances can vary based on distance metric used
+                    distance = results["distances"][0][i]
+                    relevance_score = max(0.0, min(1.0, 1.0 - distance))
+
                     formatted_results.append({
                         "chunk_id": results["ids"][0][i],
                         "content": results["documents"][0][i],
                         "metadata": results["metadatas"][0][i],
-                        "relevance_score": 1.0 - results["distances"][0][i],  # Convert distance to similarity
+                        "relevance_score": relevance_score,
                     })
 
             logger.info(f"Search for '{query[:50]}...' returned {len(formatted_results)} results")

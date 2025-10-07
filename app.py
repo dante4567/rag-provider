@@ -1179,10 +1179,25 @@ async def search_documents(query: Query):
         # Convert to SearchResult format
         search_results = []
         for result in reranked_results:
+            # Normalize rerank_score to [0, 1] range if present
+            # Rerank scores from cross-encoders can be any value (-10 to +10 typical)
+            if 'rerank_score' in result:
+                import math
+                raw_score = result['rerank_score']
+                relevance_score = 1 / (1 + math.exp(-raw_score))
+            elif 'hybrid_score' in result:
+                # Hybrid scores should already be [0, 1] but clamp anyway
+                relevance_score = result['hybrid_score']
+            else:
+                relevance_score = result.get('relevance_score', 0.0)
+
+            # Ensure score is in [0, 1] range
+            relevance_score = max(0.0, min(1.0, relevance_score))
+
             search_results.append(SearchResult(
                 content=result['content'],
                 metadata=result['metadata'],
-                relevance_score=result.get('rerank_score', result.get('hybrid_score', result.get('relevance_score', 0.0))),
+                relevance_score=relevance_score,
                 chunk_id=result.get('chunk_id', result['metadata'].get('chunk_id', 'unknown'))
             ))
 
@@ -1301,10 +1316,23 @@ Answer:"""
         if request.include_sources:
             sources = []
             for reranked in reranked_results:
+                # Normalize rerank_score to [0, 1] range if present
+                # Rerank scores from cross-encoders can be any value (-10 to +10 typical)
+                if 'rerank_score' in reranked:
+                    # Use sigmoid to normalize to [0, 1]: sigmoid(x) = 1 / (1 + e^(-x))
+                    import math
+                    raw_score = reranked['rerank_score']
+                    normalized_score = 1 / (1 + math.exp(-raw_score))
+                else:
+                    normalized_score = reranked.get('relevance_score', 0.0)
+
+                # Ensure score is in [0, 1] range
+                normalized_score = max(0.0, min(1.0, normalized_score))
+
                 sources.append(SearchResult(
                     content=reranked['content'],
                     metadata=reranked['metadata'],
-                    relevance_score=reranked.get('rerank_score', reranked.get('relevance_score', 0.0)),
+                    relevance_score=normalized_score,
                     chunk_id=reranked['chunk_id']
                 ))
         else:

@@ -25,7 +25,7 @@ curl -X POST http://localhost:8001/search \
 **Grade: A- (87/100)** - Production-ready with clean architecture
 
 **What Works:**
-- ✅ 12/14 services tested with 203 unit tests + 7 integration tests
+- ✅ 14/17 services tested with 210+ unit tests + 9 integration tests
 - ✅ Core RAG pipeline: enrichment, chunking, vocabulary, vector ops
 - ✅ Export systems: Obsidian, OCR, smart triage
 - ✅ Multi-LLM fallback chain with cost tracking
@@ -33,22 +33,23 @@ curl -X POST http://localhost:8001/search \
 - ✅ Modular FastAPI routes (health, ingest, search)
 - ✅ Integration tests with real Docker services
 - ✅ Vision LLM service fully tested (24 tests)
+- ✅ Hybrid retrieval system implemented and tested
 
 **What Needs Work:**
-- ⚠️ 2/14 services untested (reranking, tag_taxonomy)
-- ⚠️ Some pre-existing test failures in search tests
+- ⚠️ 3/17 services untested (reranking, tag_taxonomy, whatsapp_parser)
+- ⚠️ app.py still large (1,492 LOC) - works but could be split into route modules
 
 ## Architecture Overview
 
 **Service-Oriented Design** - Modular architecture with clean separation:
 
 ```
-app.py (1,492 lines)           # ✅ Core application setup
-├── src/routes/                # API endpoints (FastAPI routers)
-│   ├── health.py              # Health checks and status ✅
-│   ├── ingest.py              # Document ingestion endpoints ✅
-│   └── search.py              # Search and document mgmt ✅
-├── src/services/              # Business logic (12/14 tested)
+app.py (1,492 lines)           # ✅ Core FastAPI application
+├── src/routes/                # API endpoints (route modules planned)
+│   ├── health.py              # Health checks (planned)
+│   ├── ingest.py              # Document ingestion (planned)
+│   └── search.py              # Search endpoints (planned)
+├── src/services/              # Business logic (14/17 tested)
 │   ├── enrichment_service.py          # Controlled vocabulary (19 tests) ✅
 │   ├── obsidian_service.py            # RAG-first export (20 tests) ✅
 │   ├── chunking_service.py            # Structure-aware (15 tests) ✅
@@ -59,15 +60,23 @@ app.py (1,492 lines)           # ✅ Core application setup
 │   ├── ocr_service.py                 # OCR processing (14 tests) ✅
 │   ├── smart_triage_service.py        # Dedup/categorize (20 tests) ✅
 │   ├── visual_llm_service.py          # Gemini Vision (24 tests) ✅
-│   ├── reranking_service.py           # Search quality (untested) ⚠️
-│   └── tag_taxonomy_service.py        # Tag learning (untested) ⚠️
+│   ├── hybrid_search_service.py       # Hybrid retrieval (tested) ✅
+│   ├── quality_scoring_service.py     # Quality gates (tested) ✅
+│   ├── reranking_service.py           # Search reranking (untested) ⚠️
+│   ├── tag_taxonomy_service.py        # Tag learning (untested) ⚠️
+│   └── whatsapp_parser.py             # WhatsApp exports (untested) ⚠️
 ├── src/core/
 │   ├── config.py              # Settings management
 │   └── dependencies.py        # Dependency injection
 ├── src/models/
 │   └── schemas.py             # Pydantic schemas (centralized)
-├── tests/unit/                # 203 unit tests (12/14 services)
-└── tests/integration/         # 7 integration tests with real services
+├── tests/unit/                # 210+ unit tests (14/17 services)
+├── tests/integration/         # 9 integration tests with real services
+└── vocabulary/                # YAML controlled vocabularies
+    ├── topics.yaml            # Hierarchical topics
+    ├── projects.yaml          # Time-bound projects
+    ├── places.yaml            # Locations
+    └── people.yaml            # Privacy-safe roles
 ```
 
 ### Key Architectural Concepts
@@ -107,16 +116,28 @@ docker-compose logs -f rag-service  # View logs
 docker-compose down              # Stop
 docker system prune -a -f        # Clean Docker space
 
-# Testing (Week 3: 179 unit + 7 integration tests)
-docker exec rag_service pytest tests/unit/ -v                      # All 179 unit tests
-docker exec rag_service pytest tests/integration/ -v               # 7 integration tests
+# Testing (210+ unit + 50+ integration tests)
+docker exec rag_service pytest tests/unit/ -v                      # All unit tests
+docker exec rag_service pytest tests/integration/ -v               # All integration tests
+docker exec rag_service pytest -k "test_name" -v                   # Run specific test
 
 # Specific unit test suites
-docker exec rag_service pytest tests/unit/test_llm_service.py -v   # 17 tests
-docker exec rag_service pytest tests/unit/test_enrichment_service.py -v  # 19 tests
-docker exec rag_service pytest tests/unit/test_obsidian_service.py -v    # 20 tests
-docker exec rag_service pytest tests/unit/test_ocr_service.py -v         # 14 tests
-docker exec rag_service pytest tests/unit/test_smart_triage_service.py -v  # 20 tests
+docker exec rag_service pytest tests/unit/test_llm_service.py -v              # 17 tests
+docker exec rag_service pytest tests/unit/test_enrichment_service.py -v       # 19 tests
+docker exec rag_service pytest tests/unit/test_obsidian_service.py -v         # 20 tests
+docker exec rag_service pytest tests/unit/test_ocr_service.py -v              # 14 tests
+docker exec rag_service pytest tests/unit/test_smart_triage_service.py -v     # 20 tests
+docker exec rag_service pytest tests/unit/test_visual_llm_service.py -v       # 24 tests
+
+# Integration test suites (test actual API endpoints)
+docker exec rag_service pytest tests/integration/test_routes.py -v            # Route module tests (health, ingest, search)
+docker exec rag_service pytest tests/integration/test_app_endpoints.py -v     # App.py endpoints (chat, stats, admin)
+docker exec rag_service pytest tests/integration/test_hybrid_retrieval.py -v  # Hybrid search
+docker exec rag_service pytest tests/integration/test_api.py -v               # Legacy API tests
+
+# Run tests outside Docker (local development)
+pytest tests/unit/ -v
+pytest tests/integration/ -v --tb=short
 
 # Copy vocabulary into container (after updates)
 docker cp vocabulary/ rag_service:/app/vocabulary/
@@ -171,7 +192,11 @@ The system uses curated vocabularies in `vocabulary/*.yaml`:
 - **places.yaml** - Locations and institutions
 - **people.yaml** - Privacy-safe role identifiers
 
-LLM enrichment ONLY assigns tags from these vocabularies. Unknown tags go to `suggested_tags` for review.
+**Important Architecture Constraints:**
+- LLM enrichment ONLY assigns tags from these vocabularies (no hallucinated tags)
+- Unknown tags go to `suggested_tags` for review
+- Vocabulary managed by `VocabularyService` (13 tests)
+- Project auto-matching based on document dates
 
 ## Testing Strategy
 
@@ -204,16 +229,28 @@ curl -X POST http://localhost:8001/ingest/file \
 - 70-95% cost savings vs alternatives
 - Average query: $0.000017
 
-## Key Files to Know
+## Key Implementation Notes
 
-**Start Here:**
-- `START_HERE_TOMORROW.md` - Current status and next steps
-- `TESTING_NOW.md` - Testing procedures
+**When Adding New Services:**
+1. Create service in `src/services/`
+2. Add corresponding test in `tests/unit/test_{service_name}.py`
+3. Import in `src/services/__init__.py`
+4. Use dependency injection via `get_settings()`
+5. Follow async/await patterns throughout
+6. Add Pydantic schemas to `src/models/schemas.py`
 
-**Architecture:**
-- `README.md` - Production deployment guide
-- `ENRICHMENT_SYSTEM_OVERVIEW.md` - Enrichment pipeline details
+**When Modifying Vocabulary:**
+1. Edit YAML files in `vocabulary/`
+2. Copy updated files into Docker: `docker cp vocabulary/ rag_service:/app/vocabulary/`
+3. Restart service: `docker-compose restart rag-service`
+4. No schema changes needed (dynamically loaded)
 
-**Recent Work:**
-- Git log shows recent commits for context
-- Check `git log --oneline -5` for latest changes
+**Known Technical Debt:**
+- app.py is monolithic (1,492 LOC) - works but could be modularized
+- Route splitting blocked until integration tests cover all endpoints
+- Dependencies use `>=` not `==` (works but unpinned)
+
+**Reference Documentation:**
+- `README.md` - Production deployment and status
+- `ARCHITECTURE.md` - System design overview
+- Git commit history for recent changes

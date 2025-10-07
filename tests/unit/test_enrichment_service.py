@@ -46,9 +46,12 @@ class TestEnrichmentService:
             "Florianschule Essen",
             "Office Downtown"
         ]
+        vocab.get_all_people.return_value = []
         vocab.is_valid_topic.return_value = True
-        vocab.is_valid_project.return_value = True
         vocab.is_valid_place.return_value = True
+        vocab.is_valid_person.return_value = True
+        vocab.track_suggestion.return_value = None
+        vocab.validate_metadata.return_value = ([], [])
         return vocab
 
     @pytest.fixture
@@ -265,9 +268,12 @@ class TestEnrichmentServiceIntegration:
         vocab.get_all_topics.return_value = ["school/admin", "work/meetings"]
         vocab.get_active_projects.return_value = ["school-2026"]
         vocab.get_all_places.return_value = ["Florianschule Essen"]
+        vocab.get_all_people.return_value = []
         vocab.is_valid_topic.return_value = True
-        vocab.is_valid_project.return_value = True
         vocab.is_valid_place.return_value = True
+        vocab.is_valid_person.return_value = True
+        vocab.track_suggestion.return_value = None
+        vocab.validate_metadata.return_value = ([], [])
         return vocab
 
     @pytest.mark.asyncio
