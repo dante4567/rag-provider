@@ -240,6 +240,32 @@ class ObsidianService:
 
         return f"---\n{yaml_str}---\n\n"
 
+    def _strip_frontmatter(self, content: str) -> str:
+        """
+        Remove YAML frontmatter from content to avoid nesting conflicts
+
+        If content starts with ---, remove everything until closing ---
+        """
+        if not content.strip().startswith('---'):
+            return content
+
+        lines = content.split('\n')
+        if len(lines) < 3:
+            return content
+
+        # Find closing ---
+        closing_idx = None
+        for i in range(1, len(lines)):
+            if lines[i].strip() == '---':
+                closing_idx = i
+                break
+
+        if closing_idx:
+            # Return content after frontmatter + newline separator
+            return '\n'.join(lines[closing_idx + 1:]).lstrip('\n')
+
+        return content
+
     def build_xref_block(
         self,
         projects: List[str],
@@ -251,6 +277,7 @@ class ObsidianService:
         Build wiki-link xref block for Obsidian graph edges
 
         Wrapped in <!-- RAG:IGNORE --> so chunker excludes it
+        Uses sanitized entity names for valid Obsidian links
         """
         if not any([projects, places, people, organizations]):
             return ""
@@ -260,21 +287,25 @@ class ObsidianService:
         lines.append("## Xref")
         lines.append("")
 
-        # Project links
+        # Project links (with display text)
         for project in projects:
-            lines.append(f"[[project:{project}]] ")
+            safe_name = slugify(project) or project.replace(' ', '-')
+            lines.append(f"[[project:{safe_name}|{project}]] ")
 
-        # Place links
+        # Place links (with display text)
         for place in places:
-            lines.append(f"[[place:{place}]] ")
+            safe_name = slugify(place) or place.replace(' ', '-')
+            lines.append(f"[[place:{safe_name}|{place}]] ")
 
-        # People links
+        # People links (with display text)
         for person in people:
-            lines.append(f"[[person:{person}]] ")
+            safe_name = slugify(person) or person.replace(' ', '-')
+            lines.append(f"[[person:{safe_name}|{person}]] ")
 
-        # Organization links
+        # Organization links (with display text)
         for org in organizations:
-            lines.append(f"[[org:{org}]] ")
+            safe_name = slugify(org) or org.replace(' ', '-')
+            lines.append(f"[[org:{safe_name}|{org}]] ")
 
         lines.append("")
         lines.append("<!-- RAG:IGNORE-END -->")
@@ -325,8 +356,10 @@ class ObsidianService:
             body_parts.append("")
 
         # Evidence/Excerpts (main content)
+        # Strip frontmatter to avoid nesting conflicts
+        clean_content = self._strip_frontmatter(content)
         body_parts.append("## Evidence / Excerpts\n")
-        body_parts.append(content)
+        body_parts.append(clean_content)
         body_parts.append("")
 
         # Outcomes/Decisions
