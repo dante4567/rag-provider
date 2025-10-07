@@ -369,11 +369,17 @@ class TestEnrichmentVersioning:
 
     def test_enrichment_version_present(self):
         """All enriched docs should have version metadata"""
-        content = "Simple test document for version checking."
+        import time
+        unique_id = str(int(time.time() * 1000))
+        content = f"""This is a test document {unique_id} for verifying enrichment version tracking.
+
+The enrichment system should add version metadata to all processed documents.
+This helps track which version of enrichment was used for each document.
+Version 2.0 includes controlled vocabulary and improved entity extraction."""
 
         response = requests.post(
             f"{BASE_URL}/ingest",
-            json={"content": content, "filename": "version_test.txt"},
+            json={"content": content, "filename": f"version_test_{unique_id}.txt"},
             timeout=30
         )
         assert response.status_code == 200
@@ -381,11 +387,20 @@ class TestEnrichmentVersioning:
         result = response.json()
         metadata = result.get("metadata", {})
 
+        # Debug: print what we got
+        print(f"\n=== DEBUG ===")
+        print(f"Response success: {result.get('success')}")
+        print(f"Chunks: {result.get('chunks')}")
+        print(f"Metadata keys: {list(metadata.keys())[:15]}")
+        print(f"Enrichment version: '{metadata.get('enrichment_version', 'NOT_FOUND')}'")
+        print(f"Gated: {metadata.get('gated', False)}")
+        print(f"=============\n")
+
         # Should have enrichment version
         version = metadata.get("enrichment_version", "")
 
         # Version should exist and be current (2.0+)
-        assert version != "", "Enrichment version should be present"
+        assert version != "", f"Enrichment version should be present. Got metadata keys: {list(metadata.keys())[:10]}"
 
         if version:
             # Should be version 2.0 or higher

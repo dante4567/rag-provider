@@ -700,17 +700,30 @@ class RAGService:
                 # Check quality gate
                 if not quality_scores["do_index"]:
                     logger.warning(f"   ⛔ Document GATED (not indexed): {quality_scores.get('gate_reason', 'Failed quality threshold')}")
+
+                    # Create minimal ObsidianMetadata for gated documents
+                    gated_metadata = ObsidianMetadata(
+                        title=enriched_metadata.get("title", filename or f"document_{doc_id}"),
+                        keywords=Keywords(primary=[], secondary=[]),
+                        entities=Entities(people=[], organizations=[], locations=[]),
+                        document_type=document_type,
+                        source=filename or "",
+                        created_at=datetime.now()
+                    )
+                    gated_response_metadata = gated_metadata.model_dump() if hasattr(gated_metadata, 'model_dump') else gated_metadata.dict()
+                    gated_response_metadata.update({
+                        "gated": True,
+                        "gate_reason": quality_scores.get("gate_reason"),
+                        "quality_score": quality_scores["quality_score"],
+                        "signalness": quality_scores["signalness"],
+                        "enrichment_version": enriched_metadata.get("enrichment_version", "2.0")
+                    })
+
                     return IngestResponse(
                         success=True,
                         doc_id=doc_id,
                         chunks=0,
-                        metadata={
-                            "gated": True,
-                            "gate_reason": quality_scores.get("gate_reason"),
-                            "quality_score": quality_scores["quality_score"],
-                            "signalness": quality_scores["signalness"],
-                            "filename": str(filename or f"document_{doc_id}")
-                        },
+                        metadata=gated_response_metadata,
                         obsidian_path=None
                     )
                 else:
@@ -885,11 +898,15 @@ class RAGService:
 
             logger.info(f"✅ Processed document {doc_id}: {len(chunks)} chunks, Obsidian: {bool(obsidian_path)}")
 
+            # Convert obsidian_metadata to dict and add enrichment_version
+            response_metadata = obsidian_metadata.model_dump() if hasattr(obsidian_metadata, 'model_dump') else obsidian_metadata.dict()
+            response_metadata["enrichment_version"] = enriched_metadata.get("enrichment_version", "2.0")
+
             return IngestResponse(
                 success=True,
                 doc_id=doc_id,
                 chunks=len(chunks),
-                metadata=obsidian_metadata,
+                metadata=response_metadata,
                 obsidian_path=obsidian_path
             )
 

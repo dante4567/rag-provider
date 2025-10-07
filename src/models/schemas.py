@@ -91,6 +91,7 @@ class ObsidianMetadata(BaseModel):
     document_type: DocumentType = Field(default=DocumentType.text)
     source: str = Field(default="", description="Original file path")
     created_at: datetime = Field(default_factory=datetime.now)
+    enrichment_version: Optional[str] = Field(default="2.0", description="Enrichment system version")
 
 
 # ===== Request Models =====
