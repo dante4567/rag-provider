@@ -1134,6 +1134,71 @@ async def list_available_models():
         "providers": list(llm_clients.keys())
     }
 
+@app.post("/search", response_model=SearchResponse)
+async def search_documents(query: Query):
+    """
+    Hybrid search endpoint - combines BM25 + dense embeddings + MMR + reranking
+
+    Uses the full hybrid retrieval pipeline:
+    1. BM25 keyword search (exact term matching)
+    2. Dense vector search (semantic similarity)
+    3. Score fusion with weighted combination
+    4. MMR for diversity
+    5. Cross-encoder reranking for final ordering
+
+    This is the recommended search endpoint for best results.
+    """
+    start_time = time.time()
+
+    try:
+        # Import reranking service
+        from src.services.reranking_service import get_reranking_service
+
+        # Use hybrid search via RAG service
+        rag_service = RAGService()
+
+        # Get hybrid search results (BM25 + dense + MMR)
+        # Fetch more results for reranking
+        hybrid_results = await rag_service.vector_service.hybrid_search(
+            query=query.text,
+            top_k=query.top_k * 2,  # Get 2x for reranking
+            filter=query.filter,
+            apply_mmr=True  # Always use MMR for diversity
+        )
+
+        # Apply cross-encoder reranking for final ordering
+        reranker = get_reranking_service()
+        reranked_results = reranker.rerank(
+            query=query.text,
+            results=hybrid_results,
+            top_k=query.top_k
+        )
+
+        search_time_ms = (time.time() - start_time) * 1000
+
+        # Convert to SearchResult format
+        search_results = []
+        for result in reranked_results:
+            search_results.append(SearchResult(
+                content=result['content'],
+                metadata=result['metadata'],
+                relevance_score=result.get('rerank_score', result.get('hybrid_score', result.get('relevance_score', 0.0))),
+                chunk_id=result.get('chunk_id', result['metadata'].get('chunk_id', 'unknown'))
+            ))
+
+        logger.info(f"🔀 Hybrid search completed: {len(search_results)} results in {search_time_ms:.2f}ms")
+
+        return SearchResponse(
+            query=query.text,
+            results=search_results,
+            total_results=len(search_results),
+            search_time_ms=search_time_ms
+        )
+
+    except Exception as e:
+        logger.error(f"Hybrid search failed for query '{query.text}': {e}")
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat_with_rag(request: ChatRequest):
     """Chat endpoint with RAG functionality - combines search with LLM-powered answer generation"""

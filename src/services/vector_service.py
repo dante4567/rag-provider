@@ -10,6 +10,7 @@ from datetime import datetime
 import chromadb
 
 from src.core.config import Settings
+from src.services.hybrid_search_service import get_hybrid_search_service
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ class VectorService:
         """
         self.collection = collection
         self.settings = settings
+        self.hybrid_search_service = get_hybrid_search_service()
 
     async def add_document(
         self,
@@ -94,7 +96,10 @@ class VectorService:
                     metadatas=chunk_metadatas
                 )
 
-            logger.info(f"Added {len(chunks)} chunks for document {doc_id}")
+            # Add to BM25 index for hybrid search
+            self.hybrid_search_service.add_documents(doc_id, chunk_texts, metadata)
+
+            logger.info(f"Added {len(chunks)} chunks for document {doc_id} (ChromaDB + BM25)")
             return len(chunks)
 
         except Exception as e:
@@ -144,6 +149,50 @@ class VectorService:
 
         except Exception as e:
             logger.error(f"Search failed for query '{query}': {e}")
+            raise
+
+    async def hybrid_search(
+        self,
+        query: str,
+        top_k: int = 5,
+        filter: Optional[Dict[str, Any]] = None,
+        apply_mmr: bool = True
+    ) -> List[Dict[str, Any]]:
+        """
+        Hybrid search combining BM25 + dense embeddings
+
+        Uses:
+        1. Dense vector search (semantic similarity)
+        2. BM25 search (keyword matching)
+        3. Score fusion (weighted combination)
+        4. MMR for diversity (optional)
+
+        Args:
+            query: Search query text
+            top_k: Number of results to return
+            filter: Metadata filters (optional)
+            apply_mmr: Whether to apply MMR for diversity
+
+        Returns:
+            List of hybrid search results
+        """
+        try:
+            # First, get dense search results (fetch more for better fusion)
+            dense_results = await self.search(query, top_k=top_k * 3, filter=filter)
+
+            # Use hybrid search service to fuse with BM25
+            hybrid_results = self.hybrid_search_service.hybrid_search(
+                query=query,
+                dense_results=dense_results,
+                top_k=top_k,
+                apply_mmr=apply_mmr
+            )
+
+            logger.info(f"🔀 Hybrid search for '{query[:50]}...' returned {len(hybrid_results)} results")
+            return hybrid_results
+
+        except Exception as e:
+            logger.error(f"Hybrid search failed for query '{query}': {e}")
             raise
 
     async def delete_document(self, doc_id: str) -> bool:
