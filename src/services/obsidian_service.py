@@ -171,6 +171,7 @@ class ObsidianService:
             'people': people if people else [],
             'places': places if places else [],
             'projects': projects if projects else [],
+            'organizations': organizations if organizations else [],
             'topics': topics if topics else [],
             'created_at': created_at.strftime('%Y-%m-%d'),
             'ingested_at': ingested_at.strftime('%Y-%m-%d'),
@@ -348,12 +349,22 @@ class ObsidianService:
 
         stub_yaml = yaml.dump(stub_frontmatter, default_flow_style=False, allow_unicode=True)
 
+        # Map entity types to correct frontmatter field names
+        field_name_map = {
+            'person': 'people',
+            'project': 'projects',
+            'place': 'places',
+            'org': 'organizations',
+            'day': 'days'
+        }
+        field_name = field_name_map.get(entity_type, f"{entity_type}s")
+
         # Build stub body with Dataview query
         stub_body = f"""# {name}
 
 ```dataview
 LIST FROM "10_normalized_md"
-WHERE contains({entity_type}s, "{name}")
+WHERE contains({field_name}, "{name}")
 SORT created_at DESC
 ```
 """

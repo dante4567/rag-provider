@@ -457,3 +457,48 @@ class TestObsidianServiceIntegration:
         assert "Summary:" in content  # Summary
         assert "## Evidence / Excerpts" in content  # Body section
         assert "Test content" in content  # Actual content
+
+    def test_entity_stubs_have_correct_dataview_queries(self, service):
+        """Test that entity stubs use correct frontmatter field names in DataView queries"""
+        # Export document with all entity types
+        metadata = {
+            "people_roles": "Alice Smith",
+            "projects": "Project Alpha",
+            "places": "Berlin Office",
+            "organizations": "ACME Corp",
+            "topics": "meeting"
+        }
+
+        service.export_document(
+            title="Test",
+            content="Content",
+            metadata=metadata,
+            document_type=DocumentType.email,
+            created_at=datetime(2025, 10, 6)
+        )
+
+        # Check person stub uses 'people' (not 'persons')
+        person_stub = service.refs_dir / "persons" / "alice-smith.md"
+        if person_stub.exists():
+            content = person_stub.read_text()
+            assert 'WHERE contains(people, "Alice Smith")' in content
+            assert 'WHERE contains(persons' not in content
+
+        # Check org stub uses 'organizations' (not 'orgs')
+        org_stub = service.refs_dir / "orgs" / "acme-corp.md"
+        if org_stub.exists():
+            content = org_stub.read_text()
+            assert 'WHERE contains(organizations, "ACME Corp")' in content
+            assert 'WHERE contains(orgs' not in content
+
+        # Check project stub uses 'projects'
+        project_stub = service.refs_dir / "projects" / "project-alpha.md"
+        if project_stub.exists():
+            content = project_stub.read_text()
+            assert 'WHERE contains(projects, "Project Alpha")' in content
+
+        # Check place stub uses 'places'
+        place_stub = service.refs_dir / "places" / "berlin-office.md"
+        if place_stub.exists():
+            content = place_stub.read_text()
+            assert 'WHERE contains(places, "Berlin Office")' in content

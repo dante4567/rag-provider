@@ -20,66 +20,73 @@ curl -X POST http://localhost:8001/search \
   -d '{"text": "query", "top_k": 5}'
 ```
 
-## Current Status (Oct 7, 2025 - Blueprint Features Complete ✅)
+## Current Status (Oct 7, 2025 - After Cleanup & Optimization)
 
-**Grade: A+ (96/100)** - Production-ready, exceeds blueprint specifications
+**Grade: B- (73/100)** - Good architecture, needs runtime verification
 
 **What Works:**
-- ✅ 17/17 services tested with 280+ unit tests + 7 integration tests (100% service coverage)
+- ✅ 16/19 services tested with 318 unit tests + 142 integration tests (84% service coverage)
 - ✅ Core RAG pipeline: enrichment, chunking, vocabulary, vector ops
 - ✅ Export systems: Obsidian, OCR, smart triage, email threading
 - ✅ Multi-LLM fallback chain with cost tracking
-- ✅ Docker deployment with pinned dependencies
-- ✅ Modular FastAPI routes (6 modules: health, ingest, search, stats, chat, admin)
-- ✅ Integration tests with real Docker services (7 tests, 100% pass)
-- ✅ Vision LLM service fully tested (24 tests)
-- ✅ Hybrid retrieval + reranking fully implemented
+- ✅ Docker deployment with pinned dependencies (==)
+- ✅ Modular FastAPI routes (9 modules: health, ingest, search, stats, chat, admin, email_threading, evaluation, monitoring)
+- ✅ Optimized Dockerfile (split pip install for faster builds)
 - ✅ Email threading (Blueprint feature 1/3) ✅
 - ✅ Gold query evaluation system (Blueprint feature 2/3) ✅
 - ✅ Drift detection dashboard (Blueprint feature 3/3) ✅
 
-**Test Results:**
-- 181/203 unit tests passing (89%)
-- 7/7 integration tests passing (100%)
-- 22 failing tests are non-blocking (LLM mocks, schema deprecations)
+**Missing Tests (3 services):**
+- ❌ hybrid_search_service.py
+- ❌ quality_scoring_service.py
+- ❌ text_splitter.py
+
+**Documentation Cleanup:**
+- 402 → 12 essential markdown files (97% reduction)
 
 ## Architecture Overview
 
 **Service-Oriented Design** - Modular architecture with clean separation:
 
 ```
-app.py (1,268 lines)           # ✅ Modular FastAPI application (-15%)
-├── src/routes/                # API endpoints (6 focused modules)
+app.py (1,356 lines)           # ✅ Modular FastAPI application
+├── src/routes/                # API endpoints (9 modules)
 │   ├── health.py              # Health checks ✅
 │   ├── ingest.py              # Document ingestion ✅
 │   ├── search.py              # Hybrid search + docs ✅
 │   ├── stats.py               # Monitoring & LLM testing ✅
 │   ├── chat.py                # RAG chat with reranking ✅
-│   └── admin.py               # Cleanup endpoints ✅
-├── src/services/              # Business logic (17/17 tested - 100%)
-│   ├── enrichment_service.py          # Controlled vocabulary (19 tests) ✅
-│   ├── obsidian_service.py            # RAG-first export (20 tests) ✅
-│   ├── chunking_service.py            # Structure-aware (15 tests) ✅
-│   ├── vocabulary_service.py          # Controlled tags (14 tests) ✅
-│   ├── document_service.py            # 13+ formats (15 tests) ✅
+│   ├── admin.py               # Cleanup endpoints ✅
+│   ├── email_threading.py     # Email thread processing ✅
+│   ├── evaluation.py          # Gold query evaluation ✅
+│   └── monitoring.py          # Drift detection ✅
+├── src/services/              # Business logic (19 total, 16 tested - 84%)
+│   ├── enrichment_service.py          # Controlled vocabulary (20 tests) ✅
+│   ├── obsidian_service.py            # RAG-first export (tests exist) ✅
+│   ├── chunking_service.py            # Structure-aware (tests exist) ✅
+│   ├── vocabulary_service.py          # Controlled tags (tests exist) ✅
+│   ├── document_service.py            # 13+ formats (tests exist) ✅
 │   ├── llm_service.py                 # Multi-provider (17 tests) ✅
-│   ├── vector_service.py              # ChromaDB (8 tests) ✅
-│   ├── ocr_service.py                 # OCR processing (14 tests) ✅
-│   ├── smart_triage_service.py        # Dedup/categorize (20 tests) ✅
-│   ├── visual_llm_service.py          # Gemini Vision (24 tests) ✅
-│   ├── reranking_service.py           # Cross-encoder reranking (21 tests) ✅
-│   ├── tag_taxonomy_service.py        # Evolving tag hierarchy (comprehensive) ✅
-│   ├── whatsapp_parser.py             # WhatsApp exports (comprehensive) ✅
-│   ├── email_threading_service.py     # Email threading (30+ tests) ✅ NEW
-│   ├── evaluation_service.py          # Gold query evaluation (40+ tests) ✅ NEW
-│   └── drift_monitor_service.py       # Drift detection (30+ tests) ✅ NEW
+│   ├── vector_service.py              # ChromaDB (tests exist) ✅
+│   ├── ocr_service.py                 # OCR processing (tests exist) ✅
+│   ├── smart_triage_service.py        # Dedup/categorize (tests exist) ✅
+│   ├── visual_llm_service.py          # Gemini Vision (tests exist) ✅
+│   ├── reranking_service.py           # Cross-encoder reranking (tests exist) ✅
+│   ├── tag_taxonomy_service.py        # Evolving tag hierarchy (tests exist) ✅
+│   ├── whatsapp_parser.py             # WhatsApp exports (tests exist) ✅
+│   ├── email_threading_service.py     # Email threading (27 tests) ✅
+│   ├── evaluation_service.py          # Gold query evaluation (tests exist) ✅
+│   ├── drift_monitor_service.py       # Drift detection (tests exist) ✅
+│   ├── hybrid_search_service.py       # Hybrid retrieval ❌ NO TESTS
+│   ├── quality_scoring_service.py     # Quality gates ❌ NO TESTS
+│   └── text_splitter.py               # Text splitting ❌ NO TESTS
 ├── src/core/
 │   ├── config.py              # Settings management
 │   └── dependencies.py        # Dependency injection
 ├── src/models/
 │   └── schemas.py             # Pydantic schemas (centralized)
-├── tests/unit/                # 280+ unit tests (17/17 services - 100%)
-├── tests/integration/         # 7 integration tests (100% pass)
+├── tests/unit/                # 318 unit tests (16/19 services - 84%)
+├── tests/integration/         # 142 integration test functions
 ├── vocabulary/                # YAML controlled vocabularies
 │   ├── topics.yaml            # Hierarchical topics
 │   ├── projects.yaml          # Time-bound projects
