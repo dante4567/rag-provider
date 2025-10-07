@@ -408,19 +408,34 @@ class DocumentService:
         Returns:
             Cleaned text
         """
+        import re
+
         # Remove null bytes
         content = content.replace('\x00', '')
 
         # Normalize whitespace
         lines = content.split('\n')
         cleaned_lines = []
+        previous_was_empty = False
 
         for line in lines:
             # Strip trailing whitespace
             line = line.rstrip()
 
-            # Skip lines with only whitespace
-            if line.strip():
+            # Collapse multiple spaces to single space
+            line = re.sub(r' +', ' ', line)
+
+            # Handle empty lines (preserve one for paragraph separation)
+            if not line.strip():
+                if not previous_was_empty:
+                    cleaned_lines.append('')
+                    previous_was_empty = True
+            else:
                 cleaned_lines.append(line)
+                previous_was_empty = False
+
+        # Remove trailing empty lines
+        while cleaned_lines and not cleaned_lines[-1].strip():
+            cleaned_lines.pop()
 
         return '\n'.join(cleaned_lines)

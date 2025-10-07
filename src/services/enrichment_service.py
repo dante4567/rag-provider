@@ -89,9 +89,12 @@ class EnrichmentService:
         heading_match_alt = re.search(r'#\s+([^#]+?)(?:\s*#{2,}|$)', content)
         if heading_match_alt:
             title = heading_match_alt.group(1).strip()
-            # Take first reasonable chunk of words
-            words = title.split()[:20]
-            if 3 <= len(words) <= 20:
+            # Take first reasonable chunk of words (< 20, not <= 20)
+            words = title.split()
+            if 3 <= len(words) < 20:
+                # Limit to first 15 words if longer
+                if len(words) > 15:
+                    words = words[:15]
                 return self.sanitize_title(' '.join(words))
 
         # Strategy 2: Title: field
@@ -105,7 +108,8 @@ class EnrichmentService:
         sentences = re.split(r'[.!?]\s+', content[:500])
         for sentence in sentences:
             words = sentence.strip().split()
-            if 5 <= len(words) <= 15:
+            # Require 7+ words to avoid using fragments like "a b c d e f g"
+            if 7 <= len(words) <= 15:
                 return self.sanitize_title(sentence.strip())
 
         # Strategy 4: Clean up filename
@@ -122,8 +126,15 @@ class EnrichmentService:
         # Remove extra whitespace
         sanitized = re.sub(r'\s+', ' ', title).strip()
 
-        # Remove special characters that cause issues
+        # Remove special characters that cause issues (but keep content inside brackets)
+        # First extract content from brackets/parens
+        sanitized = re.sub(r'[\[\(]([^\]\)]+)[\]\)]', r'\1', sanitized)
+        # Then remove remaining special chars
         sanitized = re.sub(r'[<>:"/\\|?*]', '', sanitized)
+
+        # Clean up extra whitespace and dashes from removals
+        sanitized = re.sub(r'\s+', ' ', sanitized).strip()
+        sanitized = re.sub(r'^[-:\s]+|[-:\s]+$', '', sanitized)
 
         # Limit length
         if len(sanitized) > max_length:

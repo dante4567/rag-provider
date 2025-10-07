@@ -87,7 +87,9 @@
       "Bash(awk:*)",
       "Bash(git log:*)",
       "Read(///**)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(for i in {1..35})",
+      "Bash(do curl -s http://localhost:8001/search -X POST -H \"Content-Type: application/json\" -d '{\"\"\"\"text\"\"\"\":\"\"\"\"test\"\"\"\",\"\"\"\"top_k\"\"\"\":1}' -o /dev/null -w \"Request $i: %{http_code}\\n\")"
     ],
     "deny": [],
     "ask": []

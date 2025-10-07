@@ -12,6 +12,12 @@ import hashlib
 import json
 import logging
 import os
+
+# Initialize structured logging FIRST
+from src.core.logging_config import init_app_logging, get_logger, set_request_id, get_request_id
+from src.core.rate_limiting import get_default_limiter, get_api_key_limiter
+init_app_logging()
+logger = get_logger(__name__)
 import uuid
 import asyncio
 import aiofiles
@@ -370,6 +376,85 @@ app.include_router(admin.router)
 app.include_router(email_threading.router)
 app.include_router(evaluation.router)
 app.include_router(monitoring.router)
+
+# Logging middleware - tracks all requests with timing
+@app.middleware("http")
+async def logging_middleware(request: Request, call_next):
+    """Log all requests with timing and request ID"""
+    # Generate request ID
+    request_id = set_request_id()
+
+    # Start timer
+    start_time = time.time()
+
+    # Log incoming request
+    logger.info(f"→ {request.method} {request.url.path}")
+
+    try:
+        # Process request
+        response = await call_next(request)
+
+        # Calculate duration
+        duration_ms = (time.time() - start_time) * 1000
+
+        # Log response
+        logger.info(
+            f"← {request.method} {request.url.path} -> {response.status_code} ({duration_ms:.2f}ms)"
+        )
+
+        # Add request ID to response headers
+        response.headers["X-Request-ID"] = request_id
+
+        return response
+
+    except Exception as e:
+        # Log errors
+        duration_ms = (time.time() - start_time) * 1000
+        logger.error(
+            f"← {request.method} {request.url.path} -> ERROR ({duration_ms:.2f}ms): {str(e)}",
+            exc_info=True
+        )
+        raise
+
+# Rate limiting middleware - protect against DoS attacks
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """Rate limit requests based on IP and API key"""
+    from fastapi.responses import JSONResponse
+
+    # Skip rate limiting for public endpoints
+    if request.url.path in PUBLIC_ENDPOINTS:
+        return await call_next(request)
+
+    # Determine identifier (API key if present, otherwise IP)
+    api_key = request.headers.get("X-API-Key") or request.headers.get("Authorization", "").replace("Bearer ", "")
+
+    if api_key and api_key == API_KEY:
+        # Authenticated with valid API key - use generous limits
+        identifier = f"key:{hashlib.sha256(api_key.encode()).hexdigest()[:16]}"
+        limiter = get_api_key_limiter()
+    else:
+        # Unauthenticated or invalid key - use strict limits
+        identifier = f"ip:{request.client.host}"
+        limiter = get_default_limiter()
+
+    # Check rate limit
+    allowed, limit_type, retry_after = limiter.check_rate_limit(identifier)
+
+    if not allowed:
+        logger.warning(f"Rate limit exceeded: {identifier} ({limit_type}, retry in {retry_after:.1f}s)")
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": "Rate limit exceeded",
+                "limit_type": limit_type,
+                "retry_after": retry_after,
+                "message": f"Too many requests. Please wait {retry_after:.1f} seconds."
+            },
+            headers={"Retry-After": str(int(retry_after) + 1)}
+        )
+
+    return await call_next(request)
 
 # Global variables
 chroma_client = None
