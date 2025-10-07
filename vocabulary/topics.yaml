@@ -46,8 +46,88 @@ education:
   - education/assessment
   - education/support
 
+business:
+  - business/finance
+  - business/accounting
+  - business/revenue
+  - business/expenses
+  - business/profit-loss
+  - business/strategy
+  - business/planning
+  - business/growth
+  - business/operations
+  - business/marketing
+  - business/sales
+  - business/hr
+  - business/procurement
+
+technology:
+  - technology/software
+  - technology/hardware
+  - technology/api
+  - technology/documentation
+  - technology/architecture
+  - technology/infrastructure
+  - technology/security
+  - technology/database
+  - technology/frontend
+  - technology/backend
+  - technology/devops
+  - technology/testing
+  - technology/deployment
+
+engineering:
+  - engineering/design
+  - engineering/implementation
+  - engineering/testing
+  - engineering/review
+  - engineering/documentation
+  - engineering/architecture
+  - engineering/infrastructure
+  - engineering/performance
+  - engineering/debugging
+
+project:
+  - project/planning
+  - project/management
+  - project/retrospective
+  - project/sprint
+  - project/roadmap
+  - project/milestone
+  - project/objectives
+
+meeting:
+  - meeting/notes
+  - meeting/agenda
+  - meeting/minutes
+  - meeting/action-items
+  - meeting/decisions
+  - meeting/standup
+  - meeting/retrospective
+
+communication:
+  - communication/email
+  - communication/chat
+  - communication/announcement
+  - communication/update
+  - communication/report
+
+research:
+  - research/paper
+  - research/analysis
+  - research/study
+  - research/findings
+  - research/data
+
+healthcare:
+  - healthcare/medical
+  - healthcare/diagnosis
+  - healthcare/treatment
+  - healthcare/prescription
+  - healthcare/insurance
+
 # Meta
 meta:
-  version: 1.0
-  last_updated: 2025-10-05
+  version: 2.0
+  last_updated: 2025-10-07
   auto_promote_threshold: 5  # Suggested tags appearing 5+ times get auto-promoted

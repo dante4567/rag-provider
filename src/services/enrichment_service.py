@@ -264,34 +264,36 @@ Extract the following (return as JSON):
 3. **suggested_topics**: Array of NEW topics you think should be added to vocabulary
    (These will be reviewed by user, not used directly)
 
-4. **entities**: Extract actual entities (NOT controlled):
-   - organizations: Company/org names found in text
-   - people_roles: Roles mentioned (e.g., "Teacher", "Principal") - NOT names
-   - dates: Dates in ISO format (YYYY-MM-DD)
-   - contacts: Email/phone if present
+4. **entities**: Extract ONLY entities that are EXPLICITLY mentioned in the text:
+   - organizations: Company/organization names that appear in the text (leave empty if none)
+   - people_roles: Role titles mentioned in the text (NOT example roles, only actual ones)
+   - dates: Dates in ISO format YYYY-MM-DD (only dates found in text)
+   - contacts: Email/phone numbers (only if present in text)
+
+   CRITICAL: Do NOT extract entities from examples or generic references. Only extract entities that are actual content of this specific document.
 
 5. **places**: Places from content that match this list:
    {json.dumps(all_places[:15] if all_places else [])}
-   Only use exact matches.
+   Only use exact matches found in the text.
 
 6. **quality_indicators**: Assess these (0-1 scores):
    - ocr_quality: How clean is the text? (1.0 = perfect, 0.5 = some issues, 0.0 = gibberish)
    - content_completeness: Is content complete? (1.0 = complete, 0.5 = partial, 0.0 = fragment)
 
-Return ONLY this JSON structure (no markdown):
+Return ONLY this JSON structure (no markdown, no explanations):
 {{
-  "summary": "Summary here",
-  "topics": ["school/admin", "education/concept"],
-  "suggested_topics": ["school/curriculum"],
+  "summary": "Brief summary of the actual document content",
+  "topics": ["topic1", "topic2"],
+  "suggested_topics": ["new_topic_if_needed"],
   "entities": {{
-    "organizations": ["Florianschule"],
-    "people_roles": ["Principal", "Teacher"],
-    "dates": ["2025-10-05"],
+    "organizations": [],
+    "people_roles": [],
+    "dates": [],
     "contacts": []
   }},
-  "places": ["Essen"],
+  "places": [],
   "quality_indicators": {{
-    "ocr_quality": 0.95,
+    "ocr_quality": 1.0,
     "content_completeness": 1.0
   }}
 }}
