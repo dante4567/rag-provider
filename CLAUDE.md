@@ -22,19 +22,20 @@ curl -X POST http://localhost:8001/search \
 
 ## Current Status (Oct 7, 2025 - Week 3 Phase 1-3 Complete)
 
-**Grade: A- (85/100)** - Production-ready with clean architecture
+**Grade: A- (87/100)** - Production-ready with clean architecture
 
 **What Works:**
-- ✅ 11/14 services tested with 179 unit tests + 7 integration tests
+- ✅ 12/14 services tested with 203 unit tests + 7 integration tests
 - ✅ Core RAG pipeline: enrichment, chunking, vocabulary, vector ops
 - ✅ Export systems: Obsidian, OCR, smart triage
 - ✅ Multi-LLM fallback chain with cost tracking
 - ✅ Docker deployment with pinned dependencies
 - ✅ Modular FastAPI routes (health, ingest, search)
 - ✅ Integration tests with real Docker services
+- ✅ Vision LLM service fully tested (24 tests)
 
 **What Needs Work:**
-- ⚠️ 3/14 services untested (reranking, tag_taxonomy, visual_llm)
+- ⚠️ 2/14 services untested (reranking, tag_taxonomy)
 - ⚠️ Some pre-existing test failures in search tests
 
 ## Architecture Overview
@@ -47,7 +48,7 @@ app.py (1,492 lines)           # ✅ Core application setup
 │   ├── health.py              # Health checks and status ✅
 │   ├── ingest.py              # Document ingestion endpoints ✅
 │   └── search.py              # Search and document mgmt ✅
-├── src/services/              # Business logic (11/14 tested)
+├── src/services/              # Business logic (12/14 tested)
 │   ├── enrichment_service.py          # Controlled vocabulary (19 tests) ✅
 │   ├── obsidian_service.py            # RAG-first export (20 tests) ✅
 │   ├── chunking_service.py            # Structure-aware (15 tests) ✅
@@ -57,15 +58,15 @@ app.py (1,492 lines)           # ✅ Core application setup
 │   ├── vector_service.py              # ChromaDB (8 tests) ✅
 │   ├── ocr_service.py                 # OCR processing (14 tests) ✅
 │   ├── smart_triage_service.py        # Dedup/categorize (20 tests) ✅
+│   ├── visual_llm_service.py          # Gemini Vision (24 tests) ✅
 │   ├── reranking_service.py           # Search quality (untested) ⚠️
-│   ├── tag_taxonomy_service.py        # Tag learning (untested) ⚠️
-│   └── visual_llm_service.py          # Visual analysis (untested) ⚠️
+│   └── tag_taxonomy_service.py        # Tag learning (untested) ⚠️
 ├── src/core/
 │   ├── config.py              # Settings management
 │   └── dependencies.py        # Dependency injection
 ├── src/models/
 │   └── schemas.py             # Pydantic schemas (centralized)
-├── tests/unit/                # 179 unit tests
+├── tests/unit/                # 203 unit tests (12/14 services)
 └── tests/integration/         # 7 integration tests with real services
 ```
 
