@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import logging
 
-from src.models.schemas import Query, SearchResponse, DocumentInfo
+from src.models.schemas import Query, SearchResponse, DocumentInfo, SearchResult
 
 logger = logging.getLogger(__name__)
 
