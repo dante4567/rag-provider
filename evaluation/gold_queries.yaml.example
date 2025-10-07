@@ -1,0 +1,62 @@
+# Gold Query Set for RAG Evaluation
+# Copy to gold_queries.yaml and customize with your queries
+
+version: "1.0"
+created_at: "2025-10-07"
+query_count: 5
+
+queries:
+  - query_id: "q001"
+    query_text: "What are the main features of the RAG system?"
+    expected_doc_ids:
+      - "doc_readme"
+      - "doc_architecture"
+      - "doc_features"
+    category: "factual"
+    min_precision_at_5: 0.6
+    notes: "Basic factual query about system capabilities"
+
+  - query_id: "q002"
+    query_text: "How do I configure the LLM fallback chain?"
+    expected_doc_ids:
+      - "doc_env_config"
+      - "doc_llm_service"
+    category: "procedural"
+    min_precision_at_5: 0.5
+    notes: "Configuration query"
+
+  - query_id: "q003"
+    query_text: "What is the cost per document for enrichment?"
+    expected_doc_ids:
+      - "doc_cost_tracking"
+      - "doc_enrichment"
+    category: "factual"
+    min_precision_at_5: 0.5
+    notes: "Specific factual lookup"
+
+  - query_id: "q004"
+    query_text: "How does the hybrid search algorithm work?"
+    expected_doc_ids:
+      - "doc_search_service"
+      - "doc_reranking"
+      - "doc_vector_service"
+    category: "reasoning"
+    min_precision_at_5: 0.4
+    notes: "Multi-document reasoning query"
+
+  - query_id: "q005"
+    query_text: "What document formats are supported for ingestion?"
+    expected_doc_ids:
+      - "doc_document_service"
+      - "doc_readme"
+    category: "factual"
+    min_precision_at_5: 0.6
+    notes: "Format listing query"
+
+# Guidelines for creating gold queries:
+# 1. Use real user queries from your domain
+# 2. Include 30-50 queries for comprehensive coverage
+# 3. Mix query types: factual, procedural, reasoning, multi-hop
+# 4. Set realistic min_precision_at_5 thresholds (0.4-0.6)
+# 5. Update expected_doc_ids as your corpus evolves
+# 6. Run nightly evaluations to catch regressions
