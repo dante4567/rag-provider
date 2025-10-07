@@ -171,18 +171,53 @@ class EnrichmentService:
 
     def extract_title_from_content(self, content: str, filename: str) -> str:
         """
-        Extract title using multiple strategies
+        Extract title using multiple strategies with document type detection
 
-        1. Look for title markers (# heading, Title:, etc.)
-        2. Use first meaningful sentence
-        3. Fall back to filename
+        1. Legal document patterns (court decisions, case numbers)
+        2. Invoice/financial patterns
+        3. School/education patterns
+        4. Markdown headings
+        5. Title: field
+        6. First meaningful sentence
+        7. Cleaned filename fallback
         """
+        # Strategy 0a: Legal court decision pattern
+        # Pattern: "Amtsgericht [City]" or "Landgericht [City]"
+        court_match = re.search(r'(Amtsgericht|Landgericht|Oberlandesgericht)\s+([A-ZÄÖÜ][a-zäöüß]+)', content[:1000])
+        case_number_match = re.search(r'(\d{1,4}\s*[A-Z]?\s*\d{1,4}/\d{2,4})', content[:1000])
+        if court_match and case_number_match:
+            court_name = court_match.group(1) + " " + court_match.group(2)
+            case_num = case_number_match.group(1).strip()
+            return self.sanitize_title(f"{court_name} - {case_num}")
+
+        # Strategy 0b: Invoice pattern
+        invoice_match = re.search(r'Invoice\s*#?\s*(\d{4}-\d+|\d+)', content[:500], re.IGNORECASE)
+        if invoice_match:
+            invoice_num = invoice_match.group(1)
+            # Try to find client/vendor
+            client_match = re.search(r'(?:Client|Customer|For):\s*([A-Z][a-zA-Z\s&]+)', content[:500])
+            if client_match:
+                client = client_match.group(1).strip()[:30]
+                return self.sanitize_title(f"Invoice {invoice_num} - {client}")
+            return self.sanitize_title(f"Invoice {invoice_num}")
+
+        # Strategy 0c: School enrollment/education pattern
+        school_patterns = [
+            (r'Einschulung\s+(\d{4}[/-]\d{2,4})', "Einschulung"),
+            (r'Schuleingangsuntersuchung', "Schuleingangsuntersuchung"),
+            (r'OGS[-\s]+(Anmeldung|Vertrag|Betreuung)', "OGS"),
+        ]
+        for pattern, prefix in school_patterns:
+            match = re.search(pattern, content[:500], re.IGNORECASE)
+            if match:
+                if match.groups():
+                    return self.sanitize_title(f"{prefix} {match.group(1)}")
+                return self.sanitize_title(prefix)
+
         # Strategy 1: Markdown heading (handle both with and without newlines)
-        # Try with proper newlines first
         heading_match = re.search(r'^#\s+([^\n#]+)', content, re.MULTILINE)
         if heading_match:
             title = heading_match.group(1).strip()
-            # Accept shorter titles (3+ words instead of 5+) for headings
             if 3 <= len(title.split()) <= 20:
                 return self.sanitize_title(title)
 
@@ -190,10 +225,8 @@ class EnrichmentService:
         heading_match_alt = re.search(r'#\s+([^#]+?)(?:\s*#{2,}|$)', content)
         if heading_match_alt:
             title = heading_match_alt.group(1).strip()
-            # Take first reasonable chunk of words (< 20, not <= 20)
             words = title.split()
             if 3 <= len(words) < 20:
-                # Limit to first 15 words if longer
                 if len(words) > 15:
                     words = words[:15]
                 return self.sanitize_title(' '.join(words))
@@ -209,13 +242,14 @@ class EnrichmentService:
         sentences = re.split(r'[.!?]\s+', content[:500])
         for sentence in sentences:
             words = sentence.strip().split()
-            # Require 7+ words to avoid using fragments like "a b c d e f g"
             if 7 <= len(words) <= 15:
                 return self.sanitize_title(sentence.strip())
 
         # Strategy 4: Clean up filename
-        # Remove extension and common prefixes
         title = Path(filename).stem
+        # Remove upload UUIDs
+        title = re.sub(r'upload_[a-f0-9-]{30,}', '', title, flags=re.IGNORECASE)
+        # Remove common prefixes
         title = re.sub(r'^(document|file|untitled|scan)[-_\s]*', '', title, flags=re.IGNORECASE)
         title = title.replace('_', ' ').replace('-', ' ')
         title = re.sub(r'\s+', ' ', title).strip()
@@ -355,11 +389,8 @@ class EnrichmentService:
         if len(content) > 3000:
             content_sample += "\n\n[...content truncated...]"
 
-        # Build topic list for prompt
-        topic_examples = all_topics[:20] if all_topics else [
-            "school/admin", "kita/handover", "legal/custody",
-            "education/concept", "admin/registration"
-        ]
+        # Build comprehensive topic list with examples
+        topic_examples = all_topics[:30] if all_topics else []
 
         prompt = f"""Extract metadata from this document using CONTROLLED VOCABULARIES.
 
@@ -375,10 +406,20 @@ IMPORTANT: Use ONLY the provided controlled vocabulary. Do not invent new tags.
 Extract the following (return as JSON):
 
 1. **summary**: 2-3 sentence summary of main content
+
 2. **topics**: Array of topics from this CONTROLLED list:
    {json.dumps(topic_examples)}
 
-   Only use topics from this list. If content matches multiple, choose the 3-5 most relevant.
+   CLASSIFICATION GUIDE (with examples):
+   - Court documents, legal decisions, custody cases → "legal/court/decision", "legal/family", "legal/custody"
+   - School enrollment, registration, OGS → "education/school/enrollment", "education/school/ogs"
+   - Invoices, financial reports → "business/accounting", "business/finance"
+   - Technical documentation, APIs → "technology/documentation", "technology/api"
+   - Meeting notes, agendas → "meeting/notes", "meeting/agenda"
+   - Privacy policies, data protection → "education/privacy", "education/data-protection"
+
+   Only use topics from the controlled list above. Choose the 3-5 most specific and relevant topics.
+   Prefer specific topics (e.g., "legal/court/decision") over generic ones (e.g., "communication/announcement").
 
 3. **suggested_topics**: Array of NEW topics you think should be added to vocabulary
    (These will be reviewed by user, not used directly)

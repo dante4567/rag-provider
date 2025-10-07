@@ -23,10 +23,26 @@ kita:
 
 legal:
   - legal/custody
+  - legal/custody/visitation
+  - legal/custody/primary-residence
+  - legal/custody/decision-making
   - legal/court
+  - legal/court/decision
+  - legal/court/motion
+  - legal/court/hearing
+  - legal/court/order
   - legal/judgment
   - legal/motion
   - legal/agreement
+  - legal/family
+  - legal/family/divorce
+  - legal/family/child-support
+  - legal/family/parenting-plan
+  - legal/contract
+  - legal/dispute
+  - legal/filing
+  - legal/notice
+  - legal/correspondence
 
 personal:
   - personal/health
@@ -45,6 +61,25 @@ education:
   - education/methodology
   - education/assessment
   - education/support
+  - education/school
+  - education/school/enrollment
+  - education/school/registration
+  - education/school/selection
+  - education/school/transition
+  - education/school/ogs
+  - education/school/betreuung
+  - education/curriculum
+  - education/teaching
+  - education/learning
+  - education/policy
+  - education/regulation
+  - education/administration
+  - education/childcare
+  - education/preschool
+  - education/elementary
+  - education/it
+  - education/privacy
+  - education/data-protection
 
 business:
   - business/finance
@@ -128,6 +163,7 @@ healthcare:
 
 # Meta
 meta:
-  version: 2.0
-  last_updated: 2025-10-07
+  version: 2.1
+  last_updated: 2025-10-08
   auto_promote_threshold: 5  # Suggested tags appearing 5+ times get auto-promoted
+  total_topics: 138  # Updated count after legal/education expansion
