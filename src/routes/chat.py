@@ -34,7 +34,7 @@ async def chat_with_rag(
             top_k=initial_results_count
         )
 
-        search_response = await search_documents(search_query)
+        search_response = await search_documents(search_query, rag_service)
 
         if not search_response.results:
             # No relevant context found
