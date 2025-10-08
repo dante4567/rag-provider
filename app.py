@@ -89,6 +89,8 @@ try:
     from src.services.vocabulary_service import VocabularyService
     from src.services.chunking_service import ChunkingService
     from src.services.quality_scoring_service import QualityScoringService
+    from src.services.contact_service import ContactService
+    from src.services.calendar_service import CalendarService
 
     NEW_SERVICES_AVAILABLE = True
 except ImportError as e:
@@ -604,6 +606,12 @@ class RAGService:
                 refs_dir=f"{obsidian_output_dir}/refs"
             )
 
+            # Initialize contact/calendar export services
+            contacts_output_dir = Path(os.getenv("CONTACTS_PATH", "./data/contacts"))
+            calendar_output_dir = Path(os.getenv("CALENDAR_PATH", "./data/calendar"))
+            self.contact_service = ContactService(output_dir=contacts_output_dir)
+            self.calendar_service = CalendarService(output_dir=calendar_output_dir)
+
             # Initialize quality scoring service (blueprint do_index gates)
             self.quality_scoring_service = QualityScoringService()
 
@@ -614,6 +622,8 @@ class RAGService:
             logger.info(f"   📍 Places: {len(self.vocabulary_service.get_all_places())}")
             logger.info("✅ Structure-aware chunking enabled (ignores RAG:IGNORE blocks)")
             logger.info(f"✅ ObsidianService initialized (RAG-first format) → {obsidian_output_dir}")
+            logger.info(f"✅ ContactService initialized → {contacts_output_dir}")
+            logger.info(f"✅ CalendarService initialized → {calendar_output_dir}")
         else:
             logger.error("❌ New service layer not available - cannot start!")
             raise RuntimeError("New service layer is required but not available")
@@ -986,6 +996,36 @@ class RAGService:
                     import traceback
                     traceback.print_exc()
                     # Don't fail the whole operation if Obsidian export fails
+
+                # Generate vCards for people (if any)
+                try:
+                    people = enriched_metadata.get('people', [])
+                    if people:
+                        logger.info(f"👥 Generating vCards for {len(people)} people...")
+                        vcards_created = self.contact_service.create_vcards_from_metadata(
+                            people=people,
+                            organizations=enriched_metadata.get('entities', {}).get('orgs', []),
+                            document_title=title,
+                            document_id=doc_id
+                        )
+                        logger.info(f"✅ Created {len(vcards_created)} vCard(s) → {self.contact_service.output_dir}")
+                except Exception as e:
+                    logger.warning(f"⚠️ vCard generation failed: {e}")
+
+                # Generate iCal events for dates (if any)
+                try:
+                    dates = enriched_metadata.get('entities', {}).get('dates', [])
+                    if dates:
+                        logger.info(f"📅 Generating calendar events for {len(dates)} dates...")
+                        events_created = self.calendar_service.create_events_from_metadata(
+                            dates=dates,
+                            document_title=title,
+                            document_content=content,
+                            document_topics=enriched_metadata.get('topics', [])
+                        )
+                        logger.info(f"✅ Created {len(events_created)} calendar event(s) → {self.calendar_service.output_dir}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Calendar event generation failed: {e}")
 
             logger.info(f"✅ Processed document {doc_id}: {len(chunks)} chunks, Obsidian: {bool(obsidian_path)}")
 
