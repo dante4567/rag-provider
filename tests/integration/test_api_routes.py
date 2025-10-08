@@ -103,17 +103,17 @@ class TestIngestEndpoint:
         assert "obsidian_path" in result
 
     def test_ingest_text_requires_content(self, wait_for_service):
-        """POST /ingest/text without content should fail"""
+        """POST /ingest without content should fail"""
         response = requests.post(
-            f"{BASE_URL}/ingest/text",
+            f"{BASE_URL}/ingest",
             json={}
         )
         assert response.status_code == 422
 
     def test_ingest_text_success(self, wait_for_service):
-        """POST /ingest/text with valid content should succeed"""
+        """POST /ingest with valid content should succeed"""
         response = requests.post(
-            f"{BASE_URL}/ingest/text",
+            f"{BASE_URL}/ingest",
             json={
                 "content": "This is a test document for API testing.",
                 "filename": "api_test.txt"
