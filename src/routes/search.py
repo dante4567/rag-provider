@@ -39,10 +39,10 @@ async def search_documents(
         from src.services.reranking_service import get_reranking_service
 
         # Get hybrid search results (BM25 + dense + MMR)
-        # Fetch more results for reranking
+        # Fetch more results for reranking (4x to improve recall)
         hybrid_results = await rag_service.vector_service.hybrid_search(
             query=query.text,
-            top_k=query.top_k * 2,  # Get 2x for reranking
+            top_k=query.top_k * 4,  # Get 4x for reranking (improved from 2x)
             filter=query.filter,
             apply_mmr=True  # Always use MMR for diversity
         )

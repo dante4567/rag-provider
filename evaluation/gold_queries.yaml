@@ -1,61 +1,100 @@
-# Gold Query Evaluation Set - Real Test Queries
-# Based on ingested test document: School Enrollment Application
+# Gold Query Evaluation Set - Diverse Test Queries
+# Updated 2025-10-08: Expanded to 10 diverse queries across multiple document types
+# Avoids duplicate documents to properly test MMR and reranking
 
 queries:
-  # Query 1: Direct factual question (easy)
+  # Python Programming Queries
   - id: "Q001"
-    query: "What documents are needed for Anna's school enrollment?"
-    description: "User asking for required documents from enrollment form"
+    query: "How do I define a function in Python?"
+    description: "Basic Python syntax question"
     expected_docs:
-      - "upload_f804cd72-0425-4925-a078-55ab716a67fc_test_critic_doc.txt"
-      - "upload_f3f91ebb-faee-4696-815d-4db5a7db86a9_test_critic_doc.txt"
-      - "upload_94d14267-76d9-4bba-90f3-13e56ada4091_test_critic_doc.txt"
-    tags: ["education", "requirements", "documents"]
+      - "python_tutorial.md"
+      - "python_guide.md"
+    tags: ["programming", "python", "syntax"]
     difficulty: "easy"
 
-  # Query 2: Temporal query (easy)
   - id: "Q002"
-    query: "When is the deadline for school enrollment?"
-    description: "User needs to know the submission deadline"
+    query: "What are Python list comprehensions?"
+    description: "Python advanced feature query"
     expected_docs:
-      - "upload_f804cd72-0425-4925-a078-55ab716a67fc_test_critic_doc.txt"
-      - "upload_f3f91ebb-faee-4696-815d-4db5a7db86a9_test_critic_doc.txt"
-      - "upload_94d14267-76d9-4bba-90f3-13e56ada4091_test_critic_doc.txt"
-    tags: ["education", "deadline", "dates"]
-    difficulty: "easy"
+      - "python_guide.md"
+      - "python_tutorial.md"
+    tags: ["programming", "python", "data-structures"]
+    difficulty: "medium"
 
-  # Query 3: Contact information query (medium)
+  # Machine Learning Queries
   - id: "Q003"
-    query: "Who should I contact about the school enrollment?"
-    description: "User looking for contact person details"
+    query: "What is supervised learning?"
+    description: "ML concept definition"
     expected_docs:
-      - "upload_f804cd72-0425-4925-a078-55ab716a67fc_test_critic_doc.txt"
-      - "upload_f3f91ebb-faee-4696-815d-4db5a7db86a9_test_critic_doc.txt"
-      - "upload_94d14267-76d9-4bba-90f3-13e56ada4091_test_critic_doc.txt"
-    tags: ["education", "contacts", "administration"]
-    difficulty: "medium"
-
-  # Query 4: Specific entity query (easy)
-  - id: "Q004"
-    query: "Who are Anna's parents?"
-    description: "User asking for parent/guardian information"
-    expected_docs:
-      - "upload_f804cd72-0425-4925-a078-55ab716a67fc_test_critic_doc.txt"
-      - "upload_f3f91ebb-faee-4696-815d-4db5a7db86a9_test_critic_doc.txt"
-      - "upload_94d14267-76d9-4bba-90f3-13e56ada4091_test_critic_doc.txt"
-    tags: ["relationships", "family", "entities"]
+      - "ml_intro.txt"
+      - "ml_tutorial.txt"
+    tags: ["machine-learning", "concepts"]
     difficulty: "easy"
 
-  # Query 5: Location query (medium)
-  - id: "Q005"
-    query: "Where does Anna live?"
-    description: "User asking for address information"
+  - id: "Q004"
+    query: "How do neural networks work?"
+    description: "Deep learning architecture question"
     expected_docs:
-      - "upload_f804cd72-0425-4925-a078-55ab716a67fc_test_critic_doc.txt"
-      - "upload_f3f91ebb-faee-4696-815d-4db5a7db86a9_test_critic_doc.txt"
-      - "upload_94d14267-76d9-4bba-90f3-13e56ada4091_test_critic_doc.txt"
-    tags: ["location", "address", "personal"]
+      - "dl_practices.txt"
+      - "ml_tutorial.txt"
+    tags: ["deep-learning", "neural-networks"]
     difficulty: "medium"
+
+  # Research and Education Queries
+  - id: "Q005"
+    query: "What is AI in education?"
+    description: "Interdisciplinary research topic"
+    expected_docs:
+      - "research_ai_education.md"
+    tags: ["research", "education", "ai"]
+    difficulty: "easy"
+
+  # Language Comparison Queries
+  - id: "Q006"
+    query: "How do Python and JavaScript compare?"
+    description: "Programming language comparison"
+    expected_docs:
+      - "language_comparison.md"
+    tags: ["programming", "comparison"]
+    difficulty: "medium"
+
+  # Structured Document Queries
+  - id: "Q007"
+    query: "Tell me about document structure and headings"
+    description: "Document formatting question"
+    expected_docs:
+      - "structured_doc.md"
+      - "indexed_doc.md"
+    tags: ["documentation", "formatting"]
+    difficulty: "easy"
+
+  # Technical Requirements Queries
+  - id: "Q008"
+    query: "What are the system requirements?"
+    description: "Requirements specification query"
+    expected_docs:
+      - "requirements.md"
+    tags: ["requirements", "specifications"]
+    difficulty: "easy"
+
+  # Long Document Retrieval
+  - id: "Q009"
+    query: "Find information in lengthy documentation"
+    description: "Testing retrieval from long documents"
+    expected_docs:
+      - "long_doc.md"
+    tags: ["documentation", "long-form"]
+    difficulty: "medium"
+
+  # Business Report Queries
+  - id: "Q010"
+    query: "What are the ACME company metrics?"
+    description: "Business intelligence query"
+    expected_docs:
+      - "acme_report.txt"
+    tags: ["business", "reports", "analytics"]
+    difficulty: "easy"
 
 # Evaluation Configuration
 config:

@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Maria Schmidt
+N:Schmidt;Maria;;;
+TITLE:mother
+NOTE:Mentioned in: test critic doc
+REV:20251008T210141Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,mother
+END:VCARD

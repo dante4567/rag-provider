@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Dr. Weber
+N:Weber;Dr.;;;
+TITLE:Principal
+EMAIL;TYPE=INTERNET:weber@schule-koeln.de
+TEL;TYPE=CELL:+49-221-12345
+NOTE:Mentioned in: test critic doc
+REV:20251008T210141Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,Principal
+END:VCARD

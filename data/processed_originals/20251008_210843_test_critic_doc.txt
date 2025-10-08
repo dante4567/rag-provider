@@ -1,0 +1,21 @@
+School Enrollment Application
+
+Name: Anna Lins
+Date of Birth: January 15, 2025
+Father: Steven Lins
+Mother: Maria Schmidt
+Address: 123 Main Street, Köln
+
+School: Grundschule Köln-Nord
+Enrollment Year: 2026/2027
+
+Documents Required:
+- Birth certificate
+- Proof of residence
+- Medical records
+
+Deadline: Submit by October 15, 2025
+
+Contact: Dr. Weber (Principal)
+Phone: +49-221-12345
+Email: weber@schule-koeln.de

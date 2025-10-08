@@ -32,16 +32,16 @@ class HybridSearchService:
 
     def __init__(
         self,
-        bm25_weight: float = 0.3,
-        dense_weight: float = 0.7,
+        bm25_weight: float = 0.4,
+        dense_weight: float = 0.6,
         mmr_lambda: float = 0.7
     ):
         """
         Initialize hybrid search service
 
         Args:
-            bm25_weight: Weight for BM25 scores (default 0.3)
-            dense_weight: Weight for dense scores (default 0.7)
+            bm25_weight: Weight for BM25 scores (default 0.4, tuned for better keyword matching)
+            dense_weight: Weight for dense scores (default 0.6)
             mmr_lambda: MMR diversity parameter (0=max diversity, 1=max relevance)
         """
         self.bm25_weight = bm25_weight
@@ -400,8 +400,8 @@ _hybrid_search_service = None
 
 
 def get_hybrid_search_service(
-    bm25_weight: float = 0.3,
-    dense_weight: float = 0.7,
+    bm25_weight: float = 0.4,
+    dense_weight: float = 0.6,
     mmr_lambda: float = 0.7
 ) -> HybridSearchService:
     """Get or create singleton hybrid search service"""
