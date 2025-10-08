@@ -5,7 +5,10 @@
       "Bash(PYTHONPATH=/Users/danielteckentrup/Library/Python/3.9/lib/python/site-packages:$PYTHONPATH python3 src/services/obsidian_service.py)",
       "Bash(grep:*)",
       "Read(//Users/danielteckentrup/**)",
-      "Bash(make:*)"
+      "Bash(make:*)",
+      "Bash(docker cp:*)",
+      "Bash(docker exec:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

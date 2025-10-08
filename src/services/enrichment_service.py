@@ -20,6 +20,7 @@ from pathlib import Path
 
 from src.services.llm_service import LLMService
 from src.services.vocabulary_service import VocabularyService
+from src.services.entity_deduplication_service import get_entity_deduplication_service
 from src.models.schemas import DocumentType, SemanticDocumentType
 
 # Self-improvement loop imports
@@ -44,6 +45,9 @@ class EnrichmentService:
             except Exception as e:
                 print(f"Warning: Could not load vocabulary service: {e}")
                 self.vocab = None
+
+        # Load entity deduplication service
+        self.entity_dedup = get_entity_deduplication_service(similarity_threshold=0.85)
 
     def generate_content_hash(self, content: str) -> str:
         """Generate SHA-256 hash for deduplication"""
@@ -522,6 +526,60 @@ Return ONLY the category string, nothing else."""
 
         return people
 
+    def deduplicate_people(
+        self,
+        people: List[Dict],
+        document_id: str
+    ) -> List[Dict]:
+        """
+        Deduplicate people entities using EntityDeduplicationService
+
+        Args:
+            people: List of person objects with 'name' field
+            document_id: Source document ID for tracking
+
+        Returns:
+            Deduplicated list of people with canonical names
+        """
+        if not people:
+            return []
+
+        deduplicated = []
+        seen_canonical = set()
+
+        for person in people:
+            name = person.get("name", "")
+            if not name:
+                continue
+
+            # Add entity to deduplication service (it handles matching)
+            entity = self.entity_dedup.add_entity(
+                name=name,
+                entity_type="person",
+                document_id=document_id
+            )
+
+            if entity:
+                canonical = entity.canonical_name
+
+                # Skip if we've already added this canonical entity
+                if canonical in seen_canonical:
+                    logger.debug(f"Skipping duplicate: '{name}' → '{canonical}' (already added)")
+                    continue
+
+                seen_canonical.add(canonical)
+
+                # Use canonical name but preserve other fields
+                deduplicated_person = person.copy()
+                deduplicated_person["name"] = canonical
+                deduplicated_person["aliases"] = list(entity.aliases) if len(entity.aliases) > 1 else None
+                deduplicated_person["mention_count"] = entity.mentions_count
+
+                deduplicated.append(deduplicated_person)
+
+        logger.info(f"Deduplicated {len(people)} people → {len(deduplicated)} unique entities")
+        return deduplicated
+
     async def enrich_document(
         self,
         content: str,
@@ -603,6 +661,9 @@ Return ONLY the category string, nothing else."""
             llm_people = self.filter_people_by_document_type(
                 llm_people, semantic_doc_type, content
             )
+
+            # Deduplicate people entities (NEW: cross-reference resolution)
+            llm_people = self.deduplicate_people(llm_people, filename)
 
             # Combine and deduplicate dates (handle both dict and string formats)
             all_dates = []
