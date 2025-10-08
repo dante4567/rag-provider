@@ -695,7 +695,8 @@ class RAGService:
                              process_ocr: bool = False,
                              generate_obsidian: bool = True,
                              file_metadata: Dict[str, Any] = None,
-                             use_critic: bool = False) -> IngestResponse:
+                             use_critic: bool = False,
+                             use_iteration: bool = False) -> IngestResponse:
         """Process a document with full enrichment pipeline"""
 
         # Validate content
@@ -743,8 +744,6 @@ class RAGService:
             # ============================================================
             logger.info(f"🤖 Enriching document with LLM: {filename}")
 
-            # Use V2 enrichment if available, otherwise fall back to standard
-            logger.info("   📊 Enriching with controlled vocabulary")
             # Extract date from file metadata if available
             from datetime import date as date_type
             created_date = None
@@ -754,13 +753,40 @@ class RAGService:
                 except:
                     pass
 
-            enriched_metadata = await self.enrichment_service.enrich_document(
-                content=content,
-                filename=filename or f"document_{doc_id}",
-                document_type=document_type,
-                created_at=created_date,
-                existing_metadata=file_metadata
-            )
+            # Use iteration loop if requested (slower but higher quality)
+            critique_result = None
+            if use_iteration:
+                logger.info("   🔄 Using self-improvement loop (critic + editor)")
+                enriched_metadata, critique_data = await self.enrichment_service.enrich_with_iteration(
+                    text=content,
+                    filename=filename or f"document_{doc_id}",
+                    max_iterations=2,
+                    min_avg_score=4.0,
+                    use_critic=True
+                )
+
+                # Store critique result from iteration
+                if critique_data:
+                    from src.models.schemas import QualityScores, CritiqueResult
+                    critique_result = CritiqueResult(
+                        scores=QualityScores(**critique_data["scores"]),
+                        overall_quality=critique_data["overall_quality"],
+                        suggestions=critique_data["suggestions"],
+                        critic_model=critique_data["critic_model"],
+                        critic_cost=critique_data["critic_cost"],
+                        critic_date=critique_data["critic_date"]
+                    )
+                    logger.info(f"   ✅ Iteration complete: {critique_data['overall_quality']:.2f}/5.0")
+            else:
+                # Standard enrichment with controlled vocabulary
+                logger.info("   📊 Enriching with controlled vocabulary")
+                enriched_metadata = await self.enrichment_service.enrich_document(
+                    content=content,
+                    filename=filename or f"document_{doc_id}",
+                    document_type=document_type,
+                    created_at=created_date,
+                    existing_metadata=file_metadata
+                )
 
             # Debug: Check if people/dates are in enriched_metadata
             print(f"\n[APP.PY DEBUG] enriched_metadata after enrichment service:")
@@ -784,9 +810,9 @@ class RAGService:
 
             # ============================================================
             # OPTIONAL: LLM-as-Critic Quality Assessment
+            # (Skip if using iteration - already includes critic)
             # ============================================================
-            critique_result = None
-            if use_critic:
+            if use_critic and not use_iteration:
                 try:
                     logger.info(f"🔍 Running LLM-as-critic quality assessment...")
                     critique_data = await self.enrichment_service.critique_enrichment(
@@ -1120,7 +1146,7 @@ class RAGService:
             logger.error(f"Document processing failed: {e}")
             raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
-    async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True, use_critic: bool = False) -> IngestResponse:
+    async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True, use_critic: bool = False, use_iteration: bool = False) -> IngestResponse:
         """Process a file from path"""
         try:
             # Extract text using document service
@@ -1139,7 +1165,8 @@ class RAGService:
                 process_ocr=process_ocr,
                 generate_obsidian=generate_obsidian,
                 file_metadata=metadata,
-                use_critic=use_critic
+                use_critic=use_critic,
+                use_iteration=use_iteration
             )
         except Exception as e:
             logger.error(f"File processing failed for {file_path}: {e}")

@@ -1,0 +1,207 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rag-provider/schemas/enrichment.json",
+  "title": "RAG Document Enrichment Schema",
+  "description": "Schema for enriched document metadata with quality controls",
+  "type": "object",
+  "required": ["id", "source", "doc_time"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable document ID (UUID)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "source": {
+      "type": "object",
+      "description": "Immutable source information",
+      "required": ["type", "path"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["email", "pdf", "whatsapp", "web", "note", "office", "image", "text"]
+        },
+        "path": {
+          "type": "string",
+          "description": "Original file path"
+        },
+        "url": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "content_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "doc_time": {
+      "type": "object",
+      "description": "Document timestamps",
+      "required": ["created", "observed"],
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the original document was created"
+        },
+        "observed": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When we acquired/ingested it"
+        }
+      }
+    },
+    "people": {
+      "type": "object",
+      "properties": {
+        "authors": {
+          "type": "array",
+          "items": {"type": "string"},
+          "maxItems": 10
+        },
+        "mentioned": {
+          "type": "array",
+          "items": {"type": "string"},
+          "maxItems": 20
+        }
+      }
+    },
+    "people_roles": {
+      "type": "string",
+      "description": "Comma-separated people with roles: Name (role)"
+    },
+    "entities": {
+      "type": "object",
+      "properties": {
+        "orgs": {
+          "type": "array",
+          "items": {"type": "string"},
+          "maxItems": 10
+        },
+        "places": {
+          "type": "array",
+          "items": {"type": "string"},
+          "maxItems": 10
+        }
+      }
+    },
+    "topics": {
+      "type": "array",
+      "description": "Tags from controlled vocabulary only",
+      "items": {"type": "string"},
+      "maxItems": 5,
+      "uniqueItems": true
+    },
+    "suggested_topics": {
+      "type": "string",
+      "description": "Tags not in vocabulary (for review)"
+    },
+    "projects": {
+      "type": "string",
+      "description": "Comma-separated project tags"
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "tl_dr": {
+          "type": "string",
+          "maxLength": 600,
+          "description": "One-sentence gist (max 600 chars)"
+        },
+        "key_points": {
+          "type": "array",
+          "items": {"type": "string"},
+          "maxItems": 5,
+          "description": "Up to 5 key points"
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text", "status"],
+        "properties": {
+          "text": {"type": "string"},
+          "due": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["todo", "done", "cancelled"]
+          }
+        }
+      },
+      "maxItems": 10
+    },
+    "quality": {
+      "type": "object",
+      "properties": {
+        "ocr_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "pii_risk": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        }
+      }
+    },
+    "rag": {
+      "type": "object",
+      "description": "RAG system metadata",
+      "properties": {
+        "index_status": {
+          "type": "string",
+          "enum": ["raw", "enriched", "indexed", "needs_review"]
+        },
+        "chunking": {
+          "type": "object",
+          "properties": {
+            "method": {"type": "string"},
+            "max_tokens": {"type": "integer"}
+          }
+        },
+        "vector_ref": {
+          "type": "object",
+          "description": "Immutable vector DB reference",
+          "properties": {
+            "collection": {"type": "string"},
+            "doc_id": {"type": "string"}
+          }
+        },
+        "versions": {
+          "type": "object",
+          "description": "Enrichment provenance",
+          "properties": {
+            "enrichment_prompt": {"type": "string"},
+            "model": {"type": "string"},
+            "enriched_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "properties": {
+        "human": {
+          "type": ["string", "null"],
+          "description": "Who reviewed this"
+        },
+        "last_checked": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "needs_attention": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

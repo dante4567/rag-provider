@@ -264,10 +264,14 @@ curl -X POST http://localhost:8001/ingest/file \
 ## Current Version Status
 
 **V2.2 Features** (October 8, 2025 - Quality Framework Complete):
+- ✅ **LLM-as-critic quality scoring** (7-point rubric, improvement suggestions)
+- ✅ **Gold query evaluation framework** (Precision@k, MRR, quality gates)
+- ✅ **Lossless data archiving** (timestamp-prefixed originals)
+- ✅ **Dependency injection architecture** (singleton services)
+- ✅ **Retrieval tuning** (4x multiplier, BM25 0.4 weight)
 - ✅ Controlled vocabulary enrichment
 - ✅ Structure-aware semantic chunking
-- ✅ Obsidian V3 RAG-first export with entity stubs
-- ✅ Recency scoring, better titles, project auto-matching
+- ✅ Obsidian integration with wiki-links
 - ✅ Email threading (1 MD per thread)
 - ✅ Gold query evaluation system (30-50 queries, precision@k metrics)
 - ✅ Drift detection dashboard (domain/quality/duplicate monitoring)

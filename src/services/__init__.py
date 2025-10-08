@@ -19,3 +19,8 @@ __all__ = [
     "CostTracker",
     "VectorService",
 ]
+
+# Self-improvement loop services
+from src.services.editor_service import EditorService
+from src.services.patch_service import PatchService
+from src.services.schema_validator import SchemaValidator

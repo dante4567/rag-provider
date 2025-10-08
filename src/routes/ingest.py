@@ -45,16 +45,27 @@ async def ingest_file(
     process_ocr: str = Form("false"),
     generate_obsidian: str = Form("true"),
     use_critic: str = Form("false"),
+    use_iteration: str = Form("false"),
     rag_service = Depends(get_rag_service),
     PATHS: dict = Depends(get_paths)
 ):
-    """Ingest file via upload"""
+    """
+    Ingest file via upload
+
+    Args:
+        file: File to upload
+        process_ocr: Whether to run OCR (for images/scanned PDFs)
+        generate_obsidian: Whether to generate Obsidian markdown
+        use_critic: Whether to score enrichment quality (adds $0.005/doc)
+        use_iteration: Whether to use self-improvement loop (critic + editor, slower but better quality)
+    """
     # Convert string form params to boolean
     process_ocr_bool = process_ocr.lower() in ("true", "1", "yes")
     generate_obsidian_bool = generate_obsidian.lower() in ("true", "1", "yes")
     use_critic_bool = use_critic.lower() in ("true", "1", "yes")
+    use_iteration_bool = use_iteration.lower() in ("true", "1", "yes")
 
-    logger.info(f"Received file for ingestion: {file.filename}, Content-Type: {file.content_type}, use_critic={use_critic_bool}")
+    logger.info(f"Received file for ingestion: {file.filename}, Content-Type: {file.content_type}, use_critic={use_critic_bool}, use_iteration={use_iteration_bool}")
     temp_path = None
     try:
         # Save uploaded file temporarily
@@ -69,7 +80,8 @@ async def ingest_file(
             str(temp_path),
             process_ocr=process_ocr_bool,
             generate_obsidian=generate_obsidian_bool,
-            use_critic=use_critic_bool
+            use_critic=use_critic_bool,
+            use_iteration=use_iteration_bool
         )
 
         # Archive original file if successful (Priority 1: Lossless data archiving)

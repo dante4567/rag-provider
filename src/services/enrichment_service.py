@@ -22,6 +22,11 @@ from src.services.llm_service import LLMService
 from src.services.vocabulary_service import VocabularyService
 from src.models.schemas import DocumentType, SemanticDocumentType
 
+# Self-improvement loop imports
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class EnrichmentService:
     """Enhanced enrichment with controlled vocabulary (formerly V2)"""
@@ -1252,4 +1257,162 @@ Return ONLY this JSON structure (no markdown):
             "word_count": len(content.split()),
             "created_at": datetime.now().isoformat(),
             **{k: str(v) for k, v in existing_metadata.items() if isinstance(v, (str, int, float, bool))}
+        }
+
+    async def enrich_with_iteration(
+        self,
+        text: str,
+        filename: str,
+        max_iterations: int = 2,
+        min_avg_score: float = 4.0,
+        use_critic: bool = True
+    ) -> Tuple[Dict, Optional[Dict]]:
+        """
+        Iterative enrichment with self-improvement loop
+
+        Implements the full LLM-as-critic + LLM-as-editor pattern:
+        1. Initial enrichment
+        2. Critic scores it
+        3. If score < threshold and iterations remaining:
+           - Editor generates patch
+           - Validate patch
+           - Apply patch
+           - Re-score with critic
+        4. Return final enrichment + final critique
+
+        Args:
+            text: Document text to enrich
+            filename: Original filename
+            max_iterations: Maximum improvement iterations (default 2)
+            min_avg_score: Minimum average score to accept (default 4.0)
+            use_critic: Whether to use critic (default True)
+
+        Returns:
+            Tuple of (final_enrichment_metadata, final_critique_result)
+        """
+        from src.services.editor_service import EditorService
+        from src.services.patch_service import PatchService
+        from src.services.schema_validator import SchemaValidator
+
+        # Initialize self-improvement components
+        editor = EditorService(self.llm_service)
+        patcher = PatchService()
+        validator = SchemaValidator()
+
+        # Initial enrichment
+        logger.info("🌱 Starting iterative enrichment...")
+        current_enrichment = await self.enrich_document(
+            text, filename, document_type=None, existing_metadata={}
+        )
+
+        # If critic disabled, return immediately
+        if not use_critic:
+            logger.info("ℹ️ Critic disabled, returning initial enrichment")
+            return current_enrichment, None
+
+        final_critique = None
+
+        for iteration in range(max_iterations):
+            logger.info(f"🔄 Iteration {iteration + 1}/{max_iterations}")
+
+            # Score current enrichment
+            critique = await self.critique_enrichment(
+                content=text,
+                enriched_metadata=current_enrichment,
+                filename=filename
+            )
+            final_critique = critique  # Store for return
+
+            # Calculate average score
+            scores_dict = critique["scores"]
+            avg_score = sum(scores_dict.values()) / len(scores_dict)
+
+            logger.info(f"📊 Average quality score: {avg_score:.2f}/5.0")
+
+            # Check if we've met quality threshold
+            if avg_score >= min_avg_score:
+                logger.info(f"✅ Quality threshold reached: {avg_score:.2f} >= {min_avg_score}")
+                break
+
+            # Don't improve on last iteration (no point)
+            if iteration == max_iterations - 1:
+                logger.info(f"⚠️ Max iterations reached with score {avg_score:.2f}")
+                break
+
+            # Generate improvement patch
+            logger.info("🔧 Generating improvement patch...")
+
+            # Build controlled vocabulary context
+            controlled_vocab = {}
+            if self.vocab:
+                controlled_vocab = {
+                    "topics": self.vocab.get_all_topics(),
+                    "projects": [p["name"] for p in self.vocab.get_active_projects()]
+                }
+
+            # Generate patch from critic suggestions
+            patch = await editor.generate_patch(
+                current_metadata=current_enrichment,
+                critic_suggestions="\n".join(critique["suggestions"]),
+                body_text=text,
+                controlled_vocab=controlled_vocab
+            )
+
+            # Validate patch
+            logger.info("✅ Validating patch against schema...")
+            is_valid, errors = validator.validate_patch(
+                current_enrichment,
+                patch
+            )
+
+            if not is_valid and errors:
+                logger.warning(f"⚠️ Patch validation warnings: {errors[:3]}")
+                # Continue anyway with warnings
+
+            # Apply patch
+            try:
+                logger.info("🔨 Applying patch...")
+                patched_enrichment, diff = patcher.apply_patch(
+                    original=current_enrichment,
+                    patch=patch,
+                    forbidden_paths=editor.FORBIDDEN_PATHS
+                )
+
+                # Log changes
+                logger.info(f"📝 Patch applied:")
+                logger.info(diff.get('summary', 'No changes'))
+
+                # Update current enrichment
+                current_enrichment = patched_enrichment
+
+            except Exception as e:
+                logger.error(f"❌ Failed to apply patch: {e}")
+                # Continue with un-patched version
+                break
+
+        # Log final result
+        if final_critique:
+            scores_dict = final_critique.scores.dict()
+            avg_score = sum(scores_dict.values()) / len(scores_dict)
+            logger.info(f"🏁 Final quality score: {avg_score:.2f}/5.0")
+            logger.info(f"   Iterations used: {iteration + 1}/{max_iterations}")
+
+        return current_enrichment, final_critique
+
+    def _get_controlled_vocabulary(self) -> Dict[str, List[str]]:
+        """
+        Get controlled vocabulary for editor context
+
+        Returns:
+            Dict with topics, projects, etc.
+        """
+        if not self.vocab:
+            return {
+                "topics": [],
+                "projects": []
+            }
+
+        return {
+            "topics": self.vocab.get_all_topics(),
+            "projects": self.vocab.get_all_projects()
         }
