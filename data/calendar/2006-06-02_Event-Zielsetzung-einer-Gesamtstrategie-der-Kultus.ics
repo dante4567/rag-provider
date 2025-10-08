@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:da90641579bd7d9b@rag-provider.local
+DTSTART;VALUE=DATE:20060602
+DTEND;VALUE=DATE:20060603
+SUMMARY:Event: Zielsetzung einer »Gesamtstrategie der Kultusministerkonferenz zum Bildungsmonitoring« 6 2
+DESCRIPTION:nnen und muss kontinuierlich überprüft und justiert werden. Dazu hat die Kultusministerkonferenz am 02.06.2006 eine Gesamtstrategie zum Bildungsmo- nitoring beschlossen. Dieses Verfahren zur Beobachtu\\nSource: Zielsetzung einer »Gesamtstrategie der Kultusministerkonferenz zum Bildungsmonitoring« 6 2
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200110Z
+CREATED:20251008T200110Z
+LAST-MODIFIED:20251008T200110Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

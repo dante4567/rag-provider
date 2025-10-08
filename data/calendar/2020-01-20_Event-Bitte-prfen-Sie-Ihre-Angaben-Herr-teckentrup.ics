@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:4a4710dcdae55c16@rag-provider.local
+DTSTART;VALUE=DATE:20200120
+DTEND;VALUE=DATE:20200121
+SUMMARY:Event: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+DESCRIPTION:b. 23.03.1979Schwerbehinderung / Begleitperson: neinKindergeldberechtigt: neinteckentrup\, pola geb. 20.01.2020Schwerbehinderung / Begleitperson: neinKindergeldberechtigt: neinkoeller\, oskar geb. 15.06\\nSource: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200146Z
+CREATED:20251008T200146Z
+LAST-MODIFIED:20251008T200146Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

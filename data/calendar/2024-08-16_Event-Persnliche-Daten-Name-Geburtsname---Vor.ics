@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:83487915f8c0cc05@rag-provider.local
+DTSTART;VALUE=DATE:20240816
+DTEND;VALUE=DATE:20240817
+SUMMARY:Event: Persönliche Daten Name Geburtsname _________ ________________________________ Vor
+DESCRIPTION:Source: Persönliche Daten Name Geburtsname _________ ________________________________ Vor
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T195754Z
+CREATED:20251008T195754Z
+LAST-MODIFIED:20251008T195754Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

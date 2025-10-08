@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:b4d0934b1c800431@rag-provider.local
+DTSTART;VALUE=DATE:19810626
+DTEND;VALUE=DATE:19810627
+SUMMARY:Event: Persönliche Daten Name Geburtsname _________ ________________________________ Vor
+DESCRIPTION:Str. 13 0170-7989520 mail@daniel-teckentrup.de DE62440100460015211469 Hausmann 400 Teckentrup Fanny 26.06.1981 Dresden?\, Deutschland ‭+49 151 17834060‬ mail@fanny-teckentrup.de Projekmanagerin Kiepenh\\nSource: Persönliche Daten Name Geburtsname _________ ________________________________ Vor
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T195754Z
+CREATED:20251008T195754Z
+LAST-MODIFIED:20251008T195754Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

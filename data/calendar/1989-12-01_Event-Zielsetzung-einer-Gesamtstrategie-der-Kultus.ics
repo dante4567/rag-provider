@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:a20cd9d958deb64a@rag-provider.local
+DTSTART;VALUE=DATE:19891201
+DTEND;VALUE=DATE:19891202
+SUMMARY:Event: Zielsetzung einer »Gesamtstrategie der Kultusministerkonferenz zum Bildungsmonitoring« 6 2
+DESCRIPTION:Source: Zielsetzung einer »Gesamtstrategie der Kultusministerkonferenz zum Bildungsmonitoring« 6 2
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200110Z
+CREATED:20251008T200110Z
+LAST-MODIFIED:20251008T200110Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

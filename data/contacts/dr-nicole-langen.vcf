@@ -1,0 +1,11 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Dr. Nicole Langen
+N:Nicole Langen;Dr.;;;
+TITLE:lawyer
+ADR;TYPE=WORK:;;Kaiser -Wilhelm -Ring 20, 50672 Köln;;;;
+NOTE:Mentioned in: Nicole Langen Kaiser -Wilhelm -Ring 20 50672 Köln und Herrn Daniel Teckentrup Darmstädter Str
+REV:20251008T200152Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,lawyer
+END:VCARD

@@ -1,0 +1,13 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Rechtsanwälte Langen
+N:Langen;Rechtsanwälte;;;
+TITLE:law firm
+EMAIL;TYPE=INTERNET:office@rechtsanwaelte-langen.de
+TEL;TYPE=CELL:+49 (0)221/9164444
+ADR;TYPE=WORK:;;Kaiser-Wilhelm-Ring 20, 50672 Köln 3;;;;
+NOTE:Mentioned in: Page 1 --- Hinweise zur Datenverarbeitung 1
+REV:20251008T200140Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,law firm
+END:VCARD

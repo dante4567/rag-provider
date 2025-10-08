@@ -186,6 +186,7 @@ class ObsidianService:
             'source': source,
             'path': f"data/obsidian/{id}.md",  # Blueprint spec
             'doc_type': type_str,
+            'semantic_document_type': metadata.get('semantic_document_type', 'unknown/uncategorized'),
             'created_at': created_at.strftime('%Y-%m-%d'),
             'ingested_at': ingested_at.strftime('%Y-%m-%d'),
 

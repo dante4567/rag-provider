@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:0316231f9378308d@rag-provider.local
+DTSTART;VALUE=DATE:20250801
+DTEND;VALUE=DATE:20250802
+SUMMARY:Event: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+DESCRIPTION:nd Schülern unter -schiedlicher Herkunftssprache. 1Die Änderungen durch diese Verordnung treten zum 01.08.2025 in Kraft. Die entsprechen -den Anpassungen in den Verwaltungsvorschriften treten ebenfall\\nSource: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200103Z
+CREATED:20251008T200103Z
+LAST-MODIFIED:20251008T200103Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

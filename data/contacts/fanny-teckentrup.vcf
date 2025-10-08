@@ -2,9 +2,13 @@ BEGIN:VCARD
 VERSION:3.0
 FN:Fanny Teckentrup
 N:Teckentrup;Fanny;;;
-TITLE:Antragstellerin und Mutter
-NOTE:Mentioned in: Amtsgericht Köln - 310 F 14125
-REV:20251008T191935Z
+TITLE:Projekmanagerin
+ORG:Kiepenheuer & Witsch
+EMAIL;TYPE=INTERNET:mail@fanny-teckentrup.de
+TEL;TYPE=CELL:+49 151 17834060
+ADR;TYPE=WORK:;;Siebachstr. 14, 50733 Köln;;;;
+NOTE:Mentioned in: Amtsgericht Köln - 310 F 14125\, Persönliche Daten Name Geburtsname _________ ________________________________ Vor
+REV:20251008T195754Z
 PRODID:-//RAG Provider//Contact Service//EN
-CATEGORIES:RAG-Extracted,Antragstellerin und Mutter
+CATEGORIES:RAG-Extracted,Projekmanagerin
 END:VCARD

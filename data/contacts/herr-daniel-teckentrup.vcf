@@ -1,0 +1,11 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Herr Daniel Teckentrup
+N:Daniel Teckentrup;Herr;;;
+TITLE:client
+ADR;TYPE=WORK:;;Darmstädter Str. 13, 50678 Köln;;;;
+NOTE:Mentioned in: Nicole Langen Kaiser -Wilhelm -Ring 20 50672 Köln und Herrn Daniel Teckentrup Darmstädter Str
+REV:20251008T200152Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,client
+END:VCARD

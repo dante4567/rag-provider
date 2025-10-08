@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:fcb84fd1acd436cb@rag-provider.local
+DTSTART;VALUE=DATE:20110712
+DTEND;VALUE=DATE:20110713
+SUMMARY:Event: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+DESCRIPTION:S. 360)\; RdErl. v. 16.05.2014 (ABl. NRW. S. 289)\; RdErl. v.18.06.2012 (ABl. NRW. S. 382)\; RdErl. v. 12.07.2011 (ABl. NRW. S. 436)\; RdErl. v.15.11.2008 (ABl. NRW. S. 572)\; RdErl. v. 20.06.2008 (ABl. NR\\nSource: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200103Z
+CREATED:20251008T200103Z
+LAST-MODIFIED:20251008T200103Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

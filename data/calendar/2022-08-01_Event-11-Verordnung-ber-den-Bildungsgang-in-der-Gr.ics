@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:72f9997893e7be31@rag-provider.local
+DTSTART;VALUE=DATE:20220801
+DTEND;VALUE=DATE:20220802
+SUMMARY:Event: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+DESCRIPTION:tum bezieht sich auf die Verordnung in der ursprünglichen Fassung. Die vorliegen -de Fassung ist am 01.08.2022 (GV. NRW. 2022 S. 405) in Kraft getreten. Stundentafel Grundschule (ab Schuljahr 2025/202\\nSource: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200103Z
+CREATED:20251008T200103Z
+LAST-MODIFIED:20251008T200103Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

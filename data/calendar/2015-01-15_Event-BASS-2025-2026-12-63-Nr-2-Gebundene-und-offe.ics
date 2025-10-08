@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:f23acf3faa9e3a5e@rag-provider.local
+DTSTART;VALUE=DATE:20150115
+DTEND;VALUE=DATE:20150116
+SUMMARY:Event: BASS 2025 2026 12 63 Nr. 2 Gebundene und offene Ganztagsschulen sowie außerunterrichtliche Ganztags
+DESCRIPTION:dErl. v. 16.02.2018 (ABl. NRW. 03/18 S.37)\; RdErl. v. 09.03.2016 (ABl. NRW. 04/16 S. 38)\; RdErl. v. 15.01.2015 (ABl. NRW. S. 68) 1 . Datenschutzeinstellungen\\nSource: BASS 2025 2026 12 63 Nr. 2 Gebundene und offene Ganztagsschulen sowie außerunterrichtliche Ganztags
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200104Z
+CREATED:20251008T200104Z
+LAST-MODIFIED:20251008T200104Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

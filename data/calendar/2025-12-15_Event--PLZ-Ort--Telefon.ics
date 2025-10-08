@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:82015a89047975b4@rag-provider.local
+DTSTART;VALUE=DATE:20251215
+DTEND;VALUE=DATE:20251216
+SUMMARY:Event: _________________________________________ PLZ\, Ort _________________________________________ Telefon
+DESCRIPTION:Source: _________________________________________ PLZ\, Ort _________________________________________ Telefon
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200150Z
+CREATED:20251008T200150Z
+LAST-MODIFIED:20251008T200150Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:ebfba66b234652c5@rag-provider.local
+DTSTART;VALUE=DATE:19770124
+DTEND;VALUE=DATE:19770125
+SUMMARY:Event: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+DESCRIPTION:.06.1981Schwerbehinderung / Begleitperson: neinKindergeldberechtigt: neinHerr koeller\, florian geb. 24.01.1977Schwerbehinderung / Begleitperson: neinKindergeldberechtigt: neinFrau rossa\, nadine geb. 2\\nSource: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200146Z
+CREATED:20251008T200146Z
+LAST-MODIFIED:20251008T200146Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

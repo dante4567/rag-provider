@@ -59,6 +59,55 @@ class ComplexityLevel(str, Enum):
     advanced = "advanced"
 
 
+class SemanticDocumentType(str, Enum):
+    """Semantic document type classification (what kind of document is this?)"""
+    # Legal
+    legal_court_decision = "legal/court-decision"
+    legal_contract = "legal/contract"
+    legal_law = "legal/law"
+    legal_regulation = "legal/regulation"
+
+    # Forms
+    form_questionnaire = "form/questionnaire"
+    form_application = "form/application"
+    form_checklist = "form/checklist"
+    form_registration = "form/registration"
+
+    # Education
+    education_transcript = "education/transcript"
+    education_course_material = "education/course-material"
+    education_textbook = "education/textbook"
+
+    # Reference
+    reference_brochure = "reference/brochure"
+    reference_guide = "reference/guide"
+    reference_faq = "reference/faq"
+    reference_directory = "reference/directory"
+    reference_report = "reference/report"
+
+    # Communication
+    communication_email = "communication/email"
+    communication_letter = "communication/letter"
+    communication_meeting_notes = "communication/meeting-notes"
+
+    # Financial
+    financial_invoice = "financial/invoice"
+    financial_receipt = "financial/receipt"
+    financial_statement = "financial/statement"
+
+    # Personal
+    personal_note = "personal/note"
+    personal_handwritten = "personal/handwritten"
+
+    # Government
+    government_regulation = "government/regulation"
+    government_policy = "government/policy"
+    government_statistics = "government/statistics"
+
+    # Unknown
+    unknown = "unknown/uncategorized"
+
+
 # ===== Data Models =====
 
 class Keywords(BaseModel):

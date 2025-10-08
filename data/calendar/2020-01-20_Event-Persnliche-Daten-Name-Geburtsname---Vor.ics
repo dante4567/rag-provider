@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:d5e78c6d6773d3d6@rag-provider.local
+DTSTART;VALUE=DATE:20200120
+DTEND;VALUE=DATE:20200121
+SUMMARY:Event: Persönliche Daten Name Geburtsname _________ ________________________________ Vor
+DESCRIPTION:urch anderen Rechtsanwalt oder ❑ Internet – Google ❑ Internet - Anwaltsuch dienste  Pola Teckentrup 20.01.2020 mir 13 05.05.2018 März 2024 bzw 26.6.2024 folgt Kita-Kind eigenaussauge 2000€\\nSource: Persönliche Daten Name Geburtsname _________ ________________________________ Vor
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T195754Z
+CREATED:20251008T195754Z
+LAST-MODIFIED:20251008T195754Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

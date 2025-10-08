@@ -2,9 +2,13 @@ BEGIN:VCARD
 VERSION:3.0
 FN:Daniel Teckentrup
 N:Teckentrup;Daniel;;;
-TITLE:Antragsgegner und Vater
-NOTE:Mentioned in: Amtsgericht Köln - 310 F 14125
-REV:20251008T191935Z
+TITLE:Hausmann
+ORG:Kiepenheuer & Witsch
+EMAIL;TYPE=INTERNET:mail@daniel-teckentrup.de
+TEL;TYPE=CELL:0170-7989520
+ADR;TYPE=WORK:;;Darmstädter Str. 13, 50678 Köln;;;;
+NOTE:Mentioned in: Amtsgericht Köln - 310 F 14125\, Persönliche Daten Name Geburtsname _________ ________________________________ Vor
+REV:20251008T195754Z
 PRODID:-//RAG Provider//Contact Service//EN
-CATEGORIES:RAG-Extracted,Antragsgegner und Vater
+CATEGORIES:RAG-Extracted,Hausmann
 END:VCARD

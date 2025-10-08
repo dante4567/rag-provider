@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:a53ead1339d07079@rag-provider.local
+DTSTART;VALUE=DATE:20161122
+DTEND;VALUE=DATE:20161123
+SUMMARY:Deadline: 1-1 Schulgesetz für das Land Nordrhein-Westfalen Schulgesetz NRW - SchulG Vom 15
+DESCRIPTION:ebung derRichtlinie 95/46/EG (Datenschutz-Grundverordnung) (ABl. L 119 vom4.5.2016\, S. 1\, L 314 vom 22.11.2016\, S. 72)\, gilt unmittelbar. § 120 und§ 121 sowie die nachfolgenden Absätze 2 bis 4 beruhen\\nSource: 1-1 Schulgesetz für das Land Nordrhein-Westfalen Schulgesetz NRW - SchulG Vom 15
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200101Z
+CREATED:20251008T200101Z
+LAST-MODIFIED:20251008T200101Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:e23222805c2d9d3d@rag-provider.local
+DTSTART;VALUE=DATE:20250331
+DTEND;VALUE=DATE:20250401
+SUMMARY:Event: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+DESCRIPTION:RechtsVOdurch Einklammern einer Zahl\, z. B. (1)\, gekennzeichnet.3Bereinigt.Eingearbeitet: RdErl. v. 31.03.2025 (ABl. NRW. 04/25)\; RdErl. v. 06.09.2023 (ABl. NRW. 09/23)\; RdErl.v. 06.12.2022 (ABl. NRW.\\nSource: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200103Z
+CREATED:20251008T200103Z
+LAST-MODIFIED:20251008T200103Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

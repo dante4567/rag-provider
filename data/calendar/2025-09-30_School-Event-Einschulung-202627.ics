@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:299fc34ffd2f5d94@rag-provider.local
+DTSTART;VALUE=DATE:20250930
+DTEND;VALUE=DATE:20251001
+SUMMARY:School Event: Einschulung 202627
+DESCRIPTION:5) excludes weekends section Orientierung & Anmeldung 2025 Infoabend (Beispiel\, Di) :milestone\, i1\, 2025-09-30\, 1d Infoabend (Beispiel\, Do) :milestone\, i2\, 2025-10-02\, 1d Köln: zentrale Anmeldewoche :\\nSource: Einschulung 202627
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200141Z
+CREATED:20251008T200141Z
+LAST-MODIFIED:20251008T200141Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

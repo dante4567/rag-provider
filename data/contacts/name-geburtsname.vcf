@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Name (Geburtsname)
+N:(Geburtsname);Name;;;
+TITLE:respondent
+NOTE:Mentioned in: _________________________________________ PLZ\, Ort _________________________________________ Telefon
+REV:20251008T200150Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,respondent
+END:VCARD

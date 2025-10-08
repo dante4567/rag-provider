@@ -20,7 +20,7 @@ from pathlib import Path
 
 from src.services.llm_service import LLMService
 from src.services.vocabulary_service import VocabularyService
-from src.models.schemas import DocumentType
+from src.models.schemas import DocumentType, SemanticDocumentType
 
 
 class EnrichmentService:
@@ -323,6 +323,200 @@ class EnrichmentService:
 
         return sanitized or "Document"
 
+    async def classify_semantic_document_type(
+        self,
+        content: str,
+        filename: str,
+        title: str
+    ) -> str:
+        """
+        Classify document into semantic type using keyword matching + LLM fallback
+
+        Returns: semantic document type string (e.g., "legal/law", "form/questionnaire")
+        """
+        # Fast keyword-based classification first
+        content_lower = content[:2000].lower()
+        filename_lower = filename.lower()
+
+        # Legal documents
+        if any(word in content_lower for word in ['urteil', 'beschluss', 'gericht', 'richter', 'klage']):
+            if 'urteil' in content_lower or 'beschluss' in content_lower:
+                return SemanticDocumentType.legal_court_decision.value
+        if any(word in content_lower for word in ['schulgesetz', 'bass', '§', 'artikel', 'gesetz']):
+            return SemanticDocumentType.legal_law.value
+        if 'vertrag' in content_lower and 'vereinbarung' in content_lower:
+            return SemanticDocumentType.legal_contract.value
+
+        # Forms
+        if 'fragebogen' in filename_lower or 'questionnaire' in content_lower:
+            return SemanticDocumentType.form_questionnaire.value
+        if 'checkliste' in filename_lower or 'checklist' in content_lower or 'zeitstrahl' in filename_lower:
+            return SemanticDocumentType.form_checklist.value
+        if 'anmeldung' in filename_lower or 'application' in content_lower:
+            return SemanticDocumentType.form_application.value
+
+        # Education
+        if 'transcript' in filename_lower:
+            return SemanticDocumentType.education_transcript.value
+        if any(word in content_lower for word in ['course', 'lecture', 'lesson', 'curriculum']):
+            return SemanticDocumentType.education_course_material.value
+
+        # Reference materials
+        if 'broschüre' in filename_lower or 'brochure' in content_lower:
+            return SemanticDocumentType.reference_brochure.value
+        if 'faq' in filename_lower:
+            return SemanticDocumentType.reference_faq.value
+        if any(word in filename_lower for word in ['leitfaden', 'guide', 'handbuch']):
+            return SemanticDocumentType.reference_guide.value
+        if any(word in filename_lower for word in ['verzeichnis', 'standorte', 'liste', 'directory']):
+            return SemanticDocumentType.reference_directory.value
+        if any(word in content_lower for word in ['bericht', 'report', 'empfehlungen', 'expertenbeirat']):
+            return SemanticDocumentType.reference_report.value
+
+        # Communication
+        if any(word in content_lower for word in ['meeting notes', 'besprechung', 'protokoll']):
+            return SemanticDocumentType.communication_meeting_notes.value
+
+        # Financial
+        if 'rechnung' in content_lower or 'invoice' in content_lower:
+            return SemanticDocumentType.financial_invoice.value
+        if 'quittung' in content_lower or 'receipt' in content_lower or 'beleg' in content_lower:
+            return SemanticDocumentType.financial_receipt.value
+
+        # Government/Policy
+        if any(word in content_lower for word in ['verordnung', 'erlass', 'regulation']):
+            return SemanticDocumentType.government_regulation.value
+        if 'policy' in content_lower or 'richtlinie' in content_lower:
+            return SemanticDocumentType.government_policy.value
+
+        # If no keyword match, use LLM for classification
+        prompt = f"""Classify this document into ONE semantic type.
+
+Document title: {title}
+Filename: {filename}
+Content preview: {content[:800]}
+
+Choose ONLY ONE from these categories:
+- legal/court-decision (Gerichtsbeschluss, Urteil)
+- legal/law (Gesetz, SchulG, BASS)
+- legal/contract (Vertrag)
+- form/questionnaire (Fragebogen)
+- form/checklist (Checkliste, Zeitstrahl)
+- form/application (Anmeldung, Antrag)
+- education/transcript (Course transcript)
+- education/course-material (Lehrmaterial)
+- reference/brochure (Broschüre, marketing material)
+- reference/guide (Leitfaden, Handbuch)
+- reference/faq
+- reference/directory (Liste, Verzeichnis)
+- reference/report (Bericht, Empfehlungen)
+- communication/meeting-notes
+- financial/invoice
+- financial/receipt
+- government/regulation (Verordnung)
+- government/policy (Richtlinie)
+- unknown/uncategorized
+
+Return ONLY the category string, nothing else."""
+
+        try:
+            response, _, _ = await self.llm_service.call_llm(
+                prompt=prompt,
+                model_id="groq/llama-3.1-8b-instant",
+                temperature=0.0
+            )
+            doc_type = response.strip().lower()
+            # Validate it's one of our types
+            valid_types = [t.value for t in SemanticDocumentType]
+            if doc_type in valid_types:
+                return doc_type
+        except Exception as e:
+            print(f"[WARNING] LLM classification failed: {e}")
+
+        return SemanticDocumentType.unknown.value
+
+    def filter_people_by_document_type(
+        self,
+        people: List[Dict],
+        document_type: str,
+        content: str
+    ) -> List[Dict]:
+        """
+        Filter and prioritize people based on document type context
+
+        Examples:
+        - Reports with 28 authors → Keep max 5 primary authors
+        - Meeting notes → Keep all attendees
+        - Legal docs → Keep parties, lawyers, judges
+        - Forms → Keep form subject (person filling it out)
+        """
+        if not people:
+            return []
+
+        # For reports: Limit to first 5 authors if there are many
+        if document_type.startswith('reference/report') or document_type.startswith('government/'):
+            if len(people) > 10:
+                # Likely author list - keep first few
+                print(f"[FILTER] Report with {len(people)} people → keeping first 5 primary authors")
+                return people[:5]
+
+        # For legal documents: Prioritize parties, lawyers, judges
+        if document_type.startswith('legal/'):
+            # Filter people with roles like judge, lawyer, plaintiff, defendant
+            priority_roles = ['richter', 'anwalt', 'kläger', 'beklagt', 'judge', 'lawyer', 'attorney']
+            priority_people = [
+                p for p in people
+                if any(role in str(p.get('role', '')).lower() for role in priority_roles)
+            ]
+            if priority_people:
+                print(f"[FILTER] Legal doc: keeping {len(priority_people)} parties/lawyers/judges from {len(people)} total")
+                return priority_people[:10]
+
+        # For educational materials: Keep instructors, not all mentioned names
+        if document_type.startswith('education/'):
+            # In transcripts/course materials, often mentions many historical figures
+            # Keep people with explicit roles (instructor, professor) or mentioned multiple times
+            instructor_people = [
+                p for p in people
+                if any(role in str(p.get('role', '')).lower() for role in ['instructor', 'professor', 'teacher', 'dozent'])
+            ]
+            if instructor_people:
+                print(f"[FILTER] Educational doc: keeping {len(instructor_people)} instructors from {len(people)} total")
+                return instructor_people[:5]
+            # If no explicit instructors, keep max 5
+            if len(people) > 5:
+                print(f"[FILTER] Educational doc: limiting to 5 key people from {len(people)} total")
+                return people[:5]
+
+        # For brochures/marketing: Usually don't need person extraction
+        if document_type.startswith('reference/brochure'):
+            # Keep only people with explicit contact info or roles
+            contact_people = [
+                p for p in people
+                if p.get('email') or p.get('phone') or p.get('role')
+            ]
+            if len(contact_people) < len(people):
+                print(f"[FILTER] Brochure: keeping {len(contact_people)} contacts from {len(people)} mentioned people")
+                return contact_people
+
+        # For forms/questionnaires: Keep all (these are important people)
+        if document_type.startswith('form/'):
+            # Forms contain relevant people (form subjects)
+            print(f"[FILTER] Form: keeping all {len(people)} people (relevant)")
+            return people
+
+        # For meeting notes: Keep all attendees
+        if document_type.startswith('communication/meeting'):
+            print(f"[FILTER] Meeting notes: keeping all {len(people)} attendees")
+            return people
+
+        # Default: Limit to reasonable number
+        if len(people) > 15:
+            print(f"[FILTER] Default: limiting to 15 people from {len(people)} total")
+            return people[:15]
+
+        return people
+
     async def enrich_document(
         self,
         content: str,
@@ -343,6 +537,12 @@ class EnrichmentService:
 
         # Extract title first (don't rely on LLM for this)
         extracted_title = self.extract_title_from_content(content, filename)
+
+        # Classify semantic document type
+        semantic_doc_type = await self.classify_semantic_document_type(
+            content, filename, extracted_title
+        )
+        print(f"[CLASSIFY] Document type: {semantic_doc_type}")
 
         # Calculate recency score
         recency_score = self.calculate_recency_score(created_at)
@@ -394,6 +594,11 @@ class EnrichmentService:
                 print(f"\n[FALLBACK] LLM returned no people, using regex extraction: {len(regex_people)} found")
                 llm_people = regex_people
 
+            # Filter people by document type (context-aware)
+            llm_people = self.filter_people_by_document_type(
+                llm_people, semantic_doc_type, content
+            )
+
             # Combine and deduplicate dates (handle both dict and string formats)
             all_dates = []
             seen_dates = set()
@@ -433,6 +638,9 @@ class EnrichmentService:
                 existing_metadata=existing_metadata,
                 enrichment_cost=cost
             )
+
+            # Add semantic document type to metadata
+            enriched["semantic_document_type"] = semantic_doc_type
 
             # Debug: Check if people/dates are in enriched metadata
             print(f"\n[DEBUG] enriched metadata BEFORE return:")

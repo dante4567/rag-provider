@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:54676fff54629dce@rag-provider.local
+DTSTART;VALUE=DATE:20260930
+DTEND;VALUE=DATE:20261001
+SUMMARY:Deadline: Einschulung 202627
+DESCRIPTION:ita\, #ogs\, #planung\, #checkliste] Kurzüberblick Zieljahrgang: Einschulung 2026/27 (Kinder \, die bis 30.09.2026 6 Jahre alt werden). Wichtigste Frist: 15.11.2025 – späteste Anmeldung (NRW-weit). Köln: \\nSource: Einschulung 202627
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200141Z
+CREATED:20251008T200141Z
+LAST-MODIFIED:20251008T200141Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

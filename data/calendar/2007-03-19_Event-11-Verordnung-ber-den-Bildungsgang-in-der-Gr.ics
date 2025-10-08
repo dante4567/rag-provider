@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:43babb7c23bcee3f@rag-provider.local
+DTSTART;VALUE=DATE:20070319
+DTEND;VALUE=DATE:20070320
+SUMMARY:Event: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+DESCRIPTION:S. 436)\; RdErl. v.15.11.2008 (ABl. NRW. S. 572)\; RdErl. v. 20.06.2008 (ABl. NRW. S. 349)\; RdErl. v.19.03.2007 (ABl. NRW. S. 209)\; RdErl. v. 15.09.2006/02.10.2006 (ABl. NRW. S. 407)(4) Die amtsärztlich\\nSource: 1.1 Verordnung über den Bildungsgang in der Grundschule Ausbildungsordnung Grundschule - AO-GS Vom 2
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200103Z
+CREATED:20251008T200103Z
+LAST-MODIFIED:20251008T200103Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

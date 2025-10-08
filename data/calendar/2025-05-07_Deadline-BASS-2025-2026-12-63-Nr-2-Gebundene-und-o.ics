@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:1411f5718cc8a7d6@rag-provider.local
+DTSTART;VALUE=DATE:20250507
+DTEND;VALUE=DATE:20250508
+SUMMARY:Deadline: BASS 2025 2026 12 63 Nr. 2 Gebundene und offene Ganztagsschulen sowie außerunterrichtliche Ganztags
+DESCRIPTION:August 2025 in Kraft und gelten längstens bis zum 31. Juli 2026. Bereinigt.Eingearbeitet:RdErl. v. 07.05.2025 (ABl. NRW. 05/25)\; RdErl. v. 27.03.2024 (ABI. NRW. 04/24)\; RdErl. v. 07.12.2022(ABl. NRW. \\nSource: BASS 2025 2026 12 63 Nr. 2 Gebundene und offene Ganztagsschulen sowie außerunterrichtliche Ganztags
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200104Z
+CREATED:20251008T200104Z
+LAST-MODIFIED:20251008T200104Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

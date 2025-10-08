@@ -10,9 +10,9 @@ DTEND;VALUE=DATE:20251221
 SUMMARY:Event: Project Kickoff Meeting - Q4 2025
 DESCRIPTION:0+ concurrent users and integrate with our existing SAP backend.  **Key Decisions:** - Launch date: 2025-12-20 - Budget approved: €45\,000 - Tech stack: React + Node.js + PostgreSQL - Sarah will be the\\nSource: Project Kickoff Meeting - Q4 2025
 CATEGORIES:RAG-Extracted
-DTSTAMP:20251008T193755Z
-CREATED:20251008T193755Z
-LAST-MODIFIED:20251008T193755Z
+DTSTAMP:20251008T194945Z
+CREATED:20251008T194945Z
+LAST-MODIFIED:20251008T194945Z
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR

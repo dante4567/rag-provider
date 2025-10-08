@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:7672b8e6872e046b@rag-provider.local
+DTSTART;VALUE=DATE:20231024
+DTEND;VALUE=DATE:20231025
+SUMMARY:Event: Isabell van Ackeren \, Bildungssystem - und Schulentwicklungsforschung\, Universität Duisburg -Essen P
+DESCRIPTION:Source: Isabell van Ackeren \, Bildungssystem - und Schulentwicklungsforschung\, Universität Duisburg -Essen P
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200144Z
+CREATED:20251008T200144Z
+LAST-MODIFIED:20251008T200144Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

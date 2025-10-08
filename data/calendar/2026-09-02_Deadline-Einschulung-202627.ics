@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:cf6c4cdda4c7f48d@rag-provider.local
+DTSTART;VALUE=DATE:20260902
+DTEND;VALUE=DATE:20260903
+SUMMARY:Deadline: Einschulung 202627
+DESCRIPTION:ek_koeln: [2025-10-06\, 2025-10-10] registration_deadline_nrw: 2025-11-15 first_school_day_nrw_2026: 2026-09-02 tags: [#schule\, #einschulung\, #nrw\, #kita\, #ogs\, #planung\, #checkliste] Kurzüberblick Zie\\nSource: Einschulung 202627
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200141Z
+CREATED:20251008T200141Z
+LAST-MODIFIED:20251008T200141Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

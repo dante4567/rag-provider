@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:441e4684c6768527@rag-provider.local
+DTSTART;VALUE=DATE:20240328
+DTEND;VALUE=DATE:20240329
+SUMMARY:Event: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+DESCRIPTION:dd aa t t ee nn ändernFerienanlage des Erholungswerks Prümeigene Anreise4 Erwachsene & 2 Kinder28.03.2024 - 05.04.20249 Tage (8 Nächte) vor Ort1xFH 4-Raum ca. 71 qm Kaminofen570\,40 €II n n k k ll\\nSource: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200146Z
+CREATED:20251008T200146Z
+LAST-MODIFIED:20251008T200146Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:0437037764770b6c@rag-provider.local
+DTSTART;VALUE=DATE:19810626
+DTEND;VALUE=DATE:19810627
+SUMMARY:Event: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+DESCRIPTION:01.1977Schwerbehinderung / Begleitperson: neinKindergeldberechtigt: neinFrau teckentrup\, fanny geb. 26.06.1981Schwerbehinderung / Begleitperson: neinKindergeldberechtigt: neinHerr koeller\, florian geb\\nSource: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200146Z
+CREATED:20251008T200146Z
+LAST-MODIFIED:20251008T200146Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

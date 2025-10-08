@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:277f1c6f3788a569@rag-provider.local
+DTSTART;VALUE=DATE:19790323
+DTEND;VALUE=DATE:19790324
+SUMMARY:Event: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+DESCRIPTION:24.01.1977Schwerbehinderung / Begleitperson: neinKindergeldberechtigt: neinFrau rossa\, nadine geb. 23.03.1979Schwerbehinderung / Begleitperson: neinKindergeldberechtigt: neinteckentrup\, pola geb. 20.0\\nSource: Bitte prüfen Sie Ihre Angaben Herr teckentrup\, daniel geb
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T200146Z
+CREATED:20251008T200146Z
+LAST-MODIFIED:20251008T200146Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR
