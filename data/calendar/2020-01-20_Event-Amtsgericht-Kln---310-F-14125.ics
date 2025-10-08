@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:07a475b0e73f86b6@rag-provider.local
+DTSTART;VALUE=DATE:20200120
+DTEND;VALUE=DATE:20200121
+SUMMARY:Event: Amtsgericht Köln - 310 F 14125
+DESCRIPTION:In der einstweiligen Anordnungssache betreffend das minderjährige Kind Pola Teckentrup\, geboren am 20.01.2020\, an der weiter beteiligt sind: 1. Frau Fanny Teckentrup\, Siebachstraße 14\, 50733 Köln\, Ant\\nSource: Amtsgericht Köln - 310 F 14125
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T191935Z
+CREATED:20251008T191935Z
+LAST-MODIFIED:20251008T191935Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

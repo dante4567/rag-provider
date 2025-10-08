@@ -394,13 +394,23 @@ class EnrichmentService:
                 print(f"\n[FALLBACK] LLM returned no people, using regex extraction: {len(regex_people)} found")
                 llm_people = regex_people
 
-            # Combine and deduplicate dates/numbers
-            all_dates = list(set(llm_dates + regex_dates))
+            # Combine and deduplicate dates (handle both dict and string formats)
+            all_dates = []
+            seen_dates = set()
+
+            for d in llm_dates + regex_dates:
+                # Extract date string (dict or string)
+                date_str = d.get('date', d) if isinstance(d, dict) else d
+                if date_str not in seen_dates:
+                    seen_dates.add(date_str)
+                    all_dates.append(d)  # Keep original format (dict or string)
+
+            # Deduplicate numbers (simple strings/numbers)
             all_numbers = list(set(llm_numbers + regex_numbers))
 
             # Update entities with merged data
             llm_entities["people"] = llm_people[:20]  # Max 20 people
-            llm_entities["dates"] = sorted(all_dates)[:30]  # Max 30 dates
+            llm_entities["dates"] = sorted(all_dates, key=lambda x: x.get('date', x) if isinstance(x, dict) else x)[:30]  # Max 30 dates
             llm_entities["numbers"] = sorted(all_numbers)[:50]  # Max 50 numbers
             llm_data["entities"] = llm_entities
 
@@ -423,6 +433,12 @@ class EnrichmentService:
                 existing_metadata=existing_metadata,
                 enrichment_cost=cost
             )
+
+            # Debug: Check if people/dates are in enriched metadata
+            print(f"\n[DEBUG] enriched metadata BEFORE return:")
+            print(f"  - people: {enriched.get('people', 'NOT IN DICT')}")
+            print(f"  - dates: {enriched.get('dates', 'NOT IN DICT')}")
+            print(f"  - dates_detailed: {enriched.get('dates_detailed', 'NOT IN DICT')}\n")
 
             return enriched
 

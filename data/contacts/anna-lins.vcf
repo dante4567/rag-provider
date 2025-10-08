@@ -1,10 +1,9 @@
 BEGIN:VCARD
 VERSION:3.0
-FN:Steven Lins
-N:Lins;Steven;;;
-TITLE:father
+FN:Anna Lins
+N:Lins;Anna;;;
 NOTE:Mentioned in: Birth Announcement - 2025-01-15
 REV:20251008T191357Z
 PRODID:-//RAG Provider//Contact Service//EN
-CATEGORIES:RAG-Extracted,father
+CATEGORIES:RAG-Extracted
 END:VCARD

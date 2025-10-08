@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:01045991c2a7392c@rag-provider.local
+DTSTART;VALUE=DATE:20241030
+DTEND;VALUE=DATE:20241031
+SUMMARY:Court Hearing: Amtsgericht Köln - 310 F 14125
+DESCRIPTION:ang der Mutter mit dem Kind hat das Gericht im Wege der einstweiligen Anordnung durch Beschluss vom 30.10.2024 (Az. 310 F 160/24) wie folgt geregelt: Die Kindesmutter ist berechtigt und verpflichtet\, \\nSource: Amtsgericht Köln - 310 F 14125
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T191935Z
+CREATED:20251008T191935Z
+LAST-MODIFIED:20251008T191935Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

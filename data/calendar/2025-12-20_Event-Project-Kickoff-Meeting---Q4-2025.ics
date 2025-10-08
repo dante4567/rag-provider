@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:7730cd56d0ec8276@rag-provider.local
+DTSTART;VALUE=DATE:20251220
+DTEND;VALUE=DATE:20251221
+SUMMARY:Event: Project Kickoff Meeting - Q4 2025
+DESCRIPTION:0+ concurrent users and integrate with our existing SAP backend.  **Key Decisions:** - Launch date: 2025-12-20 - Budget approved: €45\,000 - Tech stack: React + Node.js + PostgreSQL - Sarah will be the\\nSource: Project Kickoff Meeting - Q4 2025
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T192013Z
+CREATED:20251008T192013Z
+LAST-MODIFIED:20251008T192013Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

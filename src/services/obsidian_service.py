@@ -149,13 +149,14 @@ class ObsidianService:
         source: str,
         doc_type: DocumentType,
         people: List[str],
-        places: List[str],
-        projects: List[str],
-        topics: List[str],
-        organizations: List[str],
-        created_at: datetime,
-        ingested_at: datetime,
-        metadata: Dict[str, Any]
+        people_objects: List[Dict] = None,  # Full person objects with relationships
+        places: List[str] = None,
+        projects: List[str] = None,
+        topics: List[str] = None,
+        organizations: List[str] = None,
+        created_at: datetime = None,
+        ingested_at: datetime = None,
+        metadata: Dict[str, Any] = None
     ) -> str:
         """
         Build unified frontmatter (Blueprint-compliant v2.1)
@@ -196,6 +197,7 @@ class ObsidianService:
 
             # Entities (FLATTENED for Obsidian Dataview compatibility)
             'organizations': orgs,
+            'people_detailed': people_objects if people_objects else [],  # Full person objects with relationships
             'dates': dates,
             'dates_detailed': entities_data.get('dates_detailed', []),  # Full date context
             'numbers': numbers,
@@ -656,6 +658,12 @@ SORT file.mtime DESC
         created_at = created_at or datetime.now()
         ingested_at = datetime.now()
 
+        # Debug: Log what metadata we received
+        print(f"\n[OBSIDIAN DEBUG] export_document() received metadata:")
+        print(f"  - people field: {metadata.get('people', 'NOT FOUND')}")
+        print(f"  - dates field: {metadata.get('dates', 'NOT FOUND')}")
+        print(f"  - dates_detailed field: {metadata.get('entities', {}).get('dates_detailed', 'NOT FOUND')}\n")
+
         # Parse metadata lists
         # Handle both old format (people_roles string) and new format (people list of dicts/strings)
         people_raw = metadata.get('people', metadata.get('people_roles', ''))
@@ -715,6 +723,7 @@ SORT file.mtime DESC
             source=source,
             doc_type=document_type,
             people=people,
+            people_objects=people_objects,  # Add full objects with relationships
             places=places,
             projects=projects,
             topics=topics,

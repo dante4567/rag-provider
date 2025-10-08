@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:ff633b49c061424a@rag-provider.local
+DTSTART;VALUE=DATE:20241106
+DTEND;VALUE=DATE:20241107
+SUMMARY:Deadline: Amtsgericht Köln - 310 F 14125
+DESCRIPTION:re Abholung durch die Mutter im Rahmen der zugelassenen Abholzeiten ist möglich)\, beginnend mit dem 06.11.2024\, bis zum darauffolgenden Freitag 7:00 Uhr\, wobei die Mutter das Kind innerhalb der Bringz\\nSource: Amtsgericht Köln - 310 F 14125
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T191935Z
+CREATED:20251008T191935Z
+LAST-MODIFIED:20251008T191935Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

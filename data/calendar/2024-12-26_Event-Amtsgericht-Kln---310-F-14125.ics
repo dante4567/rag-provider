@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:3ceb4145eadc2ec3@rag-provider.local
+DTSTART;VALUE=DATE:20241226
+DTEND;VALUE=DATE:20241227
+SUMMARY:Event: Amtsgericht Köln - 310 F 14125
+DESCRIPTION:rhalb der Bringzeit auch später in die Kita bringen darf\; c) der Umgangskontakt der Kindesmutter am 26.12.2024 beginnt bereits um 12 Uhr\, an diesem Tag bringt der Kindesvater das Kind zur Wohnung der \\nSource: Amtsgericht Köln - 310 F 14125
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T191935Z
+CREATED:20251008T191935Z
+LAST-MODIFIED:20251008T191935Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

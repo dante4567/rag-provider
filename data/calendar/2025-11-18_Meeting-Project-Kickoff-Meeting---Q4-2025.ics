@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:ebec51adf007ad9b@rag-provider.local
+DTSTART;VALUE=DATE:20251118
+DTEND;VALUE=DATE:20251119
+SUMMARY:Meeting: Project Kickoff Meeting - Q4 2025
+DESCRIPTION:2025-11-20 2. Lisa to deliver mockups by 2025-11-25 3. Dr. Weber to review security requirements by 2025-11-18  **Follow-up Meeting:** 2025-11-22 at 14:00  ## Risks - Tight timeline might require addi\\nSource: Project Kickoff Meeting - Q4 2025
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T192013Z
+CREATED:20251008T192013Z
+LAST-MODIFIED:20251008T192013Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:fe3e510add189ad7@rag-provider.local
+DTSTART;VALUE=DATE:20240120
+DTEND;VALUE=DATE:20240121
+SUMMARY:Event: Amtsgericht Köln - 310 F 14125
+DESCRIPTION:festgesetzt. G r ü n d e I. Die Beteiligten sind die Eltern des Kindes Pola Teckentrup\, geboren am 20.01.2024. Seit der Trennung der Eltern im März 2024 wurde das Kind zunächst überwiegend von dem Kin\\nSource: Amtsgericht Köln - 310 F 14125
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T191935Z
+CREATED:20251008T191935Z
+LAST-MODIFIED:20251008T191935Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

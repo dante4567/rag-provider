@@ -758,6 +758,15 @@ class RAGService:
                 existing_metadata=file_metadata
             )
 
+            # Debug: Check if people/dates are in enriched_metadata
+            print(f"\n[APP.PY DEBUG] enriched_metadata after enrichment service:")
+            print(f"  - 'people' in metadata: {'people' in enriched_metadata}")
+            print(f"  - people value: {enriched_metadata.get('people', 'NOT FOUND')}")
+            print(f"  - 'dates' in metadata: {'dates' in enriched_metadata}")
+            print(f"  - dates value: {enriched_metadata.get('dates', 'NOT FOUND')}")
+            print(f"  - 'entities' in metadata: {'entities' in enriched_metadata}")
+            print(f"  - entities value: {enriched_metadata.get('entities', 'NOT FOUND')}\n")
+
             # Use LLM-improved title
             title = enriched_metadata.get("title", filename or f"document_{doc_id}")
             logger.info(f"✅ Multi-stage enrichment complete: {title}")

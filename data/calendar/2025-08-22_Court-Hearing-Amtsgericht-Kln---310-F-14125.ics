@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:08e0c4a7f82ea173@rag-provider.local
+DTSTART;VALUE=DATE:20250822
+DTEND;VALUE=DATE:20250823
+SUMMARY:Court Hearing: Amtsgericht Köln - 310 F 14125
+DESCRIPTION:age\, Ubierring 7\, 50678 Köln\, hat das Amtsgericht Köln durch die Richterin am Amtsgericht Wiemer am 22.08.2025 beschlossen: 2 Der Antrag auf Erlass einer einstweiligen Anordnung wird zurückgewiesen. D\\nSource: Amtsgericht Köln - 310 F 14125
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T191935Z
+CREATED:20251008T191935Z
+LAST-MODIFIED:20251008T191935Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR
