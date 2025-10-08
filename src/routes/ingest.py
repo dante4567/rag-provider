@@ -28,7 +28,8 @@ async def ingest_document(document: Document):
             document_type=document.document_type,
             process_ocr=document.process_ocr,
             generate_obsidian=document.generate_obsidian,
-            file_metadata=document.metadata
+            file_metadata=document.metadata,
+            use_critic=document.use_critic
         )
     except Exception as e:
         logger.error(f"Document ingestion failed: {e}")
@@ -39,7 +40,8 @@ async def ingest_document(document: Document):
 async def ingest_file(
     file: UploadFile = File(...),
     process_ocr: bool = Form(False),
-    generate_obsidian: bool = Form(True)
+    generate_obsidian: bool = Form(True),
+    use_critic: bool = Form(False)
 ):
     """Ingest file via upload"""
     from app import rag_service, PATHS
@@ -58,7 +60,8 @@ async def ingest_file(
         result = await rag_service.process_file(
             str(temp_path),
             process_ocr=process_ocr,
-            generate_obsidian=generate_obsidian
+            generate_obsidian=generate_obsidian,
+            use_critic=use_critic
         )
 
         # Copy to Obsidian attachments if successful
@@ -88,7 +91,8 @@ async def ingest_file(
 async def ingest_batch_files(
     files: List[UploadFile] = File(...),
     process_ocr: bool = Form(False),
-    generate_obsidian: bool = Form(True)
+    generate_obsidian: bool = Form(True),
+    use_critic: bool = Form(False)
 ):
     """Batch file ingestion"""
     from app import rag_service, PATHS
@@ -109,7 +113,7 @@ async def ingest_batch_files(
         # Process files concurrently
         tasks = []
         for temp_path in temp_paths:
-            task = rag_service.process_file(str(temp_path), process_ocr, generate_obsidian)
+            task = rag_service.process_file(str(temp_path), process_ocr, generate_obsidian, use_critic)
             tasks.append(task)
 
         results = await asyncio.gather(*tasks, return_exceptions=True)

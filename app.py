@@ -691,7 +691,8 @@ class RAGService:
                              document_type: DocumentType = DocumentType.text,
                              process_ocr: bool = False,
                              generate_obsidian: bool = True,
-                             file_metadata: Dict[str, Any] = None) -> IngestResponse:
+                             file_metadata: Dict[str, Any] = None,
+                             use_critic: bool = False) -> IngestResponse:
         """Process a document with full enrichment pipeline"""
 
         # Validate content
@@ -777,6 +778,41 @@ class RAGService:
             logger.info(f"   💰 Enrichment cost: ${enriched_metadata.get('enrichment_cost_usd', 0):.6f}")
             if enriched_metadata.get('recommended_for_review', False):
                 logger.info(f"   ⚠️  Recommended for manual review (confidence/significance flags)")
+
+            # ============================================================
+            # OPTIONAL: LLM-as-Critic Quality Assessment
+            # ============================================================
+            critique_result = None
+            if use_critic:
+                try:
+                    logger.info(f"🔍 Running LLM-as-critic quality assessment...")
+                    critique_data = await self.enrichment_service.critique_enrichment(
+                        content=content,
+                        enriched_metadata=enriched_metadata,
+                        filename=filename or f"document_{doc_id}"
+                    )
+
+                    # Store critique in response
+                    from src.models.schemas import QualityScores, CritiqueResult
+                    critique_result = CritiqueResult(
+                        scores=QualityScores(**critique_data["scores"]),
+                        overall_quality=critique_data["overall_quality"],
+                        suggestions=critique_data["suggestions"],
+                        critic_model=critique_data["critic_model"],
+                        critic_cost=critique_data["critic_cost"],
+                        critic_date=critique_data["critic_date"]
+                    )
+
+                    logger.info(f"✅ Critic assessment complete: {critique_data['overall_quality']:.2f}/5.0")
+                    logger.info(f"   📊 Schema: {critique_data['scores']['schema_compliance']:.1f} | Entities: {critique_data['scores']['entity_quality']:.1f} | Topics: {critique_data['scores']['topic_relevance']:.1f}")
+                    logger.info(f"   📊 Summary: {critique_data['scores']['summary_quality']:.1f} | Tasks: {critique_data['scores']['task_identification']:.1f} | Privacy: {critique_data['scores']['privacy_assessment']:.1f}")
+                    logger.info(f"   💰 Critic cost: ${critique_data['critic_cost']:.6f}")
+                    if critique_data['suggestions']:
+                        logger.info(f"   💡 Suggestions ({len(critique_data['suggestions'])}): {critique_data['suggestions'][0][:80]}...")
+                except Exception as e:
+                    logger.warning(f"   ⚠️ Critic assessment failed: {e}")
+                    import traceback
+                    traceback.print_exc()
 
             # ============================================================
             # QUALITY GATES - Blueprint do_index scoring
@@ -1073,14 +1109,15 @@ class RAGService:
                 doc_id=doc_id,
                 chunks=len(chunks),
                 metadata=response_metadata,
-                obsidian_path=obsidian_path
+                obsidian_path=obsidian_path,
+                critique=critique_result
             )
 
         except Exception as e:
             logger.error(f"Document processing failed: {e}")
             raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
-    async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True) -> IngestResponse:
+    async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True, use_critic: bool = False) -> IngestResponse:
         """Process a file from path"""
         try:
             # Extract text using document service
@@ -1098,7 +1135,8 @@ class RAGService:
                 document_type=document_type,
                 process_ocr=process_ocr,
                 generate_obsidian=generate_obsidian,
-                file_metadata=metadata
+                file_metadata=metadata,
+                use_critic=use_critic
             )
         except Exception as e:
             logger.error(f"File processing failed for {file_path}: {e}")

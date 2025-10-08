@@ -153,6 +153,7 @@ class Document(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
     process_ocr: bool = Field(default=False, description="Process with OCR if needed")
     generate_obsidian: bool = Field(default=True, description="Generate Obsidian markdown")
+    use_critic: bool = Field(default=False, description="Run LLM-as-critic quality assessment")
 
 
 class EnrichmentSettings(BaseModel):
@@ -197,6 +198,7 @@ class IngestResponse(BaseModel):
     chunks: int = Field(..., description="Number of chunks created")
     metadata: ObsidianMetadata = Field(..., description="Generated metadata")
     obsidian_path: Optional[str] = Field(default=None, description="Path to Obsidian markdown file")
+    critique: Optional["CritiqueResult"] = Field(default=None, description="Quality critique from LLM-as-critic")
 
 
 class SearchResult(BaseModel):
@@ -266,3 +268,26 @@ class CostStats(BaseModel):
     operations_today: int = Field(..., description="Number of operations today")
     most_expensive_operation: Optional[CostInfo] = Field(default=None, description="Most expensive operation")
     cost_by_provider: Dict[str, float] = Field(..., description="Cost breakdown by provider")
+
+
+# ===== Quality Assessment Models (LLM-as-Critic) =====
+
+class QualityScores(BaseModel):
+    """Quality scores from LLM critic (0-5 scale)"""
+    schema_compliance: float = Field(..., ge=0.0, le=5.0, description="Required fields present, correct data types")
+    entity_quality: float = Field(..., ge=0.0, le=5.0, description="Completeness and accuracy of extracted entities")
+    topic_relevance: float = Field(..., ge=0.0, le=5.0, description="Appropriate controlled vocabulary usage")
+    summary_quality: float = Field(..., ge=0.0, le=5.0, description="Conciseness, accuracy, key points captured")
+    task_identification: float = Field(..., ge=0.0, le=5.0, description="Action items and deadlines extracted")
+    privacy_assessment: float = Field(..., ge=0.0, le=5.0, description="PII detection and handling")
+    chunking_suitability: float = Field(..., ge=0.0, le=5.0, description="Document structure analysis")
+
+
+class CritiqueResult(BaseModel):
+    """Result from LLM-as-critic quality assessment"""
+    scores: QualityScores = Field(..., description="Individual rubric scores")
+    overall_quality: float = Field(..., ge=0.0, le=5.0, description="Weighted average quality score")
+    suggestions: List[str] = Field(default_factory=list, description="Specific improvement suggestions")
+    critic_model: str = Field(..., description="LLM model used for critique")
+    critic_cost: float = Field(..., description="Cost of critique in USD")
+    critic_date: str = Field(..., description="ISO timestamp of critique")

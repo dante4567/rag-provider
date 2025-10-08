@@ -1028,6 +1028,200 @@ Return ONLY this JSON structure (no markdown, no explanations):
 
         return metadata
 
+    async def critique_enrichment(
+        self,
+        content: str,
+        enriched_metadata: Dict,
+        filename: str
+    ) -> Dict:
+        """
+        Critique enriched metadata using LLM-as-critic pattern
+
+        Returns quality scores (0-5) for 7 rubrics:
+        - schema_compliance: Required fields present, data types correct
+        - entity_quality: Completeness and accuracy of extracted entities
+        - topic_relevance: Appropriate controlled vocabulary usage
+        - summary_quality: Conciseness, accuracy, key points captured
+        - task_identification: Action items and deadlines extracted
+        - privacy_assessment: PII detection and handling
+        - chunking_suitability: Document structure analysis
+
+        Plus overall quality score and improvement suggestions.
+        """
+
+        # Build critic prompt
+        prompt = self._build_critic_prompt(content, enriched_metadata, filename)
+
+        try:
+            # Use Anthropic for critic (better reasoning)
+            critic_response, cost, model_used = await self.llm_service.call_llm(
+                prompt=prompt,
+                model_id="anthropic/claude-3-5-sonnet-20241022",
+                temperature=0.0  # Deterministic scoring
+            )
+
+            # Parse critic response
+            critique_data = self._parse_llm_response(critic_response)
+
+            # Validate scores are in range 0-5
+            scores = critique_data.get("scores", {})
+            for key, value in scores.items():
+                if not isinstance(value, (int, float)) or value < 0 or value > 5:
+                    print(f"[WARNING] Invalid score for {key}: {value}, defaulting to 2.5")
+                    scores[key] = 2.5
+
+            # Calculate overall quality (weighted average)
+            overall_quality = (
+                scores.get("schema_compliance", 2.5) * 0.15 +
+                scores.get("entity_quality", 2.5) * 0.25 +
+                scores.get("topic_relevance", 2.5) * 0.20 +
+                scores.get("summary_quality", 2.5) * 0.15 +
+                scores.get("task_identification", 2.5) * 0.10 +
+                scores.get("privacy_assessment", 2.5) * 0.10 +
+                scores.get("chunking_suitability", 2.5) * 0.05
+            )
+
+            return {
+                "scores": scores,
+                "overall_quality": round(overall_quality, 2),
+                "suggestions": critique_data.get("suggestions", []),
+                "critic_model": model_used,
+                "critic_cost": round(cost, 6),
+                "critic_date": datetime.now().isoformat()
+            }
+
+        except Exception as e:
+            print(f"[ERROR] Critic enrichment failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+            # Fallback: neutral scores
+            return {
+                "scores": {
+                    "schema_compliance": 2.5,
+                    "entity_quality": 2.5,
+                    "topic_relevance": 2.5,
+                    "summary_quality": 2.5,
+                    "task_identification": 2.5,
+                    "privacy_assessment": 2.5,
+                    "chunking_suitability": 2.5
+                },
+                "overall_quality": 2.5,
+                "suggestions": ["Critic evaluation failed"],
+                "critic_model": "fallback",
+                "critic_cost": 0.0,
+                "critic_date": datetime.now().isoformat()
+            }
+
+    def _build_critic_prompt(
+        self,
+        content: str,
+        enriched_metadata: Dict,
+        filename: str
+    ) -> str:
+        """Build critic prompt with 7-point rubric"""
+
+        # Truncate content for context
+        content_sample = content[:2000]
+        if len(content) > 2000:
+            content_sample += "\n\n[...truncated...]"
+
+        # Format enriched metadata for review (hide complex fields)
+        metadata_for_review = {
+            "title": enriched_metadata.get("title", ""),
+            "summary": enriched_metadata.get("summary", ""),
+            "topics": enriched_metadata.get("topics", "").split(",") if enriched_metadata.get("topics") else [],
+            "people": enriched_metadata.get("people", [])[:5],  # Show first 5
+            "organizations": enriched_metadata.get("organizations", "").split(",") if enriched_metadata.get("organizations") else [],
+            "dates": enriched_metadata.get("dates", [])[:5],
+            "places": enriched_metadata.get("places", "").split(",") if enriched_metadata.get("places") else [],
+            "projects": enriched_metadata.get("projects", "").split(",") if enriched_metadata.get("projects") else [],
+            "quality_score": enriched_metadata.get("quality_score", 0.0)
+        }
+
+        prompt = f"""You are a quality critic for a RAG system. Evaluate the enrichment quality of this document.
+
+**ORIGINAL DOCUMENT**
+Filename: {filename}
+Content (first 2000 chars):
+{content_sample}
+
+**ENRICHED METADATA** (generated by enrichment system):
+{json.dumps(metadata_for_review, indent=2)}
+
+**YOUR TASK**: Score the enrichment quality on 7 rubrics (0-5 scale):
+
+1. **schema_compliance** (0-5):
+   - 5: All required fields present (title, summary, topics), correct data types
+   - 3: Most fields present, minor type issues
+   - 1: Missing critical fields or major type errors
+   - 0: Completely broken schema
+
+2. **entity_quality** (0-5):
+   - 5: All key entities extracted (people, orgs, dates), accurate and complete
+   - 3: Most entities found, some minor omissions
+   - 1: Many entities missing or inaccurate
+   - 0: No entities or all wrong
+
+3. **topic_relevance** (0-5):
+   - 5: Topics perfectly match content, specific and relevant
+   - 3: Topics mostly correct, could be more specific
+   - 1: Topics generic or partially wrong
+   - 0: Topics completely wrong or missing
+
+4. **summary_quality** (0-5):
+   - 5: Summary captures key points, concise (2-3 sentences), accurate
+   - 3: Summary decent but misses some points or too long
+   - 1: Summary vague, inaccurate, or way too long
+   - 0: No summary or gibberish
+
+5. **task_identification** (0-5):
+   - 5: All action items and deadlines extracted
+   - 3: Some tasks found, missing a few
+   - 1: Tasks present but not extracted
+   - 0: N/A (no tasks in document)
+
+6. **privacy_assessment** (0-5):
+   - 5: All PII identified, no privacy risks
+   - 3: Most PII caught, minor risks
+   - 1: Significant PII missed or exposed
+   - 0: Critical privacy violation
+
+7. **chunking_suitability** (0-5):
+   - 5: Document structure clear, easy to chunk semantically
+   - 3: Some structure, decent chunking possible
+   - 1: Poor structure, hard to chunk well
+   - 0: N/A (single paragraph document)
+
+**SCORING GUIDELINES**:
+- Be strict but fair
+- Use 2.5 as neutral/acceptable baseline
+- Score 4+ only for excellent quality
+- Score 0 only if rubric is N/A or completely broken
+- Consider the document type (legal docs need better entity extraction than brochures)
+
+**SUGGESTIONS**: Provide 3-5 specific improvements (not generic advice).
+
+Return ONLY this JSON structure (no markdown):
+{{
+  "scores": {{
+    "schema_compliance": 4.5,
+    "entity_quality": 3.5,
+    "topic_relevance": 4.0,
+    "summary_quality": 4.5,
+    "task_identification": 0.0,
+    "privacy_assessment": 4.0,
+    "chunking_suitability": 3.5
+  }},
+  "suggestions": [
+    "Add Dr. Schmidt's full contact details (email/phone visible in text)",
+    "Extract deadline '15. Oktober' mentioned in paragraph 3",
+    "Topics could be more specific: 'legal/court' → 'legal/court/family-custody'"
+  ]
+}}
+"""
+        return prompt
+
     def _fallback_metadata(
         self,
         content: str,
