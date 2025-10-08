@@ -170,14 +170,14 @@ class TestCostTracker:
 
         stats = tracker.get_stats()
 
-        assert stats.total_cost_today == 0.8
-        assert stats.total_cost_all_time == 0.8
+        assert stats.total_cost_today == pytest.approx(0.8)
+        assert stats.total_cost_all_time == pytest.approx(0.8)
         assert stats.daily_budget == 10.0
-        assert stats.budget_remaining == 9.2
+        assert stats.budget_remaining == pytest.approx(9.2)
         assert stats.operations_today == 3
-        assert stats.most_expensive_operation.cost_usd == 0.5
-        assert stats.cost_by_provider["groq"] == 0.3
-        assert stats.cost_by_provider["anthropic"] == 0.5
+        assert stats.most_expensive_operation.cost_usd == pytest.approx(0.5)
+        assert stats.cost_by_provider["groq"] == pytest.approx(0.3)
+        assert stats.cost_by_provider["anthropic"] == pytest.approx(0.5)
 
 
 # =============================================================================
@@ -198,6 +198,10 @@ class TestLLMService:
         settings.llm_temperature = 0.7
         settings.llm_max_retries = 3
         settings.daily_budget_usd = 10.0
+        settings.default_llm = "groq"
+        settings.fallback_llm = "anthropic"
+        settings.emergency_llm = "openai"
+        settings.enable_cost_tracking = True
         return settings
 
     def test_init(self, mock_settings):
@@ -216,12 +220,14 @@ class TestLLMService:
         provider, config = service.get_model_info("groq/llama-3.1-8b-instant")
         assert provider == "groq"
         assert config is not None
-        assert "api_key" in config
+        assert "model_name" in config
+        assert "max_tokens" in config
 
         # Test Anthropic model
         provider, config = service.get_model_info("anthropic/claude-3-haiku-20240307")
         assert provider == "anthropic"
         assert config is not None
+        assert "model_name" in config
 
     def test_get_model_info_unknown_model(self, mock_settings):
         """Test getting model info for unknown models"""
@@ -305,8 +311,8 @@ class TestLLMService:
             )
 
     @pytest.mark.asyncio
-    @patch('src.services.llm_service.groq.AsyncGroq')
-    async def test_call_llm_success_groq(self, mock_groq_client, mock_settings):
+    @patch('src.services.llm_service.groq.Groq')
+    async def test_call_llm_success_groq(self, mock_groq_class, mock_settings):
         """Test successful LLM call to Groq"""
         # Mock Groq client response
         mock_response = Mock()
@@ -316,15 +322,16 @@ class TestLLMService:
         mock_response.usage.prompt_tokens = 100
         mock_response.usage.completion_tokens = 50
 
-        mock_client_instance = Mock()
-        mock_client_instance.chat.completions.create = AsyncMock(return_value=mock_response)
-        mock_groq_client.return_value = mock_client_instance
+        mock_client = Mock()
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_groq_class.return_value = mock_client
 
         service = LLMService(mock_settings)
+        service.clients["groq"] = mock_client  # Override with mocked client
 
-        response, cost = await service.call_llm(
+        response, cost, model_used = await service.call_llm(
             prompt="Test prompt",
-            model="groq/llama-3.1-8b-instant",
+            model_id="groq/llama-3.1-8b-instant",
             temperature=0.7
         )
 
