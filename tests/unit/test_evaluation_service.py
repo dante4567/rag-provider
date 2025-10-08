@@ -463,10 +463,10 @@ class TestHistoricalTracking:
 
         comparison = service.compare_runs(run1, run2)
 
-        assert comparison['precision_at_5_delta'] == 0.10
-        assert comparison['precision_at_10_delta'] == 0.10
-        assert comparison['recall_at_5_delta'] == 0.10
-        assert comparison['pass_rate_delta'] == 0.10
+        assert comparison['precision_at_5_delta'] == pytest.approx(0.10)
+        assert comparison['precision_at_10_delta'] == pytest.approx(0.10)
+        assert comparison['recall_at_5_delta'] == pytest.approx(0.10)
+        assert comparison['pass_rate_delta'] == pytest.approx(0.10)
 
 
 # =============================================================================

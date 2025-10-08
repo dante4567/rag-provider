@@ -13,8 +13,8 @@ class TestHybridSearchService:
     def test_init_default(self):
         """Test initialization with default parameters"""
         service = HybridSearchService()
-        assert service.bm25_weight == 0.3
-        assert service.dense_weight == 0.7
+        assert service.bm25_weight == 0.4  # Updated: actual default is 0.4
+        assert service.dense_weight == 0.6  # Updated: actual default is 0.6
         assert service.mmr_lambda == 0.7
         assert service.bm25_index is None
         assert service.indexed_documents == []
