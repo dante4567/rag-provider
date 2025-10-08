@@ -1132,15 +1132,24 @@ Return ONLY this JSON structure (no markdown, no explanations):
             content_sample += "\n\n[...truncated...]"
 
         # Format enriched metadata for review (hide complex fields)
+        # Helper to handle both string and list formats
+        def _to_list(value):
+            if isinstance(value, list):
+                return value
+            elif isinstance(value, str) and value:
+                return [v.strip() for v in value.split(",") if v.strip()]
+            else:
+                return []
+
         metadata_for_review = {
             "title": enriched_metadata.get("title", ""),
             "summary": enriched_metadata.get("summary", ""),
-            "topics": enriched_metadata.get("topics", "").split(",") if enriched_metadata.get("topics") else [],
+            "topics": _to_list(enriched_metadata.get("topics", [])),
             "people": enriched_metadata.get("people", [])[:5],  # Show first 5
-            "organizations": enriched_metadata.get("organizations", "").split(",") if enriched_metadata.get("organizations") else [],
+            "organizations": _to_list(enriched_metadata.get("organizations", [])),
             "dates": enriched_metadata.get("dates", [])[:5],
-            "places": enriched_metadata.get("places", "").split(",") if enriched_metadata.get("places") else [],
-            "projects": enriched_metadata.get("projects", "").split(",") if enriched_metadata.get("projects") else [],
+            "places": _to_list(enriched_metadata.get("places", [])),
+            "projects": _to_list(enriched_metadata.get("projects", [])),
             "quality_score": enriched_metadata.get("quality_score", 0.0)
         }
 

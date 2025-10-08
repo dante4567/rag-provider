@@ -960,12 +960,19 @@ class RAGService:
             locs_list = enriched_lists.get("locations", [])
             dates_list = enriched_lists.get("dates", [])
 
+            # Extract summary string (handle both dict and string formats)
+            summary_value = enriched_metadata.get("summary", "")
+            if isinstance(summary_value, dict):
+                summary_str = summary_value.get("tl_dr", "") or summary_value.get("text", "") or str(summary_value)
+            else:
+                summary_str = str(summary_value) if summary_value else ""
+
             obsidian_metadata = ObsidianMetadata(
                 title=title,
                 keywords=Keywords(primary=tags_list[:3], secondary=tags_list[3:] if len(tags_list) > 3 else []),
                 tags=[f"#{tag}" if not tag.startswith("#") else tag for tag in tags_list],
-                summary=enriched_metadata.get("summary", ""),
-                abstract=enriched_metadata.get("summary", ""),
+                summary=summary_str,
+                abstract=summary_str,
                 key_points=key_points_list,
                 entities=Entities(
                     people=people_list,
