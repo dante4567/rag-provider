@@ -1347,7 +1347,7 @@ Return ONLY this JSON structure (no markdown):
             if self.vocab:
                 controlled_vocab = {
                     "topics": self.vocab.get_all_topics(),
-                    "projects": [p["name"] for p in self.vocab.get_active_projects()]
+                    "projects": self.vocab.get_active_projects()  # Already returns list of strings
                 }
 
             # Generate patch from critic suggestions
@@ -1392,7 +1392,7 @@ Return ONLY this JSON structure (no markdown):
 
         # Log final result
         if final_critique:
-            scores_dict = final_critique.scores.dict()
+            scores_dict = final_critique["scores"]
             avg_score = sum(scores_dict.values()) / len(scores_dict)
             logger.info(f"🏁 Final quality score: {avg_score:.2f}/5.0")
             logger.info(f"   Iterations used: {iteration + 1}/{max_iterations}")

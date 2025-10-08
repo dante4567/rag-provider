@@ -152,15 +152,17 @@ Generate the patch now:"""
 
         try:
             # Call LLM with strict JSON output
-            response = await self.llm_service.call_llm(
-                messages=[{"role": "user", "content": prompt}],
-                model="groq/llama-3.1-8b-instant",  # Fast and cheap for patches
+            response_text, cost, model_used = await self.llm_service.call_llm(
+                prompt=prompt,
+                model_id="groq/llama-3.1-8b-instant",  # Fast and cheap for patches
                 temperature=0.0,  # Deterministic
                 max_tokens=1000
             )
 
+            logger.debug(f"Editor LLM call: ${cost:.6f} via {model_used}")
+
             # Extract JSON from response
-            patch = self._extract_json_patch(response)
+            patch = self._extract_json_patch(response_text)
 
             # Validate patch doesn't touch forbidden paths
             self._validate_patch_paths(patch)
