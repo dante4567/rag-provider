@@ -426,36 +426,54 @@ Extract the following (return as JSON):
 
 4. **entities**: Extract ONLY entities that are EXPLICITLY mentioned in the text:
    - organizations: Company/organization names that appear in the text (e.g., "Amtsgericht Köln", "Sparkasse")
-   - people: Extract people as STRUCTURED OBJECTS with contact details when available. Include:
-     * name: Full name with titles/roles (required)
-     * role: Their role/function if mentioned (optional)
-     * phone: Phone number if mentioned (optional)
-     * email: Email address if mentioned (optional)
-     * address: Physical address if mentioned (optional)
-     * organization: Organization they belong to if mentioned (optional)
-     * birth_date: Date of birth in YYYY-MM-DD format if mentioned (optional)
-     * relationships: List of relationships if mentioned, e.g., [{{"type": "father", "person": "Anna Lins"}}, {{"type": "colleague", "person": "Dr. Weber"}}] (optional)
+   - people: Extract people as STRUCTURED OBJECTS (ALWAYS use full object format, NOT just names):
+     * name: Full name with titles/roles (REQUIRED)
+     * role: Their role/function if mentioned
+     * email: Email address if mentioned
+     * phone: Phone number if mentioned
+     * address: Physical address if mentioned
+     * organization: Organization they belong to if mentioned
+     * birth_date: Date of birth in YYYY-MM-DD if mentioned
+     * **relationships: CRITICAL - ALWAYS extract if ANY relationship is mentioned**
+       Format: [{{"type": "father/mother/son/daughter/colleague/manager", "person": "Name"}}]
 
-     Examples to EXTRACT:
-     * {{"name": "Rechtsanwalt Dr. Schmidt", "role": "representing the plaintiff", "email": "schmidt@lawfirm.de"}}
-     * {{"name": "Richterin Meyer", "role": "presiding judge"}}
-     * {{"name": "Anna Lins", "birth_date": "2025-01-15", "relationships": [{{"type": "daughter", "person": "Steven Lins"}}]}}
-     * {{"name": "Steven Lins", "role": "father", "relationships": [{{"type": "father", "person": "Anna Lins"}}]}}
+     **RELATIONSHIP EXTRACTION IS MANDATORY when text mentions ANY family/professional connection.**
 
-     Examples to SKIP:
-     * "Rechtsanwalt" (just a role, no specific person)
-     * "Richterin" (just a role, no name)
-     * "der Lehrer" (generic role reference)
+     CORRECT Examples:
+     ✅ Input: "Anna Lins was born. Steven Lins is the father"
+        Output: [
+          {{"name": "Anna Lins", "birth_date": "2025-01-15", "relationships": [{{"type": "daughter", "person": "Steven Lins"}}]}},
+          {{"name": "Steven Lins", "role": "father", "relationships": [{{"type": "father", "person": "Anna Lins"}}]}}
+        ]
 
-   - dates: Extract dates as STRUCTURED OBJECTS with context. Include:
-     * date: Date in ISO format YYYY-MM-DD (required)
-     * type: Type of date (e.g., "deadline", "meeting", "birthday", "event") (optional)
-     * description: What this date is about (optional)
+     ✅ Input: "Dr. Schmidt (lawyer) representing Mr. Weber"
+        Output: [
+          {{"name": "Dr. Schmidt", "role": "lawyer"}},
+          {{"name": "Mr. Weber", "relationships": [{{"type": "client", "person": "Dr. Schmidt"}}]}}
+        ]
 
-     Examples:
-     * {{"date": "2025-12-15", "type": "deadline", "description": "Submit proposal"}}
-     * {{"date": "2025-11-25", "type": "meeting", "description": "Project kickoff"}}
-     * {{"date": "2025-01-15", "type": "birthday", "description": "Anna's birthday"}}
+     ❌ WRONG: {{"name": "Anna Lins"}} when text says "Steven is her father" (missing relationship!)
+
+     Skip ONLY generic roles without names: "the lawyer", "a teacher", etc.
+
+   - dates: Extract dates as STRUCTURED OBJECTS with context (ALWAYS include type and description):
+     * date: Date in ISO format YYYY-MM-DD (REQUIRED)
+     * type: REQUIRED - One of: "deadline", "meeting", "birthday", "event", "appointment"
+     * description: REQUIRED - Brief context about what this date represents
+
+     **DATE CONTEXT IS MANDATORY - Never extract bare dates without type/description.**
+
+     CORRECT Examples:
+     ✅ Input: "Submit the proposal by December 15"
+        Output: {{"date": "2025-12-15", "type": "deadline", "description": "Submit proposal"}}
+
+     ✅ Input: "Team meeting on November 25 to kick off the project"
+        Output: {{"date": "2025-11-25", "type": "meeting", "description": "Project kickoff meeting"}}
+
+     ✅ Input: "Anna was born on January 15"
+        Output: {{"date": "2025-01-15", "type": "birthday", "description": "Anna's birthday"}}
+
+     ❌ WRONG: {{"date": "2025-12-15"}} without type/description (incomplete!)
    - numbers: Significant numbers (case numbers, amounts, percentages - NOT phone/bank numbers, those go in people objects)
 
    CRITICAL: Do NOT extract entities from examples or generic references. Only extract entities that are actual content of this specific document.
@@ -577,14 +595,33 @@ Return ONLY this JSON structure (no markdown, no explanations):
         return validated
 
     def extract_enriched_lists(self, metadata: Dict) -> Dict:
-        """Convert comma-separated strings in metadata back to lists"""
+        """Convert comma-separated strings OR lists in metadata to clean lists"""
+
+        def to_list(value, field_name=""):
+            """Convert CSV string or list to clean list"""
+            if isinstance(value, list):
+                return value
+            elif isinstance(value, str):
+                return [v.strip() for v in value.split(",") if v.strip()]
+            else:
+                return []
+
+        # Handle people - can be list of objects or CSV string
+        people_raw = metadata.get("people", metadata.get("people_roles", ""))
+        if isinstance(people_raw, list):
+            # List of person objects or strings
+            people = [p.get("name") if isinstance(p, dict) else str(p) for p in people_raw]
+        else:
+            # CSV string
+            people = to_list(people_raw)
+
         return {
-            "tags": [t.strip() for t in metadata.get("topics", "").split(",") if t.strip()],
+            "tags": to_list(metadata.get("topics", "")),
             "key_points": [],  # Not stored in flat metadata
-            "people": [p.strip() for p in metadata.get("people_roles", "").split(",") if p.strip()],
-            "organizations": [o.strip() for o in metadata.get("organizations", "").split(",") if o.strip()],
-            "locations": [l.strip() for l in metadata.get("places", "").split(",") if l.strip()],
-            "dates": [d.strip() for d in metadata.get("dates", "").split(",") if d.strip()],
+            "people": people,
+            "organizations": to_list(metadata.get("organizations", "")),
+            "locations": to_list(metadata.get("places", "")),
+            "dates": to_list(metadata.get("dates", "")),
         }
 
     def _build_enriched_metadata(

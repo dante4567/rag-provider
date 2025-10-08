@@ -71,22 +71,35 @@ class ObsidianService:
         content: str
     ) -> str:
         """
-        Generate filename: YYYY-MM-DD__doc_type__slug__shortid.md
+        Generate cross-platform safe filename: YYYY-MM-DD__doc_type__slug__shortid.md
 
         Example: 2025-10-02__correspondence.thread__kita-handover__7c1a.md
+
+        Sanitization:
+        - Removes path separators (/, \)
+        - Removes null bytes
+        - Restricts to safe characters
+        - Max length enforcement
         """
         date_str = created_at.strftime('%Y-%m-%d')
 
-        # Clean doc_type (remove 'DocumentType.' prefix if present)
+        # Clean doc_type (remove 'DocumentType.' prefix + sanitize)
         type_str = str(doc_type).replace('DocumentType.', '')
+        # Remove any path separators and dangerous chars
+        type_str = type_str.replace('/', '-').replace('\\', '-').replace('\x00', '')
+        type_str = slugify(type_str) or 'text'
 
-        # Create slug
+        # Create slug (already safe from slugify)
         slug = self.create_slug(title)
 
         # Generate short ID
         short_id = self.generate_short_id(content)
 
-        return f"{date_str}__{type_str}__{slug}__{short_id}.md"
+        # Final safety check: remove any remaining path separators
+        filename = f"{date_str}__{type_str}__{slug}__{short_id}.md"
+        filename = filename.replace('/', '_').replace('\\', '_').replace('\x00', '')
+
+        return filename
 
     def derive_tags(
         self,
@@ -475,8 +488,13 @@ class ObsidianService:
         entity_dir = self.refs_dir / f"{entity_type}s"
         entity_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create filename
-        safe_name = slugify(name) or name.replace(' ', '-')
+        # Create cross-platform safe filename
+        safe_name = slugify(name)
+        if not safe_name:
+            # Fallback: manual sanitization if slugify returns empty
+            safe_name = name.replace(' ', '-').replace('/', '-').replace('\\', '-').replace('\x00', '')
+            safe_name = ''.join(c for c in safe_name if c.isalnum() or c in '-_.')
+            safe_name = safe_name or 'entity'  # Ultimate fallback
         file_path = entity_dir / f"{safe_name}.md"
 
         # Don't overwrite if exists (stubs are created once)

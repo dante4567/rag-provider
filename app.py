@@ -717,7 +717,11 @@ class RAGService:
                 limit=1
             )
             if existing_docs and existing_docs['ids']:
-                existing_doc_id = existing_docs['ids'][0].split('_chunk_')[0]
+                # Handle both string IDs and list IDs
+                first_id = existing_docs['ids'][0]
+                if isinstance(first_id, list):
+                    first_id = first_id[0] if first_id else ""
+                existing_doc_id = first_id.split('_chunk_')[0] if isinstance(first_id, str) else str(first_id)
                 logger.info(f"Duplicate content detected for {filename}. Existing doc: {existing_doc_id}")
                 return IngestResponse(
                     success=True,
