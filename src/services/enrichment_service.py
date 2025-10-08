@@ -145,6 +145,52 @@ class EnrichmentService:
         numbers_list = sorted(list(numbers))
         return numbers_list[:50]  # Max 50 numbers
 
+    def extract_people_from_content(self, content: str) -> List[Dict[str, str]]:
+        """
+        Fallback: Extract people from content using regex patterns
+
+        Patterns:
+        - Names with titles (Dr., Prof., Mr., Mrs., etc.)
+        - Names with roles in parentheses: "John Smith (Manager)"
+        - Email addresses → extract name before @
+        - Phone with name context: "Contact John at +49..."
+        """
+        people = []
+        seen_names = set()
+
+        # Pattern: Title + Name (e.g., "Dr. Maria Schmidt", "Prof. Weber")
+        title_pattern = r'\b(?:Dr\.|Prof\.|Mr\.|Mrs\.|Ms\.|Herr|Frau|Rechtsanwalt|Richterin?)\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*)\b'
+        for match in re.finditer(title_pattern, content):
+            name = match.group(0).strip()
+            if name not in seen_names and len(name) > 3:
+                people.append({"name": name})
+                seen_names.add(name)
+
+        # Pattern: Name (Role) - e.g., "John Smith (Manager)", "Anna Lins (daughter)"
+        role_pattern = r'\b([A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß]+)\s*\(([^)]+)\)'
+        for match in re.finditer(role_pattern, content):
+            name = match.group(1).strip()
+            role = match.group(2).strip()
+            if name not in seen_names:
+                people.append({"name": name, "role": role})
+                seen_names.add(name)
+
+        # Pattern: Email → extract name
+        email_pattern = r'\b([a-zA-Z0-9._%+-]+)@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b'
+        for match in re.finditer(email_pattern, content):
+            email = match.group(0)
+            # Extract potential name from email (first.last@domain → First Last)
+            local_part = match.group(1)
+            if '.' in local_part:
+                parts = local_part.split('.')
+                name = ' '.join(p.capitalize() for p in parts if len(p) > 1)
+                if name not in seen_names and len(name) > 3:
+                    people.append({"name": name, "email": email})
+                    seen_names.add(name)
+
+        # Limit results
+        return people[:20]  # Max 20 people
+
     def calculate_recency_score(self, created_at: Optional[date] = None) -> float:
         """
         Calculate recency score with exponential decay
@@ -317,25 +363,50 @@ class EnrichmentService:
                 temperature=0.1
             )
 
+            # Debug: Log raw LLM response
+            print(f"\n{'='*80}")
+            print(f"[DEBUG] Raw LLM Response (first 500 chars):")
+            print(f"{llm_response_text[:500]}...")
+            print(f"{'='*80}\n")
+
             llm_data = self._parse_llm_response(llm_response_text)
 
-            # Extract dates and numbers using regex (in addition to LLM extraction)
+            # Debug: Log parsed data
+            print(f"\n[DEBUG] Parsed LLM Data:")
+            print(f"  - Topics: {llm_data.get('topics', [])}")
+            print(f"  - People: {llm_data.get('entities', {}).get('people', [])}")
+            print(f"  - Dates: {llm_data.get('entities', {}).get('dates', [])}")
+            print(f"  - Empty? {len(llm_data) == 0}\n")
+
+            # Extract dates, numbers, and people using regex (in addition to LLM extraction)
             regex_dates = self.extract_dates_from_content(content)
             regex_numbers = self.extract_numbers_from_content(content)
+            regex_people = self.extract_people_from_content(content)
 
             # Merge LLM entities with regex extractions
             llm_entities = llm_data.get("entities", {})
             llm_dates = llm_entities.get("dates", [])
             llm_numbers = llm_entities.get("numbers", [])
+            llm_people = llm_entities.get("people", [])
 
-            # Combine and deduplicate
+            # FALLBACK: Use regex-extracted people if LLM returned none
+            if not llm_people:
+                print(f"\n[FALLBACK] LLM returned no people, using regex extraction: {len(regex_people)} found")
+                llm_people = regex_people
+
+            # Combine and deduplicate dates/numbers
             all_dates = list(set(llm_dates + regex_dates))
             all_numbers = list(set(llm_numbers + regex_numbers))
 
             # Update entities with merged data
+            llm_entities["people"] = llm_people[:20]  # Max 20 people
             llm_entities["dates"] = sorted(all_dates)[:30]  # Max 30 dates
             llm_entities["numbers"] = sorted(all_numbers)[:50]  # Max 50 numbers
             llm_data["entities"] = llm_entities
+
+            print(f"[DEBUG] Final entities after fallback:")
+            print(f"  - People: {len(llm_entities.get('people', []))}")
+            print(f"  - Dates: {len(llm_entities.get('dates', []))}")
 
             # Validate and clean with controlled vocabulary
             validated = self._validate_with_vocabulary(llm_data, created_at)
