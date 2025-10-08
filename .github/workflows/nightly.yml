@@ -1,0 +1,127 @@
+name: Nightly Tests
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  full-test-suite:
+    name: Full Test Suite (Including Slow Tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      chromadb:
+        image: chromadb/chroma:latest
+        ports:
+          - 8000:8000
+        options: >-
+          --health-cmd "curl -f http://localhost:8000/api/v1/heartbeat || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          tesseract-ocr \
+          tesseract-ocr-eng \
+          tesseract-ocr-deu \
+          tesseract-ocr-fra \
+          tesseract-ocr-spa \
+          poppler-utils \
+          libmagic1
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov pytest-html
+
+    - name: Set environment variables
+      run: |
+        echo "CHROMA_HOST=localhost" >> $GITHUB_ENV
+        echo "CHROMA_PORT=8000" >> $GITHUB_ENV
+        echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
+        echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> $GITHUB_ENV
+        echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+        echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> $GITHUB_ENV
+
+    - name: Start RAG service
+      run: |
+        python app.py &
+        sleep 10
+
+    - name: Wait for service
+      run: |
+        for i in {1..30}; do
+          if curl -s http://localhost:8001/health > /dev/null; then
+            echo "✅ Service is ready"
+            break
+          fi
+          echo "Waiting for service... ($i/30)"
+          sleep 2
+        done
+
+    - name: Run all unit tests
+      run: |
+        pytest tests/unit -v --tb=short --cov=src --cov-report=xml --cov-report=html
+      timeout-minutes: 5
+
+    - name: Run all integration tests (including slow)
+      run: |
+        pytest tests/integration -v --tb=short --html=report.html --self-contained-html
+      timeout-minutes: 20
+      continue-on-error: true  # Don't fail build on rate limits
+
+    - name: Upload test report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-report
+        path: |
+          report.html
+          htmlcov/
+          coverage.xml
+
+    - name: Upload coverage to Codecov
+      if: always()
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage.xml
+        flags: nightly
+        name: codecov-nightly
+      continue-on-error: true
+
+    - name: Display service logs
+      if: always()
+      run: |
+        echo "=== Service Logs ==="
+        cat app.log || echo "No app.log found"
+
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "❌ Nightly tests failed"
+        echo "Check the workflow logs for details"
+
+    - name: Test summary
+      if: always()
+      run: |
+        echo "=== Nightly Test Summary ==="
+        echo "Unit tests completed"
+        echo "Integration tests completed (may have rate limit issues)"
+        echo "Reports uploaded as artifacts"
