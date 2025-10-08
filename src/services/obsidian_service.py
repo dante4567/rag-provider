@@ -656,10 +656,30 @@ SORT file.mtime DESC
             # Old format: CSV string
             people = self._parse_csv(people_raw)
 
-        places = self._parse_csv(metadata.get('places', ''))
-        projects = self._parse_csv(metadata.get('projects', ''))
-        topics = self._parse_csv(metadata.get('topics', ''))
-        organizations = self._parse_csv(metadata.get('organizations', ''))
+        # Handle both list and CSV string formats
+        places = metadata.get('places', '')
+        if isinstance(places, list):
+            places = places
+        else:
+            places = self._parse_csv(places)
+
+        projects = metadata.get('projects', '')
+        if isinstance(projects, list):
+            projects = projects
+        else:
+            projects = self._parse_csv(projects)
+
+        topics = metadata.get('topics', '')
+        if isinstance(topics, list):
+            topics = topics
+        else:
+            topics = self._parse_csv(topics)
+
+        organizations = metadata.get('organizations', '')
+        if isinstance(organizations, list):
+            organizations = organizations
+        else:
+            organizations = self._parse_csv(organizations)
 
         # Generate ID and filename
         date_str = created_at.strftime('%Y-%m-%d')
