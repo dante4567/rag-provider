@@ -91,6 +91,7 @@ try:
     from src.services.quality_scoring_service import QualityScoringService
     from src.services.contact_service import ContactService
     from src.services.calendar_service import CalendarService
+    from src.services.entity_name_filter_service import EntityNameFilterService
 
     NEW_SERVICES_AVAILABLE = True
 except ImportError as e:
@@ -612,6 +613,9 @@ class RAGService:
             self.contact_service = ContactService(output_dir=contacts_output_dir)
             self.calendar_service = CalendarService(output_dir=calendar_output_dir)
 
+            # Initialize entity name filter (filters generic roles)
+            self.entity_filter = EntityNameFilterService()
+
             # Initialize quality scoring service (blueprint do_index gates)
             self.quality_scoring_service = QualityScoringService()
 
@@ -1001,14 +1005,25 @@ class RAGService:
                 try:
                     people = enriched_metadata.get('people', [])
                     if people:
-                        logger.info(f"👥 Generating vCards for {len(people)} people...")
-                        vcards_created = self.contact_service.create_vcards_from_metadata(
-                            people=people,
-                            organizations=enriched_metadata.get('entities', {}).get('orgs', []),
-                            document_title=title,
-                            document_id=doc_id
-                        )
-                        logger.info(f"✅ Created {len(vcards_created)} vCard(s) → {self.contact_service.output_dir}")
+                        # Filter out generic roles (keep only specific named people)
+                        filtered_people = self.entity_filter.filter_people(people)
+
+                        # Show what was filtered
+                        filtered_out = [p for p in people if p not in filtered_people]
+                        if filtered_out:
+                            logger.info(f"🔍 Filtered out generic roles: {', '.join(filtered_out)}")
+
+                        if filtered_people:
+                            logger.info(f"👥 Creating vCards for {len(filtered_people)} specific people: {', '.join(filtered_people)}")
+                            vcards_created = self.contact_service.create_vcards_from_metadata(
+                                people=filtered_people,
+                                organizations=enriched_metadata.get('entities', {}).get('orgs', []),
+                                document_title=title,
+                                document_id=doc_id
+                            )
+                            logger.info(f"✅ Created {len(vcards_created)} vCard(s) → {self.contact_service.output_dir}")
+                        else:
+                            logger.info(f"ℹ️  No specific people found (all {len(people)} were generic roles)")
                 except Exception as e:
                     logger.warning(f"⚠️ vCard generation failed: {e}")
 
