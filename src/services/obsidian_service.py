@@ -346,23 +346,31 @@ class ObsidianService:
         if not any([projects, places, people, organizations]):
             return ""
 
-        # Build entity reference section (plain text, human-readable)
+        # Build entity reference section with wiki-links for backlinks
         lines = ["## Related", ""]
 
         if people:
-            lines.append("**People:** " + " · ".join(people))
+            # Create wiki-links to person stubs in refs/persons/
+            people_links = [f"[[{person}]]" for person in people]
+            lines.append("**People:** " + " · ".join(people_links))
             lines.append("")
 
         if places:
-            lines.append("**Places:** " + " · ".join(places))
+            # Create wiki-links to place stubs in refs/places/
+            place_links = [f"[[{place}]]" for place in places]
+            lines.append("**Places:** " + " · ".join(place_links))
             lines.append("")
 
         if organizations:
-            lines.append("**Organizations:** " + " · ".join(organizations))
+            # Create wiki-links to org stubs in refs/orgs/
+            org_links = [f"[[{org}]]" for org in organizations]
+            lines.append("**Organizations:** " + " · ".join(org_links))
             lines.append("")
 
         if projects:
-            lines.append("**Projects:** " + " · ".join(projects))
+            # Create wiki-links to project stubs in refs/projects/
+            project_links = [f"[[{project}]]" for project in projects]
+            lines.append("**Projects:** " + " · ".join(project_links))
             lines.append("")
 
         return "\n".join(lines)
@@ -409,8 +417,15 @@ class ObsidianService:
 
         body_parts.append("## Source")
         body_parts.append("")
-        # Show source filename (no wiki-link, file path stored in frontmatter)
-        body_parts.append(f"📄 `{original_filename}`")
+        # Show source filename with wiki-link to attachment if exists
+        # Extract base filename without upload ID prefix
+        base_filename = original_filename
+        if '_' in original_filename and original_filename.startswith('upload_'):
+            # Remove upload_<uuid>_ prefix
+            parts = original_filename.split('_', 2)
+            if len(parts) >= 3:
+                base_filename = parts[2]
+        body_parts.append(f"📄 [[attachments/{original_filename}|{base_filename}]]")
         body_parts.append("")
 
         # Key Facts
@@ -426,6 +441,7 @@ class ObsidianService:
         # Ensure proper paragraph spacing
         formatted_content = self._format_paragraphs(clean_content)
         body_parts.append("## Evidence / Excerpts\n")
+        body_parts.append("_Note: This document was chunked for vector search. See `chunks` in frontmatter for count._\n")
         body_parts.append(formatted_content)
         body_parts.append("")
 
@@ -548,12 +564,13 @@ class ObsidianService:
 ## Events on This Date
 
 ```dataview
-TABLE summary, dates_detailed as "Date Context"
-WHERE contains(dates, "{name}")
+TABLE file.link as "Document", summary as "Summary", dates_detailed as "Date Context"
+FROM "."
+WHERE dates != null AND contains(dates, "{name}")
 SORT file.mtime DESC
 ```
 
-**Note:** The "Date Context" column shows all dates from each document. Look for entries matching `{name}` to see the specific context (deadline, meeting, etc.).
+**Note:** Shows all documents with events/deadlines on this date. The "Date Context" column shows details (meeting, deadline, birthday, etc.).
 """
         elif entity_type == 'person':
             # Enhanced person stub with contact info and relationships
@@ -605,15 +622,16 @@ SORT file.mtime DESC
                 stub_body += f"## About\n\n{person_data['description']}\n\n"
 
             # Related documents section
-            stub_body += """## Related Documents
+            stub_body += f"""## Related Documents
 
 ```dataview
-TABLE summary, topics, file.mtime as "Last Modified"
-WHERE contains(people, "{}")
+TABLE file.link as "Document", summary as "Summary", topics as "Topics"
+FROM "."
+WHERE people != null AND contains(people, "{name}")
 SORT file.mtime DESC
 ```
 
-""".format(name)
+"""
         else:
             # Regular entity stub - use file.link to find backlinks
             stub_body = f"""# {name}
@@ -621,8 +639,9 @@ SORT file.mtime DESC
 ## Related Documents
 
 ```dataview
-TABLE summary, topics
-WHERE contains({field_name}, "{name}")
+TABLE file.link as "Document", summary as "Summary", topics as "Topics"
+FROM "."
+WHERE {field_name} != null AND contains({field_name}, "{name}")
 SORT file.mtime DESC
 ```
 """
