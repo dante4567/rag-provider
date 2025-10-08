@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:2c1e96992d297888@rag-provider.local
+DTSTART;VALUE=DATE:20260101
+DTEND;VALUE=DATE:20260102
+SUMMARY:Event: Please complete the attached registration forms and return them by the end of the month
+DESCRIPTION:Source: Please complete the attached registration forms and return them by the end of the month
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T203929Z
+CREATED:20251008T203929Z
+LAST-MODIFIED:20251008T203929Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

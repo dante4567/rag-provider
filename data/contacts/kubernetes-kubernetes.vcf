@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Kubernetes
+
+Kubernetes
+N:Kubernetes;Kubernetes;;;
+TITLE:K8s
+NOTE:Mentioned in: Docker Container Orchestration with Kubernetes Kubernetes K8s manages containerized applications acr
+REV:20251008T204014Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,K8s
+END:VCARD

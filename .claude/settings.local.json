@@ -4,7 +4,8 @@
       "Bash(PYTHONPATH=/Users/danielteckentrup/Library/Python/3.9/lib/python/site-packages:$PYTHONPATH python3 -c \"import yaml; print(''yaml imported successfully'')\")",
       "Bash(PYTHONPATH=/Users/danielteckentrup/Library/Python/3.9/lib/python/site-packages:$PYTHONPATH python3 src/services/obsidian_service.py)",
       "Bash(grep:*)",
-      "Read(//Users/danielteckentrup/**)"
+      "Read(//Users/danielteckentrup/**)",
+      "Bash(make:*)"
     ],
     "deny": [],
     "ask": []

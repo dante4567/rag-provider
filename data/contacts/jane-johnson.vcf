@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Johnson
+N:Johnson;Jane;;;
+TITLE:note-taker
+NOTE:Mentioned in: meeting minutes
+REV:20251008T203933Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,note-taker
+END:VCARD

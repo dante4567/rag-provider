@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Dr. Maria Schmidt
+N:Maria Schmidt;Dr.;;;
+TITLE:presenter
+NOTE:Mentioned in: meeting minutes
+REV:20251008T203933Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,presenter
+END:VCARD

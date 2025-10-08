@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Rechtsanwalt Dr. Schmidt
+N:Dr. Schmidt;Rechtsanwalt;;;
+TITLE:representing the plaintiff
+EMAIL;TYPE=INTERNET:schmidt@lawfirm.de
+TEL;TYPE=CELL:0221-12345
+NOTE:Mentioned in: Document with Private Notes
+REV:20251008T203914Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,representing the plaintiff
+END:VCARD
