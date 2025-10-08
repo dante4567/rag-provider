@@ -433,19 +433,29 @@ Extract the following (return as JSON):
      * email: Email address if mentioned (optional)
      * address: Physical address if mentioned (optional)
      * organization: Organization they belong to if mentioned (optional)
-     * bank_account: Bank account/IBAN if mentioned (optional)
+     * birth_date: Date of birth in YYYY-MM-DD format if mentioned (optional)
+     * relationships: List of relationships if mentioned, e.g., [{{"type": "father", "person": "Anna Lins"}}, {{"type": "colleague", "person": "Dr. Weber"}}] (optional)
 
      Examples to EXTRACT:
      * {{"name": "Rechtsanwalt Dr. Schmidt", "role": "representing the plaintiff", "email": "schmidt@lawfirm.de"}}
      * {{"name": "Richterin Meyer", "role": "presiding judge"}}
-     * {{"name": "Prof. Dr. Weber", "phone": "0221-12345", "address": "Hauptstraße 1, Köln"}}
+     * {{"name": "Anna Lins", "birth_date": "2025-01-15", "relationships": [{{"type": "daughter", "person": "Steven Lins"}}]}}
+     * {{"name": "Steven Lins", "role": "father", "relationships": [{{"type": "father", "person": "Anna Lins"}}]}}
 
      Examples to SKIP:
      * "Rechtsanwalt" (just a role, no specific person)
      * "Richterin" (just a role, no name)
      * "der Lehrer" (generic role reference)
 
-   - dates: Dates in ISO format YYYY-MM-DD (only dates found in text, NOT document creation dates)
+   - dates: Extract dates as STRUCTURED OBJECTS with context. Include:
+     * date: Date in ISO format YYYY-MM-DD (required)
+     * type: Type of date (e.g., "deadline", "meeting", "birthday", "event") (optional)
+     * description: What this date is about (optional)
+
+     Examples:
+     * {{"date": "2025-12-15", "type": "deadline", "description": "Submit proposal"}}
+     * {{"date": "2025-11-25", "type": "meeting", "description": "Project kickoff"}}
+     * {{"date": "2025-01-15", "type": "birthday", "description": "Anna's birthday"}}
    - numbers: Significant numbers (case numbers, amounts, percentages - NOT phone/bank numbers, those go in people objects)
 
    CRITICAL: Do NOT extract entities from examples or generic references. Only extract entities that are actual content of this specific document.
@@ -473,11 +483,15 @@ Return ONLY this JSON structure (no markdown, no explanations):
         "phone": "0221-12345"
       }},
       {{
-        "name": "Richterin Meyer",
-        "role": "presiding judge"
+        "name": "Anna Lins",
+        "birth_date": "2025-01-15",
+        "relationships": [{{"type": "daughter", "person": "Steven Lins"}}]
       }}
     ],
-    "dates": ["2025-11-15", "2025-10-08"],
+    "dates": [
+      {{"date": "2025-12-15", "type": "deadline", "description": "Submit proposal"}},
+      {{"date": "2025-11-25", "type": "meeting", "description": "Project kickoff"}}
+    ],
     "numbers": ["310 F 141/25", "€1,500"]
   }},
   "places": ["Köln", "Berlin"],
@@ -598,11 +612,24 @@ Return ONLY this JSON structure (no markdown, no explanations):
         # Entities
         entities = validated_data.get("entities", {})
 
+        # Handle structured dates (can be dicts or strings)
+        dates_raw = entities.get("dates", [])
+        dates_list = []  # Simple list for frontmatter
+        dates_detailed = []  # Full objects with context
+
+        for d in dates_raw:
+            if isinstance(d, dict):
+                dates_detailed.append(d)
+                dates_list.append(d.get("date", ""))
+            else:
+                dates_list.append(d)
+                dates_detailed.append({"date": d})
+
         # Define keys we're setting (to avoid duplicates from existing_metadata)
         known_keys = {
             "content_hash", "content_hash_short", "filename", "document_type",
             "title", "summary", "topics", "places", "projects",
-            "suggested_topics", "organizations", "people", "people_roles", "dates", "numbers", "contacts",
+            "suggested_topics", "organizations", "people", "people_roles", "dates", "dates_detailed", "numbers", "contacts",
             "quality_score", "recency_score", "ocr_quality",
             "enrichment_version", "enrichment_date", "enrichment_cost",
             "word_count", "char_count", "created_at", "enriched", "entities"
@@ -629,16 +656,18 @@ Return ONLY this JSON structure (no markdown, no explanations):
 
             # === EXTRACTED ENTITIES (not controlled) ===
             "organizations": ",".join(entities.get("organizations", [])[:10]),
-            "people": entities.get("people", [])[:20],  # NEW: list of people (not comma-separated)
+            "people": entities.get("people", [])[:20],  # NEW: list of person objects (not comma-separated)
             "people_roles": ",".join(entities.get("people_roles", [])[:10]),  # Legacy field
-            "dates": ",".join(entities.get("dates", [])[:30]),  # Increased from 10 to 30
+            "dates": dates_list[:30],  # NEW: list of date strings for frontmatter
+            "dates_detailed": dates_detailed[:30],  # NEW: full date objects with context
             "numbers": ",".join(entities.get("numbers", [])[:50]),  # NEW: numbers
             "contacts": ",".join(entities.get("contacts", [])[:5]),
 
             # === ENTITIES DICT (for Obsidian frontmatter) ===
             "entities": {
                 "orgs": entities.get("organizations", [])[:10],
-                "dates": entities.get("dates", [])[:30],
+                "dates": dates_list[:30],
+                "dates_detailed": dates_detailed[:30],
                 "numbers": entities.get("numbers", [])[:50]
             },
 
