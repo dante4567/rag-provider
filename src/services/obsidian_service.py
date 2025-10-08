@@ -443,7 +443,8 @@ class ObsidianService:
         entity_type: str,  # person, project, place, org, day
         name: str,
         aliases: List[str] = None,
-        extra_links: Dict[str, str] = None
+        extra_links: Dict[str, str] = None,
+        person_data: Dict[str, Any] = None  # For person entities: full metadata
     ):
         """
         Create/update entity stub for backlinks
@@ -455,9 +456,19 @@ class ObsidianService:
             name: Entity name (for days: ISO date like "2025-11-15")
             aliases: Alternative names
             extra_links: Additional links to include (e.g., {"vCard": "path/to/file.vcf"})
+            person_data: For person entities, full metadata dict with:
+                - role: Their role/title
+                - email: Email address (vCard compatible)
+                - phone: Phone number (vCard compatible)
+                - address: Physical address (vCard compatible)
+                - organization: Organization they belong to
+                - birth_date: Date of birth
+                - description: Bio/description
+                - contact_type: auto-determined as 'personal' (has contact) or 'reference' (no contact)
         """
         aliases = aliases or []
         extra_links = extra_links or {}
+        person_data = person_data or {}
 
         # Determine directory
         entity_dir = self.refs_dir / f"{entity_type}s"
@@ -477,6 +488,24 @@ class ObsidianService:
             'name': name,
             'aliases': aliases
         }
+
+        # Add person-specific fields to frontmatter (vCard compatible)
+        if entity_type == 'person' and person_data:
+            if person_data.get('email'):
+                stub_frontmatter['email'] = person_data['email']
+            if person_data.get('phone'):
+                stub_frontmatter['phone'] = person_data['phone']
+            if person_data.get('address'):
+                stub_frontmatter['address'] = person_data['address']
+            if person_data.get('role'):
+                stub_frontmatter['role'] = person_data['role']
+            if person_data.get('organization'):
+                stub_frontmatter['organization'] = person_data['organization']
+            if person_data.get('birth_date'):
+                stub_frontmatter['birth_date'] = person_data['birth_date']
+            # Determine contact type: has contact info = personal, else = reference
+            has_contact = person_data.get('email') or person_data.get('phone') or person_data.get('address')
+            stub_frontmatter['contact_type'] = 'personal' if has_contact else 'reference'
 
         stub_yaml = yaml.dump(stub_frontmatter, default_flow_style=False, allow_unicode=True)
 
@@ -503,6 +532,53 @@ WHERE contains(dates, "{name}")
 SORT file.mtime DESC
 ```
 """
+        elif entity_type == 'person':
+            # Enhanced person stub with contact info and relationships
+            stub_body = f"""# {name}\n\n"""
+
+            # Contact information section
+            contact_parts = []
+            if person_data.get('role'):
+                role = person_data['role']
+                org = person_data.get('organization', '')
+                if org:
+                    contact_parts.append(f"**Role:** {role} at {org}")
+                else:
+                    contact_parts.append(f"**Role:** {role}")
+
+            if person_data.get('email') or person_data.get('phone'):
+                contact_line = "**Contact:** "
+                parts = []
+                if person_data.get('email'):
+                    parts.append(person_data['email'])
+                if person_data.get('phone'):
+                    parts.append(person_data['phone'])
+                contact_line += " · ".join(parts)
+                contact_parts.append(contact_line)
+
+            if person_data.get('address'):
+                contact_parts.append(f"**Address:** {person_data['address']}")
+
+            if person_data.get('birth_date'):
+                contact_parts.append(f"**Birth Date:** {person_data['birth_date']}")
+
+            if contact_parts:
+                stub_body += "\n".join(contact_parts) + "\n\n"
+
+            # Description section
+            if person_data.get('description'):
+                stub_body += f"## About\n\n{person_data['description']}\n\n"
+
+            # Related documents section
+            stub_body += """## Related Documents
+
+```dataview
+TABLE summary, topics, file.mtime as "Last Modified"
+WHERE contains(people, "{}")
+SORT file.mtime DESC
+```
+
+""".format(name)
         else:
             # Regular entity stub - use file.link to find backlinks
             stub_body = f"""# {name}
@@ -550,9 +626,17 @@ SORT file.mtime DESC
         # Parse metadata lists
         # Handle both old format (people_roles string) and new format (people list of dicts/strings)
         people_raw = metadata.get('people', metadata.get('people_roles', ''))
+        people_objects = []  # Full person objects with metadata
+        people = []  # Just names for frontmatter/xref
+
         if isinstance(people_raw, list):
             # New format: list of dicts or strings
-            people = [p.get('name') if isinstance(p, dict) else p for p in people_raw]
+            for p in people_raw:
+                if isinstance(p, dict):
+                    people_objects.append(p)
+                    people.append(p.get('name', ''))
+                else:
+                    people.append(p)
         else:
             # Old format: CSV string
             people = self._parse_csv(people_raw)
@@ -615,12 +699,17 @@ SORT file.mtime DESC
 
         # Create entity stubs with resource links
 
-        # People stubs with vCard links
-        for person in people:
-            if not person:  # Skip empty names
+        # People stubs with vCard links and full metadata
+        # Use full person objects if available, otherwise fall back to names
+        persons_to_process = people_objects if people_objects else [{'name': p} for p in people if p]
+
+        for person_obj in persons_to_process:
+            person_name = person_obj.get('name', '') if isinstance(person_obj, dict) else str(person_obj)
+            if not person_name:
                 continue
+
             # Check if vCard exists for this person
-            vcard_filename = slugify(person) + '.vcf'
+            vcard_filename = slugify(person_name) + '.vcf'
             # Use absolute path for Docker, relative for local dev
             import os
             is_docker = os.getenv("DOCKER_CONTAINER", "false").lower() == "true"
@@ -631,7 +720,9 @@ SORT file.mtime DESC
             if vcard_path.exists():
                 extra_links['vCard'] = f"../../../data/contacts/{vcard_filename}"
 
-            self.create_entity_stub('person', person, extra_links=extra_links)
+            # Pass full person data if it's a dict, otherwise empty dict
+            person_data = person_obj if isinstance(person_obj, dict) else {}
+            self.create_entity_stub('person', person_name, extra_links=extra_links, person_data=person_data)
 
         # Project stubs
         for project in projects:
