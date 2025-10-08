@@ -189,16 +189,16 @@ class ObsidianService:
             'created_at': created_at.strftime('%Y-%m-%d'),
             'ingested_at': ingested_at.strftime('%Y-%m-%d'),
 
-            # Controlled vocabulary (top-level lists)
-            'people': people if people else [],
-            'places': places if places else [],
-            'projects': projects if projects else [],
-            'topics': topics if topics else [],
+            # Controlled vocabulary (top-level lists) - converted to wiki-links for clickability
+            'people': [f"[[refs/persons/{slugify(p)}|{p}]]" for p in people] if people else [],
+            'places': [f"[[refs/places/{slugify(p)}|{p}]]" for p in places] if places else [],
+            'projects': [f"[[refs/projects/{slugify(p)}|{p}]]" for p in projects] if projects else [],
+            'topics': topics if topics else [],  # Topics remain as plain strings (hierarchical paths)
 
             # Entities (FLATTENED for Obsidian Dataview compatibility)
-            'organizations': orgs,
+            'organizations': [f"[[refs/orgs/{slugify(o)}|{o}]]" for o in orgs] if orgs else [],
             'people_detailed': people_objects if people_objects else [],  # Full person objects with relationships
-            'dates': dates,
+            'dates': [f"[[refs/days/{d}]]" for d in dates] if dates else [],
             'dates_detailed': entities_data.get('dates_detailed', []),  # Full date context
             'numbers': numbers,
 
