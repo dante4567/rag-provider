@@ -1,7 +1,7 @@
 # RAG Provider - Development Makefile
 # Common commands for development and deployment
 
-.PHONY: help setup up down restart logs logs-follow test test-unit test-integration clean build health status shell
+.PHONY: help setup up down restart logs logs-follow test test-unit test-integration test-quality clean build health status shell
 
 # Default target
 help:
@@ -26,6 +26,7 @@ help:
 	@echo "  make test-unit      - Run unit tests only"
 	@echo "  make test-integration - Run integration tests only"
 	@echo "  make test-service   - Test specific service (e.g., make test-service SERVICE=llm)"
+	@echo "  make test-quality   - Run retrieval quality evaluation (gold queries)"
 	@echo ""
 	@echo "🛠️  Development:"
 	@echo "  make shell          - Open shell in RAG service container"
@@ -115,6 +116,16 @@ test-service:
 		echo "🧪 Testing $(SERVICE)..."; \
 		docker exec rag_service pytest tests/unit/test_$(SERVICE).py -v; \
 	fi
+
+test-quality:
+	@echo "🎯 Running retrieval quality evaluation..."
+	@if [ ! -f evaluation/gold_queries.yaml ]; then \
+		echo "⚠️  No gold_queries.yaml found. Copy the example:"; \
+		echo "   cp evaluation/gold_queries.yaml.example evaluation/gold_queries.yaml"; \
+		echo "   Then edit with your actual ingested documents."; \
+		exit 1; \
+	fi
+	@python3 scripts/evaluate_retrieval.py
 
 # Development
 shell:

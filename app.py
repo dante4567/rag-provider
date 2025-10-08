@@ -175,6 +175,7 @@ def get_platform_config():
             'output_path': '/data/output',
             'processed_path': '/data/processed',
             'obsidian_path': '/data/obsidian',
+            'archive_path': '/data/processed_originals',
             'temp_path': '/tmp'
         }
     elif PLATFORM == 'windows':
@@ -184,6 +185,7 @@ def get_platform_config():
             'output_path': f'{base_path}/output',
             'processed_path': f'{base_path}/processed',
             'obsidian_path': f'{base_path}/obsidian',
+            'archive_path': f'{base_path}/processed_originals',
             'temp_path': os.environ.get('TEMP', '/tmp')
         }
     else:  # Linux/macOS
@@ -193,6 +195,7 @@ def get_platform_config():
             'output_path': f'{base_path}/output',
             'processed_path': f'{base_path}/processed',
             'obsidian_path': f'{base_path}/obsidian',
+            'archive_path': f'{base_path}/processed_originals',
             'temp_path': '/tmp'
         }
 

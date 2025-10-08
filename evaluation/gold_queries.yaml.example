@@ -1,62 +1,67 @@
-# Gold Query Set for RAG Evaluation
-# Copy to gold_queries.yaml and customize with your queries
-
-version: "1.0"
-created_at: "2025-10-07"
-query_count: 5
+# Gold Query Evaluation Set
+#
+# Purpose: Measure retrieval quality with precision@k, recall@k, and MRR metrics
+# Format: Each query has expected relevant documents for evaluation
+#
+# How to use:
+#   1. Copy this file to gold_queries.yaml
+#   2. Replace with your actual ingested documents
+#   3. Run: make test-quality (or python scripts/evaluate_retrieval.py)
+#
+# Metrics explained:
+#   - Precision@k: % of retrieved docs that are relevant (quality of results)
+#   - Recall@k: % of relevant docs that were retrieved (coverage)
+#   - MRR (Mean Reciprocal Rank): Average of 1/rank of first relevant doc
+#   - Any Good Citation Rate: % of queries where at least 1 relevant doc appears
 
 queries:
-  - query_id: "q001"
-    query_text: "What are the main features of the RAG system?"
-    expected_doc_ids:
-      - "doc_readme"
-      - "doc_architecture"
-      - "doc_features"
-    category: "factual"
-    min_precision_at_5: 0.6
-    notes: "Basic factual query about system capabilities"
+  # Example: School enrollment queries
+  - id: "Q001"
+    query: "What documents are needed for school enrollment?"
+    description: "User wants to know required documents for Anna's school registration"
+    expected_docs:
+      - "enrollment_application_anna_lins.txt"
+      - "school_requirements_grundschule.pdf"
+    tags: ["education", "enrollment", "requirements"]
+    difficulty: "easy"  # easy | medium | hard
 
-  - query_id: "q002"
-    query_text: "How do I configure the LLM fallback chain?"
-    expected_doc_ids:
-      - "doc_env_config"
-      - "doc_llm_service"
-    category: "procedural"
-    min_precision_at_5: 0.5
-    notes: "Configuration query"
+  - id: "Q002"
+    query: "When is the deadline for submitting Anna's enrollment?"
+    description: "User needs to know specific deadline"
+    expected_docs:
+      - "enrollment_application_anna_lins.txt"
+    tags: ["education", "deadline", "dates"]
+    difficulty: "easy"
 
-  - query_id: "q003"
-    query_text: "What is the cost per document for enrichment?"
-    expected_doc_ids:
-      - "doc_cost_tracking"
-      - "doc_enrichment"
-    category: "factual"
-    min_precision_at_5: 0.5
-    notes: "Specific factual lookup"
+  - id: "Q003"
+    query: "Who should I contact about kindergarten enrollment in Köln?"
+    description: "User looking for contact person for school enrollment"
+    expected_docs:
+      - "enrollment_application_anna_lins.txt"
+      - "school_contacts_koeln.txt"
+    tags: ["education", "contacts", "administration"]
+    difficulty: "medium"
 
-  - query_id: "q004"
-    query_text: "How does the hybrid search algorithm work?"
-    expected_doc_ids:
-      - "doc_search_service"
-      - "doc_reranking"
-      - "doc_vector_service"
-    category: "reasoning"
-    min_precision_at_5: 0.4
-    notes: "Multi-document reasoning query"
+# Evaluation Configuration
+config:
+  # How many results to retrieve per query (k values to test)
+  k_values: [1, 3, 5, 10]
 
-  - query_id: "q005"
-    query_text: "What document formats are supported for ingestion?"
-    expected_doc_ids:
-      - "doc_document_service"
-      - "doc_readme"
-    category: "factual"
-    min_precision_at_5: 0.6
-    notes: "Format listing query"
+  # Minimum acceptable scores (quality gates)
+  min_precision_at_5: 0.60  # At least 60% of top 5 results should be relevant
+  min_recall_at_10: 0.70    # Should find at least 70% of relevant docs in top 10
+  min_mrr: 0.50             # First relevant doc should average rank 2 or better
+  min_any_good_citation: 0.80  # 80% of queries should have ≥1 relevant result
 
-# Guidelines for creating gold queries:
-# 1. Use real user queries from your domain
-# 2. Include 30-50 queries for comprehensive coverage
-# 3. Mix query types: factual, procedural, reasoning, multi-hop
-# 4. Set realistic min_precision_at_5 thresholds (0.4-0.6)
-# 5. Update expected_doc_ids as your corpus evolves
-# 6. Run nightly evaluations to catch regressions
+  # Test modes
+  use_reranking: true       # Test with cross-encoder reranker enabled
+  test_bm25_only: false     # Compare against BM25-only baseline
+  test_dense_only: false    # Compare against dense-only baseline
+
+# Notes for creating good gold queries:
+#
+# 1. **Diversity**: Cover different query types (factual, temporal, procedural, verification, relationship)
+# 2. **Difficulty levels**: Easy (direct match), Medium (requires reasoning), Hard (multi-hop/temporal)
+# 3. **Real user questions**: Base queries on actual user needs
+# 4. **Expected docs**: Only list truly relevant documents (be strict!)
+# 5. **Maintenance**: Update monthly as you ingest new documents

@@ -94,6 +94,7 @@ RUN mkdir -p \
     /data/input \
     /data/output \
     /data/processed \
+    /data/processed_originals \
     /data/obsidian \
     /tmp/rag_processing
 
