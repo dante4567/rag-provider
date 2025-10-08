@@ -262,6 +262,64 @@ class ObsidianService:
 
         return content
 
+    def _format_paragraphs(self, content: str) -> str:
+        """
+        Ensure proper paragraph spacing in markdown content
+
+        - Add blank lines between paragraphs (double newline)
+        - Preserve markdown formatting (headers, lists, code blocks)
+        """
+        if not content:
+            return content
+
+        lines = content.split('\n')
+        formatted = []
+        prev_empty = False
+        in_code_block = False
+
+        for line in lines:
+            stripped = line.strip()
+
+            # Track code blocks
+            if stripped.startswith('```'):
+                in_code_block = not in_code_block
+                formatted.append(line)
+                prev_empty = False
+                continue
+
+            # Inside code blocks, preserve exactly
+            if in_code_block:
+                formatted.append(line)
+                continue
+
+            # Empty line
+            if not stripped:
+                if not prev_empty:  # Only add one blank line
+                    formatted.append('')
+                    prev_empty = True
+                continue
+
+            # Non-empty line
+            # If previous was text and this is text (not header/list), ensure spacing
+            if formatted and not prev_empty:
+                last_line = formatted[-1].strip()
+                # Check if both are regular paragraphs (not headers, lists, etc.)
+                is_special = (stripped.startswith('#') or stripped.startswith('-') or
+                             stripped.startswith('*') or stripped.startswith('>') or
+                             stripped.startswith('|'))
+                was_special = (last_line.startswith('#') or last_line.startswith('-') or
+                              last_line.startswith('*') or last_line.startswith('>') or
+                              last_line.startswith('|'))
+
+                # Add spacing between regular paragraphs
+                if not is_special and not was_special and last_line:
+                    formatted.append('')  # Add blank line
+
+            formatted.append(line)
+            prev_empty = False
+
+        return '\n'.join(formatted)
+
     def build_xref_block(
         self,
         projects: List[str],
@@ -350,12 +408,8 @@ class ObsidianService:
 
         body_parts.append("## Source")
         body_parts.append("")
-        if attachment_path.exists():
-            # Use Obsidian wiki-link syntax
-            body_parts.append(f"📄 [[attachments/{original_filename}|Open Original]]")
-        else:
-            # Fallback: just show filename
-            body_parts.append(f"*Original:* `{original_filename}`")
+        # Always create wiki-link (ingest route will copy file to attachments/)
+        body_parts.append(f"📄 [[attachments/{original_filename}|Open Original]]")
         body_parts.append("")
 
         # Key Facts
@@ -368,8 +422,10 @@ class ObsidianService:
         # Evidence/Excerpts (main content)
         # Strip frontmatter to avoid nesting conflicts
         clean_content = self._strip_frontmatter(content)
+        # Ensure proper paragraph spacing
+        formatted_content = self._format_paragraphs(clean_content)
         body_parts.append("## Evidence / Excerpts\n")
-        body_parts.append(clean_content)
+        body_parts.append(formatted_content)
         body_parts.append("")
 
         # Outcomes/Decisions
@@ -399,20 +455,28 @@ class ObsidianService:
 
     def create_entity_stub(
         self,
-        entity_type: str,  # person, project, place, org
+        entity_type: str,  # person, project, place, org, day
         name: str,
-        aliases: List[str] = None
+        aliases: List[str] = None,
+        extra_links: Dict[str, str] = None
     ):
         """
         Create/update entity stub for backlinks
 
-        Example: refs/people/Mother.md
+        Example: refs/people/Mother.md, refs/days/2025-11-15.md
+
+        Args:
+            entity_type: Type of entity (person, project, place, org, day)
+            name: Entity name (for days: ISO date like "2025-11-15")
+            aliases: Alternative names
+            extra_links: Additional links to include (e.g., {"vCard": "path/to/file.vcf"})
         """
         aliases = aliases or []
+        extra_links = extra_links or {}
 
         # Determine directory
         entity_dir = self.refs_dir / f"{entity_type}s"
-        entity_dir.mkdir(exist_ok=True)
+        entity_dir.mkdir(parents=True, exist_ok=True)
 
         # Create filename
         safe_name = slugify(name) or name.replace(' ', '-')
@@ -437,12 +501,26 @@ class ObsidianService:
             'project': 'projects',
             'place': 'places',
             'org': 'organizations',
-            'day': 'days'
+            'day': 'dates'  # Daily notes query on 'dates' field
         }
         field_name = field_name_map.get(entity_type, f"{entity_type}s")
 
         # Build stub body with Dataview query
-        stub_body = f"""# {name}
+        if entity_type == 'day':
+            # Daily note: Show documents mentioning this date
+            stub_body = f"""# {name}
+
+## Related Documents
+
+```dataview
+TABLE summary, topics
+WHERE contains(dates, "{name}")
+SORT file.name DESC
+```
+"""
+        else:
+            # Regular entity stub
+            stub_body = f"""# {name}
 
 ```dataview
 LIST FROM "10_normalized_md"
@@ -450,6 +528,12 @@ WHERE contains({field_name}, "{name}")
 SORT created_at DESC
 ```
 """
+
+        # Add extra links section if provided
+        if extra_links:
+            stub_body += "\n## Resources\n\n"
+            for label, link in extra_links.items():
+                stub_body += f"- {label}: [[{link}]]\n"
 
         # Write stub
         stub_content = f"---\n{stub_yaml}---\n\n{stub_body}"
@@ -475,7 +559,15 @@ SORT created_at DESC
         ingested_at = datetime.now()
 
         # Parse metadata lists
-        people = self._parse_csv(metadata.get('people_roles', ''))
+        # Handle both old format (people_roles string) and new format (people list of dicts/strings)
+        people_raw = metadata.get('people', metadata.get('people_roles', ''))
+        if isinstance(people_raw, list):
+            # New format: list of dicts or strings
+            people = [p.get('name') if isinstance(p, dict) else p for p in people_raw]
+        else:
+            # Old format: CSV string
+            people = self._parse_csv(people_raw)
+
         places = self._parse_csv(metadata.get('places', ''))
         projects = self._parse_csv(metadata.get('projects', ''))
         topics = self._parse_csv(metadata.get('topics', ''))
@@ -532,18 +624,59 @@ SORT created_at DESC
         # Write file
         file_path.write_text(full_content, encoding='utf-8')
 
-        # Create entity stubs
-        for person in people:
-            self.create_entity_stub('person', person)
+        # Create entity stubs with resource links
 
+        # People stubs with vCard links
+        for person in people:
+            if not person:  # Skip empty names
+                continue
+            # Check if vCard exists for this person
+            vcard_filename = slugify(person) + '.vcf'
+            # Use absolute path for Docker, relative for local dev
+            import os
+            is_docker = os.getenv("DOCKER_CONTAINER", "false").lower() == "true"
+            vcard_base = Path('/data/contacts') if is_docker else Path('data/contacts')
+            vcard_path = vcard_base / vcard_filename
+
+            extra_links = {}
+            if vcard_path.exists():
+                extra_links['vCard'] = f"../../../data/contacts/{vcard_filename}"
+
+            self.create_entity_stub('person', person, extra_links=extra_links)
+
+        # Project stubs
         for project in projects:
             self.create_entity_stub('project', project)
 
+        # Place stubs
         for place in places:
             self.create_entity_stub('place', place)
 
+        # Organization stubs
         for org in organizations:
             self.create_entity_stub('org', org)
+
+        # Daily notes for extracted dates with iCal links
+        dates = metadata.get('dates', [])
+        if isinstance(dates, str):
+            dates = self._parse_csv(dates)
+
+        for date_str in dates:
+            # Check if calendar event exists for this date
+            # Events are named like: 2025-11-15_event-title.ics
+            import glob
+            calendar_dir = Path('data/calendar')
+            ical_files = []
+            if calendar_dir.exists():
+                ical_files = list(calendar_dir.glob(f"{date_str}_*.ics"))
+
+            extra_links = {}
+            if ical_files:
+                # Link to the first matching event
+                ical_filename = ical_files[0].name
+                extra_links['Calendar Event'] = f"../../../data/calendar/{ical_filename}"
+
+            self.create_entity_stub('day', date_str, extra_links=extra_links)
 
         return file_path
 

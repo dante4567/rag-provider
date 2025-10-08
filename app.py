@@ -174,7 +174,7 @@ def get_platform_config():
             'input_path': '/data/input',
             'output_path': '/data/output',
             'processed_path': '/data/processed',
-            'obsidian_path': '/tmp/obsidian',
+            'obsidian_path': '/data/obsidian',
             'temp_path': '/tmp'
         }
     elif PLATFORM == 'windows':
@@ -608,8 +608,11 @@ class RAGService:
             )
 
             # Initialize contact/calendar export services
-            contacts_output_dir = Path(os.getenv("CONTACTS_PATH", "./data/contacts"))
-            calendar_output_dir = Path(os.getenv("CALENDAR_PATH", "./data/calendar"))
+            # Use absolute paths for Docker, relative for local dev
+            contacts_default = "/data/contacts" if IS_DOCKER else "./data/contacts"
+            calendar_default = "/data/calendar" if IS_DOCKER else "./data/calendar"
+            contacts_output_dir = Path(os.getenv("CONTACTS_PATH", contacts_default))
+            calendar_output_dir = Path(os.getenv("CALENDAR_PATH", calendar_default))
             self.contact_service = ContactService(output_dir=contacts_output_dir)
             self.calendar_service = CalendarService(output_dir=calendar_output_dir)
 
