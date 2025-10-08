@@ -163,6 +163,9 @@ class PatchService:
         for part in parts[:-1]:
             if part not in current:
                 current[part] = {}
+            elif not isinstance(current[part], dict):
+                # Replace non-dict values with empty dict to allow nested access
+                current[part] = {}
             current = current[part]
 
         # Get old value
