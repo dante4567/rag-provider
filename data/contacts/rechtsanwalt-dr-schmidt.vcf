@@ -5,8 +5,8 @@ N:Dr. Schmidt;Rechtsanwalt;;;
 TITLE:representing the plaintiff
 EMAIL;TYPE=INTERNET:schmidt@lawfirm.de
 TEL;TYPE=CELL:0221-12345
-NOTE:Mentioned in: Document with Private Notes
-REV:20251008T230607Z
+NOTE:Mentioned in: Document with Private Notes\, python tutorial 2
+REV:20251008T232808Z
 PRODID:-//RAG Provider//Contact Service//EN
 CATEGORIES:RAG-Extracted,representing the plaintiff
 END:VCARD

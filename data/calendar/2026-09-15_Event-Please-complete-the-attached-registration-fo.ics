@@ -10,9 +10,9 @@ DTEND;VALUE=DATE:20260916
 SUMMARY:Event: Please complete the attached registration forms and return them by the end of the month
 DESCRIPTION:Source: Please complete the attached registration forms and return them by the end of the month
 CATEGORIES:RAG-Extracted
-DTSTAMP:20251008T230628Z
-CREATED:20251008T230628Z
-LAST-MODIFIED:20251008T230628Z
+DTSTAMP:20251008T232729Z
+CREATED:20251008T232729Z
+LAST-MODIFIED:20251008T232729Z
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR

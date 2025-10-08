@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Maria Weber
+N:Weber;Maria;;;
+TITLE:Attendee
+NOTE:Mentioned in: consistency test 0\, consistency test 1
+REV:20251008T233218Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,Attendee
+END:VCARD

@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:c82cf9198800ca60@rag-provider.local
+DTSTART;VALUE=DATE:20251005
+DTEND;VALUE=DATE:20251006
+SUMMARY:Event: Legal Document Custody Agreement This agreement establishes shared custody arrangements for the mino
+DESCRIPTION:Source: Legal Document Custody Agreement This agreement establishes shared custody arrangements for the mino
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T233215Z
+CREATED:20251008T233215Z
+LAST-MODIFIED:20251008T233215Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR
