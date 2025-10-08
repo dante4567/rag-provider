@@ -188,17 +188,15 @@ class ObsidianService:
             'projects': projects if projects else [],
             'topics': topics if topics else [],
 
-            # Entities section (Blueprint spec - separate from controlled vocab)
-            'entities': {
-                'orgs': orgs,
-                'dates': dates,
-                'numbers': numbers
-            },
+            # Entities (FLATTENED for Obsidian Dataview compatibility)
+            'organizations': orgs,
+            'dates': dates,
+            'numbers': numbers,
 
             # Summary (top-level)
             'summary': metadata.get('summary', ''),
 
-            # Scores (TOP-LEVEL per blueprint, not nested!)
+            # Scores (FLAT for Dataview queries)
             'quality_score': float(metadata.get('quality_score', 0.0)),
             'novelty_score': float(metadata.get('novelty_score', 0.0)),
             'actionability_score': float(metadata.get('actionability_score', 0.0)),
@@ -206,14 +204,12 @@ class ObsidianService:
             'signalness': float(metadata.get('signalness', 0.0)),
             'do_index': metadata.get('do_index', True),
 
-            # Provenance (TOP-LEVEL per blueprint)
-            'provenance': {
-                'sha256': metadata.get('content_hash', '')[:16],
-                'sha256_full': metadata.get('content_hash', ''),
-                'source_ref': source,
-                'file_size_mb': metadata.get('file_size_mb', 0.0),
-                'ingestion_date': ingested_at.isoformat()
-            },
+            # Provenance (FLATTENED for Dataview)
+            'sha256': metadata.get('content_hash', '')[:16],
+            'sha256_full': metadata.get('content_hash', ''),
+            'source_ref': source,
+            'file_size_mb': metadata.get('file_size_mb', 0.0),
+            'ingestion_date': ingested_at.isoformat(),
 
             # Enrichment metadata (top-level)
             'enrichment_version': metadata.get('enrichment_version', 'v2.1'),
@@ -316,6 +312,7 @@ class ObsidianService:
         self,
         content: str,
         summary: str,
+        source: str,
         key_facts: List[str],
         outcomes: List[str],
         next_actions: List[str],
@@ -341,11 +338,24 @@ class ObsidianService:
         if summary:
             body_parts.append(f"> **Summary:** {summary}\n")
 
-        # Source link section (added for linking to originals)
-        # Note: Source filename is in frontmatter, this adds visibility
+        # Source link section - link to original in attachments/
+        # Extract original filename (remove upload_UUID_ prefix)
+        import re
+        import os
+        original_filename = re.sub(r'^upload_[a-f0-9-]+_', '', source)
+
+        # Check if original exists in Obsidian attachments
+        obsidian_base = Path(os.environ.get('OBSIDIAN_VAULT_PATH', '/data/obsidian'))
+        attachment_path = obsidian_base / 'attachments' / original_filename
+
         body_parts.append("## Source")
         body_parts.append("")
-        body_parts.append("See `source` in frontmatter for original filename.")
+        if attachment_path.exists():
+            # Use Obsidian wiki-link syntax
+            body_parts.append(f"📄 [[attachments/{original_filename}|Open Original]]")
+        else:
+            # Fallback: just show filename
+            body_parts.append(f"*Original:* `{original_filename}`")
         body_parts.append("")
 
         # Key Facts
@@ -506,6 +516,7 @@ SORT created_at DESC
         body = self.build_body(
             content=content,
             summary=summary,
+            source=source,
             key_facts=key_facts,
             outcomes=outcomes,
             next_actions=next_actions,

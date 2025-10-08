@@ -61,6 +61,17 @@ async def ingest_file(
             generate_obsidian=generate_obsidian
         )
 
+        # Copy to Obsidian attachments if successful
+        if generate_obsidian and result.success:
+            import shutil
+            attachments_dir = Path(PATHS.get('obsidian_path', '/data/obsidian')) / 'attachments'
+            attachments_dir.mkdir(parents=True, exist_ok=True)
+
+            # Copy with original filename (no UUID prefix)
+            dest_path = attachments_dir / file.filename
+            shutil.copy2(str(temp_path), str(dest_path))
+            logger.info(f"📎 Copied original to: {dest_path}")
+
         # Clean up temp file
         temp_path.unlink()
 
