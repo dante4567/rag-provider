@@ -573,8 +573,12 @@ LIMIT 50
 **Note:** Shows all documents with events/deadlines on this date. The "Date Context" column shows details (meeting, deadline, birthday, etc.).
 """
         elif entity_type == 'person':
-            # Enhanced person stub with contact info and relationships
+            # Enhanced person stub with summary, contact info, and relationships
             stub_body = f"""# {name}\n\n"""
+
+            # Summary section (if provided)
+            if person_data.get('description'):
+                stub_body += f"> {person_data['description']}\n\n"
 
             # Contact information section
             contact_parts = []
@@ -605,7 +609,7 @@ LIMIT 50
             if contact_parts:
                 stub_body += "\n".join(contact_parts) + "\n\n"
 
-            # Relationships section
+            # Relationships section with wiki-links
             relationships = person_data.get('relationships', [])
             if relationships:
                 stub_body += "## Relationships\n\n"
@@ -613,13 +617,11 @@ LIMIT 50
                     rel_type = rel.get('type', 'related to')
                     rel_person = rel.get('person', '')
                     if rel_person:
-                        # Format: "- Father of: Anna Lins"
-                        stub_body += f"- **{rel_type.title()} of:** {rel_person}\n"
+                        # Convert to wiki-link for clickability and backlinks
+                        rel_slug = slugify(rel_person)
+                        rel_link = f"[[refs/persons/{rel_slug}|{rel_person}]]"
+                        stub_body += f"- **{rel_type.title()}:** {rel_link}\n"
                 stub_body += "\n"
-
-            # Description section
-            if person_data.get('description'):
-                stub_body += f"## About\n\n{person_data['description']}\n\n"
 
             # Related documents section
             stub_body += f"""## Related Documents
