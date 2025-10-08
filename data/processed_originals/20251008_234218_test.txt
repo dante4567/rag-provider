@@ -1,0 +1,20 @@
+This is a test document for the RAG service comprehensive testing.
+
+Key Topics:
+- Machine Learning fundamentals
+- Natural Language Processing applications
+- Deep Learning architectures
+- Computer Vision techniques
+
+Important metrics:
+- Accuracy: 95.3%
+- F1-Score: 0.92
+- Processing time: 2.5 seconds
+
+Technologies mentioned:
+- Python
+- TensorFlow
+- PyTorch
+- OpenCV
+
+This document contains exactly 5 paragraphs for chunk testing.

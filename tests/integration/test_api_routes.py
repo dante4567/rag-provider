@@ -63,6 +63,7 @@ class TestIngestEndpoint:
         response = requests.post(f"{BASE_URL}/ingest/file")
         assert response.status_code == 422  # Unprocessable Entity
 
+    @pytest.mark.slow
     def test_ingest_file_success(self, wait_for_service):
         """POST /ingest/file with valid file should succeed"""
         if not TEST_FILE_PATH.exists():
@@ -83,6 +84,7 @@ class TestIngestEndpoint:
         assert "chunks" in data
         assert "metadata" in data
 
+    @pytest.mark.slow
     def test_ingest_file_generates_obsidian(self, wait_for_service):
         """POST /ingest/file should generate Obsidian file when requested"""
         if not TEST_FILE_PATH.exists():
@@ -110,6 +112,7 @@ class TestIngestEndpoint:
         )
         assert response.status_code == 422
 
+    @pytest.mark.slow
     def test_ingest_text_success(self, wait_for_service):
         """POST /ingest with valid content should succeed"""
         response = requests.post(
@@ -176,6 +179,7 @@ class TestChatEndpoint:
         )
         assert response.status_code == 422
 
+    @pytest.mark.slow
     def test_chat_returns_answer(self, wait_for_service):
         """POST /chat should return answer with sources"""
         response = requests.post(
@@ -191,6 +195,7 @@ class TestChatEndpoint:
         assert "sources" in data
         assert "llm_provider_used" in data
 
+    @pytest.mark.slow
     def test_chat_accepts_llm_model(self, wait_for_service):
         """POST /chat should accept llm_model parameter"""
         response = requests.post(

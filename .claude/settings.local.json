@@ -7,7 +7,8 @@
       "Bash(curl:*)",
       "Bash(python3:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\n🔧 Fix Integration Test Endpoints (/ingest/text → /ingest)\n\n**Problem:**\n- Integration tests using wrong endpoint paths\n- `/ingest/text` endpoint doesn''t exist (404 errors)\n- Tests failing with 16 failed, 7 passed (30% pass rate)\n\n**Solution:**\n- Fixed endpoint paths: `/ingest/text` → `/ingest`\n- Actual API structure:\n  - POST /ingest (JSON body with content + filename)\n  - POST /ingest/file (file upload)\n  - POST /ingest/batch (multiple files)\n\n**Results:**\n- ✅ 9 passed, 14 failed (39% pass rate)\n- ✅ All ingest endpoint tests now pass (9/9)\n- Remaining failures: search/chat (timing/ChromaDB connection issues)\n\n**Next Steps:**\n- Fix ChromaDB connection for search/chat tests\n- Mark slow tests with @pytest.mark.slow\n- Create fast smoke test suite for CI/CD\n\nLocation: tests/integration/test_api_routes.py:105-127\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(docker-compose restart:*)"
     ],
     "deny": [],
     "ask": []
