@@ -1,13 +1,14 @@
 """
 Search and document management endpoints
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from pathlib import Path
 import re
 import logging
 
 from src.models.schemas import Query, SearchResponse, DocumentInfo, SearchResult
+from src.core.dependencies import get_rag_service, get_paths, get_app_collection
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,10 @@ router = APIRouter(tags=["search"])
 
 
 @router.post("/search", response_model=SearchResponse)
-async def search_documents(query: Query):
+async def search_documents(
+    query: Query,
+    rag_service = Depends(get_rag_service)
+):
     """
     Hybrid search endpoint - combines BM25 + dense embeddings + MMR + reranking
 
@@ -32,11 +36,7 @@ async def search_documents(query: Query):
     start_time = time.time()
 
     try:
-        from app import RAGService
         from src.services.reranking_service import get_reranking_service
-
-        # Use hybrid search via RAG service
-        rag_service = RAGService()
 
         # Get hybrid search results (BM25 + dense + MMR)
         # Fetch more results for reranking
@@ -97,11 +97,12 @@ async def search_documents(query: Query):
 
 
 @router.get("/documents", response_model=List[DocumentInfo])
-async def list_documents():
+async def list_documents(
+    collection = Depends(get_app_collection),
+    PATHS: dict = Depends(get_paths)
+):
     """List all documents"""
     try:
-        from app import collection, PATHS
-
         results = collection.get()
 
         docs = {}
@@ -134,11 +135,13 @@ async def list_documents():
 
 
 @router.get("/documents/{doc_id}", response_model=DocumentInfo)
-async def get_document(doc_id: str):
+async def get_document(
+    doc_id: str,
+    collection = Depends(get_app_collection),
+    PATHS: dict = Depends(get_paths)
+):
     """Get a specific document by ID"""
     try:
-        from app import collection, PATHS
-
         # Get document chunks
         results = collection.get(where={"doc_id": doc_id})
 
@@ -174,11 +177,13 @@ async def get_document(doc_id: str):
 
 
 @router.delete("/documents/{doc_id}")
-async def delete_document(doc_id: str):
+async def delete_document(
+    doc_id: str,
+    collection = Depends(get_app_collection),
+    PATHS: dict = Depends(get_paths)
+):
     """Delete document and associated files"""
     try:
-        from app import collection, PATHS
-
         # Get document info first
         results = collection.get(where={"doc_id": doc_id})
         if not results['ids']:

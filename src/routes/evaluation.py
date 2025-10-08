@@ -8,7 +8,7 @@ Provides API endpoints for:
 - Comparing evaluation runs
 """
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 import json
@@ -18,6 +18,7 @@ from src.services.evaluation_service import (
     GoldQuery,
     EvaluationRun
 )
+from src.core.dependencies import get_rag_service
 
 router = APIRouter(tags=["evaluation"])
 
@@ -121,7 +122,10 @@ async def add_gold_query(request: AddGoldQueryRequest):
 
 
 @router.post("/evaluation/run", response_model=EvaluationRunSummary)
-async def run_evaluation(request: RunEvaluationRequest):
+async def run_evaluation(
+    request: RunEvaluationRequest,
+    rag_service = Depends(get_rag_service)
+):
     """
     Run evaluation against all gold queries
 
@@ -132,9 +136,6 @@ async def run_evaluation(request: RunEvaluationRequest):
         Evaluation run results with metrics
     """
     try:
-        # Import RAG service
-        from app import RAGService
-
         if not evaluation_service.gold_queries:
             evaluation_service.load_gold_queries()
 
@@ -148,7 +149,7 @@ async def run_evaluation(request: RunEvaluationRequest):
         async def search_function(query_text: str, top_k: int) -> List[str]:
             """Wrapper for RAG search that returns doc IDs"""
             try:
-                results = await RAGService.vector_service.hybrid_search(
+                results = await rag_service.vector_service.hybrid_search(
                     query=query_text,
                     top_k=top_k,
                     apply_mmr=True

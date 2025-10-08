@@ -184,6 +184,81 @@ def get_vector_service(
     return VectorService(collection, settings)
 
 
+# ===== RAGService Singleton =====
+
+_rag_service_instance: Optional[object] = None
+
+
+def get_rag_service():
+    """
+    Get RAGService singleton instance
+
+    Returns the global RAGService instance, creating it if necessary.
+    This ensures all routes share the same initialized service with
+    all its sub-services (LLM, vector, enrichment, etc.)
+
+    Returns:
+        RAGService: Global RAGService instance
+
+    Raises:
+        HTTPException: 503 if RAGService initialization fails
+    """
+    global _rag_service_instance
+
+    if _rag_service_instance is None:
+        try:
+            # Import here to avoid circular dependency
+            from app import RAGService
+            _rag_service_instance = RAGService()
+            logger.info("✅ RAGService singleton initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize RAGService: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"RAG service initialization failed: {str(e)}"
+            )
+
+    return _rag_service_instance
+
+
+def reset_rag_service():
+    """Reset RAGService instance (for testing or reconfiguration)"""
+    global _rag_service_instance
+    _rag_service_instance = None
+
+
+def get_paths():
+    """
+    Get platform-specific path configuration
+
+    Returns:
+        dict: Path configuration with keys:
+            - input_path: Directory for input files
+            - output_path: Directory for output files
+            - processed_path: Directory for processed files
+            - obsidian_path: Directory for Obsidian vault
+            - archive_path: Directory for original file archive
+            - temp_path: Temporary directory
+    """
+    from app import PATHS
+    return PATHS
+
+
+def get_app_collection():
+    """
+    Get the main ChromaDB collection from app.py
+
+    This returns the global collection instance created at app startup.
+    For most use cases, prefer using get_collection() which creates
+    a fresh collection instance.
+
+    Returns:
+        chromadb.Collection: Global collection instance
+    """
+    from app import collection
+    return collection
+
+
 # ===== Validation Dependencies =====
 
 async def validate_file_size(

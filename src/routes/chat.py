@@ -1,11 +1,12 @@
 """
 RAG chat endpoint
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 import logging
 import time
 
 from src.models.schemas import ChatRequest, ChatResponse, Query, SearchResult
+from src.core.dependencies import get_rag_service
 
 logger = logging.getLogger(__name__)
 
@@ -13,18 +14,19 @@ router = APIRouter(tags=["chat"])
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_with_rag(request: ChatRequest):
+async def chat_with_rag(
+    request: ChatRequest,
+    rag_service = Depends(get_rag_service)
+):
     """Chat endpoint with RAG functionality - combines search with LLM-powered answer generation"""
     start_time = time.time()
 
     try:
-        from app import RAGService
         from src.services.reranking_service import get_reranking_service
         # Import search_documents from search routes
         from src.routes.search import search_documents
 
         # Step 1: Search for relevant context (retrieve more for reranking)
-        rag_service = RAGService()
         # Retrieve 3x more results for reranking
         initial_results_count = request.max_context_chunks * 3
         search_query = Query(

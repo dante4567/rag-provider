@@ -10,6 +10,7 @@ import asyncio
 import logging
 
 from src.models.schemas import Document, IngestResponse, ObsidianMetadata
+from src.core.dependencies import get_rag_service, get_paths
 
 logger = logging.getLogger(__name__)
 
@@ -17,10 +18,12 @@ router = APIRouter(prefix="/ingest", tags=["ingest"])
 
 
 @router.post("", response_model=IngestResponse)
-async def ingest_document(document: Document):
+async def ingest_document(
+    document: Document,
+    rag_service = Depends(get_rag_service)
+):
     """Ingest document via API"""
     try:
-        from app import rag_service, verify_token
         # Auth handled by app-level middleware
         return await rag_service.process_document(
             content=document.content,
@@ -41,11 +44,11 @@ async def ingest_file(
     file: UploadFile = File(...),
     process_ocr: str = Form("false"),
     generate_obsidian: str = Form("true"),
-    use_critic: str = Form("false")
+    use_critic: str = Form("false"),
+    rag_service = Depends(get_rag_service),
+    PATHS: dict = Depends(get_paths)
 ):
     """Ingest file via upload"""
-    from app import rag_service, PATHS
-
     # Convert string form params to boolean
     process_ocr_bool = process_ocr.lower() in ("true", "1", "yes")
     generate_obsidian_bool = generate_obsidian.lower() in ("true", "1", "yes")
@@ -111,11 +114,11 @@ async def ingest_batch_files(
     files: List[UploadFile] = File(...),
     process_ocr: str = Form("false"),
     generate_obsidian: str = Form("true"),
-    use_critic: str = Form("false")
+    use_critic: str = Form("false"),
+    rag_service = Depends(get_rag_service),
+    PATHS: dict = Depends(get_paths)
 ):
     """Batch file ingestion"""
-    from app import rag_service, PATHS
-
     # Convert string form params to boolean
     process_ocr_bool = process_ocr.lower() in ("true", "1", "yes")
     generate_obsidian_bool = generate_obsidian.lower() in ("true", "1", "yes")
