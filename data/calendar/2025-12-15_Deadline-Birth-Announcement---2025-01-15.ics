@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:960d441aabeacd6b@rag-provider.local
+DTSTART;VALUE=DATE:20251215
+DTEND;VALUE=DATE:20251216
+SUMMARY:Deadline: Birth Announcement - 2025-01-15
+DESCRIPTION:5. Her father Steven Lins is very proud.  ## Important Dates  - **2025-01-15**: Anna's birthday - **2025-12-15**: Deadline to submit the final project proposal for the new system - **2025-11-30**: Mee\\nSource: Birth Announcement - 2025-01-15
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T173418Z
+CREATED:20251008T173418Z
+LAST-MODIFIED:20251008T173418Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

@@ -184,6 +184,7 @@ class ObsidianService:
             # Entities (FLATTENED for Obsidian Dataview compatibility)
             'organizations': orgs,
             'dates': dates,
+            'dates_detailed': entities_data.get('dates_detailed', []),  # Full date context
             'numbers': numbers,
 
             # Summary (top-level)
@@ -521,16 +522,18 @@ class ObsidianService:
 
         # Build stub body with Dataview query
         if entity_type == 'day':
-            # Daily note: Show documents mentioning this date
+            # Daily note: Show documents mentioning this date with context
             stub_body = f"""# {name}
 
-## Related Documents
+## Events on This Date
 
 ```dataview
-TABLE summary, topics
+TABLE summary, dates_detailed as "Date Context"
 WHERE contains(dates, "{name}")
 SORT file.mtime DESC
 ```
+
+**Note:** The "Date Context" column shows all dates from each document. Look for entries matching `{name}` to see the specific context (deadline, meeting, etc.).
 """
         elif entity_type == 'person':
             # Enhanced person stub with contact info and relationships
@@ -564,6 +567,18 @@ SORT file.mtime DESC
 
             if contact_parts:
                 stub_body += "\n".join(contact_parts) + "\n\n"
+
+            # Relationships section
+            relationships = person_data.get('relationships', [])
+            if relationships:
+                stub_body += "## Relationships\n\n"
+                for rel in relationships:
+                    rel_type = rel.get('type', 'related to')
+                    rel_person = rel.get('person', '')
+                    if rel_person:
+                        # Format: "- Father of: Anna Lins"
+                        stub_body += f"- **{rel_type.title()} of:** {rel_person}\n"
+                stub_body += "\n"
 
             # Description section
             if person_data.get('description'):

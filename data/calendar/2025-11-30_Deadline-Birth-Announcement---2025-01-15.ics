@@ -1,0 +1,18 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RAG Provider//Calendar Service//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:38f7b7d7ea53168d@rag-provider.local
+DTSTART;VALUE=DATE:20251130
+DTEND;VALUE=DATE:20251201
+SUMMARY:Deadline: Birth Announcement - 2025-01-15
+DESCRIPTION:a's birthday - **2025-12-15**: Deadline to submit the final project proposal for the new system - **2025-11-30**: Meeting scheduled with Dr. Schmidt to discuss the roadmap  ## Contact Information  Ste\\nSource: Birth Announcement - 2025-01-15
+CATEGORIES:RAG-Extracted
+DTSTAMP:20251008T173418Z
+CREATED:20251008T173418Z
+LAST-MODIFIED:20251008T173418Z
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

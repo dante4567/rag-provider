@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Steven Lins
+N:Lins;Steven;;;
+TITLE:father
+EMAIL;TYPE=INTERNET:steven.lins@email.com
+TEL;TYPE=CELL:+49 170 1234567
+NOTE:Mentioned in: Birth Announcement - 2025-01-15
+REV:20251008T173418Z
+PRODID:-//RAG Provider//Contact Service//EN
+CATEGORIES:RAG-Extracted,father
+END:VCARD
