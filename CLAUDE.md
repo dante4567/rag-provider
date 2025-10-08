@@ -39,7 +39,9 @@ curl -X POST http://localhost:8001/search \
 - ✅ **Retrieval tuning** - 4x multiplier, BM25 0.4 weight
 
 **What Works:**
-- ✅ **523 tests** (475+ passing = 91% pass rate) across 22 services
+- ✅ **524 tests** (469 passing = 90% pass rate) across 22 services
+  - **Phase 1 tests**: 54/54 passing (100%)
+  - **Legacy tests**: 469/524 passing (90%)
 - ✅ **Complete self-improvement** - Opt-in via `use_iteration=true` parameter
 - ✅ Core RAG pipeline: enrichment, chunking, vocabulary, hybrid search
 - ✅ Multi-LLM fallback chain with cost tracking ($0.000063/doc + $0.005/critique)
@@ -48,14 +50,71 @@ curl -X POST http://localhost:8001/search \
 - ✅ Modular architecture (1,472 LOC app.py + 22 services)
 
 **Remaining Gaps:**
-- ⚠️ **Dependencies not pinned** - Uses `>=`, not `==` (2 hours)
+- ⚠️ **55 failing legacy tests** - Mock configuration and API changes (4-6 hours)
+  - 10 LLM service tests (mock settings missing attributes)
+  - 16 WhatsApp parser tests (API changes)
+  - 8 tag taxonomy tests (service interface changes)
+  - 6 Obsidian tests (schema updates)
+  - Others: models, auth, reranking
 - ⚠️ **No entity deduplication** - "Dr. Weber" ≠ "Thomas Weber" (1-2 days)
-- ⚠️ **Some failing tests** - Legacy tests need updating (4-6 hours)
 
 **Next Steps:**
-- Pin dependencies for reproducible builds
+- Fix mock configurations for LLM service tests
+- Update WhatsApp parser tests to new API
 - Entity deduplication and linking
-- Fix remaining legacy test failures
+
+## Phase 1 Self-Improvement Details
+
+**Iteration Loop:** score → edit → validate → apply → re-score
+- **Max 2 iterations** - Prevents infinite loops
+- **Quality threshold: 4.0/5.0** - Stops when quality is good enough
+- **Opt-in via parameter** - `use_iteration=true` to enable
+- **Cost per iteration**: ~$0.005 (critic) + $0.0001 (editor) = $0.0051
+
+**Services Added:**
+1. **EditorService** (`src/services/editor_service.py`)
+   - Generates JSON patches from critic suggestions
+   - Uses Groq Llama 3.1 8B ($0.0001/patch)
+   - Validates patches against forbidden paths
+   - Tests: 16/16 passing
+
+2. **PatchService** (`src/services/patch_service.py`)
+   - Safe JSON patch application (add/replace/remove)
+   - Forbidden path protection (id, source.*, rag.*)
+   - Diff logging with before/after tracking
+   - Tests: 18/18 passing
+
+3. **SchemaValidator** (`src/services/schema_validator.py`)
+   - JSON Schema Draft 7 validation
+   - Constraint enforcement (max lengths, item counts)
+   - Patch simulation before application
+   - Tests: 15/15 passing
+
+**Integration Tests:** 5/5 passing
+- Complete iteration loop flow
+- Quality threshold detection
+- Max iterations limit
+- Empty patch handling
+- PatchService + SchemaValidator integration
+
+**Example Usage:**
+```python
+from src.services.enrichment_service import EnrichmentService
+
+enrichment_service = get_enrichment_service()  # From dependencies
+
+# With self-improvement
+final_enrichment, final_critique = await enrichment_service.enrich_with_iteration(
+    text="Document content...",
+    filename="document.pdf",
+    max_iterations=2,
+    min_avg_score=4.0,
+    use_iteration=True
+)
+
+print(f"Final quality: {final_critique['overall_quality']:.2f}/5.0")
+print(f"Iterations used: {iterations_count}")
+```
 
 ## Architecture Overview
 
