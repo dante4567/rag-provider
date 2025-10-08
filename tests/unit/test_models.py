@@ -78,38 +78,34 @@ class TestSearchModels:
     def test_search_result(self):
         """Test SearchResult model"""
         result = SearchResult(
-            id="doc1",
             content="Test content",
             metadata={"filename": "test.txt"},
-            similarity=0.85,
-            document_id="doc1",
-            chunk_index=0
+            relevance_score=0.85,
+            chunk_id="doc1_chunk_0"
         )
-        assert result.id == "doc1"
-        assert result.similarity == 0.85
-        assert result.document_id == "doc1"
-        assert result.chunk_index == 0
+        assert result.content == "Test content"
+        assert result.relevance_score == 0.85
+        assert result.chunk_id == "doc1_chunk_0"
+        assert result.metadata["filename"] == "test.txt"
 
     def test_search_response(self):
         """Test SearchResponse model"""
         result = SearchResult(
-            id="doc1",
             content="Test content",
             metadata={"filename": "test.txt"},
-            similarity=0.85,
-            document_id="doc1",
-            chunk_index=0
+            relevance_score=0.85,
+            chunk_id="doc1_chunk_0"
         )
         response = SearchResponse(
             results=[result],
             query="test",
             total_results=1,
-            processing_time=0.5
+            search_time_ms=123.45
         )
         assert len(response.results) == 1
         assert response.query == "test"
         assert response.total_results == 1
-        assert response.processing_time == 0.5
+        assert response.search_time_ms == 123.45
 
 
 class TestChatModels:
@@ -119,7 +115,6 @@ class TestChatModels:
         """Test ChatRequest with minimal fields"""
         request = ChatRequest(question="What is this?")
         assert request.question == "What is this?"
-        assert request.conversation_id is None
         assert request.max_context_chunks == 5
         assert request.llm_provider is None
         assert request.include_sources is True
@@ -128,15 +123,15 @@ class TestChatModels:
         """Test ChatRequest with all fields"""
         request = ChatRequest(
             question="What is this?",
-            conversation_id="conv123",
             max_context_chunks=10,
             llm_provider=LLMProvider.anthropic,
+            llm_model=LLMModel.anthropic_claude_3_haiku,
             include_sources=False
         )
         assert request.question == "What is this?"
-        assert request.conversation_id == "conv123"
         assert request.max_context_chunks == 10
         assert request.llm_provider == LLMProvider.anthropic
+        assert request.llm_model == LLMModel.anthropic_claude_3_haiku
         assert request.include_sources is False
 
 
@@ -171,5 +166,5 @@ class TestLLMModels:
     def test_llm_model_enum(self):
         """Test LLMModel enum values"""
         assert LLMModel.groq_llama3_8b == "groq/llama-3.1-8b-instant"
-        assert LLMModel.claude_haiku == "anthropic/claude-3-haiku-20240307"
-        assert LLMModel.gpt4o_mini == "openai/gpt-4o-mini"
+        assert LLMModel.anthropic_claude_3_haiku == "anthropic/claude-3-haiku-20240307"
+        assert LLMModel.openai_gpt_4o_mini == "openai/gpt-4o-mini"

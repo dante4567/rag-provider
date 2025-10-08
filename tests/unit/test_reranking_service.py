@@ -14,22 +14,27 @@ from src.services.reranking_service import RerankingService, get_reranking_servi
 
 
 # =============================================================================
+# Fixtures (Module-level so all test classes can access)
+# =============================================================================
+
+@pytest.fixture
+def mock_cross_encoder():
+    """Create mock CrossEncoder model"""
+    mock_model = Mock()
+    # Mock predict to return scores based on content quality
+    # Longer content gets higher scores (simulating relevance)
+    def mock_predict(pairs):
+        return [len(pair[1]) / 100.0 for pair in pairs]
+    mock_model.predict = mock_predict
+    return mock_model
+
+
+# =============================================================================
 # RerankingService Tests
 # =============================================================================
 
 class TestRerankingService:
     """Test the RerankingService class"""
-
-    @pytest.fixture
-    def mock_cross_encoder(self):
-        """Create mock CrossEncoder model"""
-        mock_model = Mock()
-        # Mock predict to return scores based on content quality
-        # Longer content gets higher scores (simulating relevance)
-        def mock_predict(pairs):
-            return [len(pair[1]) / 100.0 for pair in pairs]
-        mock_model.predict = mock_predict
-        return mock_model
 
     @pytest.fixture
     def service(self):

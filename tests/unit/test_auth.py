@@ -56,8 +56,11 @@ class TestAuthentication:
     @pytest.mark.asyncio
     async def test_verify_token_invalid_api_key(self):
         """Test authentication failure with invalid API key"""
-        with patch.dict(os.environ, {"REQUIRE_AUTH": "true", "RAG_API_KEY": "test_key"}):
-            from src.auth.auth import verify_token
+        from src.auth import auth
+
+        # Patch module variables directly
+        with patch.object(auth, 'REQUIRE_AUTH', True), \
+             patch.object(auth, 'API_KEY', 'test_key'):
 
             request = Mock(spec=Request)
             request.url.path = "/api/ingest"
@@ -66,7 +69,7 @@ class TestAuthentication:
             credentials.credentials = "wrong_key"
 
             with pytest.raises(HTTPException) as exc_info:
-                await verify_token(request, credentials)
+                await auth.verify_token(request, credentials)
 
             assert exc_info.value.status_code == 401
             assert "Invalid or missing API key" in exc_info.value.detail
@@ -74,15 +77,22 @@ class TestAuthentication:
     @pytest.mark.asyncio
     async def test_verify_token_no_api_key_configured(self):
         """Test authentication failure when no API key is configured"""
-        with patch.dict(os.environ, {"REQUIRE_AUTH": "true"}, clear=True):
-            from src.auth.auth import verify_token
+        from src.auth import auth
+
+        # Patch module variables - REQUIRE_AUTH=True but API_KEY=None
+        with patch.object(auth, 'REQUIRE_AUTH', True), \
+             patch.object(auth, 'API_KEY', None):
 
             request = Mock(spec=Request)
             request.url.path = "/api/ingest"
+            request.headers = Mock()
+            request.headers.get = Mock(return_value=None)
+            request.query_params = Mock()
+            request.query_params.get = Mock(return_value=None)
             credentials = None
 
             with pytest.raises(HTTPException) as exc_info:
-                await verify_token(request, credentials)
+                await auth.verify_token(request, credentials)
 
             assert exc_info.value.status_code == 503
             assert "no API key is configured" in exc_info.value.detail

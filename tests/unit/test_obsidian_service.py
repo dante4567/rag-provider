@@ -128,12 +128,15 @@ class TestObsidianService:
         )
 
         # Check tag prefixes
+        # NOTE: Only doc, project, and topic tags are created
+        # People, places, orgs are entities with wiki-links, NOT tags
         assert "doc/email" in tags
-        assert any("person/" in tag for tag in tags)
         assert any("project/" in tag for tag in tags)
-        assert any("place/" in tag for tag in tags)
         assert any("topic/" in tag for tag in tags)
-        assert any("org/" in tag for tag in tags)
+        # People, places, orgs are NOT in tags - they're in frontmatter as entities
+        assert not any("person/" in tag for tag in tags)
+        assert not any("place/" in tag for tag in tags)
+        assert not any("org/" in tag for tag in tags)
 
     def test_derive_tags_empty_lists(self, service):
         """Test tag derivation with empty metadata"""
@@ -175,14 +178,17 @@ class TestObsidianService:
         assert frontmatter.startswith("---\n")
         assert frontmatter.endswith("---\n\n")
 
-        # Should contain key fields
+        # Should contain key fields (flattened, no rag: section)
         assert "title:" in frontmatter
         assert "doc_type:" in frontmatter
         assert "tags:" in frontmatter
-        assert "rag:" in frontmatter
+        # V2.1: Flattened structure with entities in frontmatter
+        assert "people:" in frontmatter
+        assert "places:" in frontmatter
+        assert "projects:" in frontmatter
 
     def test_build_frontmatter_rag_section(self, service):
-        """Test that RAG section is included in frontmatter"""
+        """Test that RAG scores are included in frontmatter (flattened, not nested)"""
         frontmatter = service.build_frontmatter(
             id="test",
             title="Test",
@@ -203,10 +209,11 @@ class TestObsidianService:
             }
         )
 
-        # Check RAG section exists
-        assert "rag:" in frontmatter
+        # V2.1: Scores are flattened (top-level), not under rag: section
         assert "quality_score:" in frontmatter
         assert "recency_score:" in frontmatter
+        assert "novelty_score:" in frontmatter
+        assert "actionability_score:" in frontmatter
 
     def test_build_xref_block_basic(self, service):
         """Test xref block generation with wiki-links"""
@@ -217,14 +224,15 @@ class TestObsidianService:
             organizations=["ACME Corp"]
         )
 
-        # Should have RAG:IGNORE markers
-        assert "<!-- RAG:IGNORE-START -->" in xref
-        assert "<!-- RAG:IGNORE-END -->" in xref
+        # V2.1: No RAG:IGNORE markers - entities are in frontmatter and queryable
+        # Wiki-links in body create backlinks for Obsidian graph
 
-        # Should have wiki-links
-        assert "[[project:Project Alpha]]" in xref
-        assert "[[person:Alice]]" in xref
-        assert "[[person:Bob]]" in xref
+        # Should have wiki-links with refs/ paths
+        assert "[[refs/projects/project-alpha|Project Alpha]]" in xref
+        assert "[[refs/persons/alice|Alice]]" in xref
+        assert "[[refs/persons/bob|Bob]]" in xref
+        assert "[[refs/places/office|Office]]" in xref
+        assert "[[refs/orgs/acme-corp|ACME Corp]]" in xref
 
     def test_build_xref_block_empty(self, service):
         """Test xref block returns empty for no entities"""
@@ -242,6 +250,7 @@ class TestObsidianService:
         body = service.build_body(
             content="Main content here",
             summary="This is a summary",
+            source="test_source.pdf",
             key_facts=["Fact 1", "Fact 2"],
             outcomes=["Outcome 1"],
             next_actions=["Action 1"],
@@ -261,6 +270,7 @@ class TestObsidianService:
         body = service.build_body(
             content="Just content",
             summary="",
+            source="test.txt",
             key_facts=[],
             outcomes=[],
             next_actions=[],

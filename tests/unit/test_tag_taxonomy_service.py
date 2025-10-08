@@ -146,7 +146,7 @@ class TestTagTaxonomyService:
         """Test getting tag usage statistics"""
         await service_with_collection.refresh_tag_cache()
 
-        stats = service.get_tag_statistics()
+        stats = service_with_collection.get_tag_statistics()
 
         assert 'total_unique_tags' in stats
         assert 'total_documents' in stats
@@ -170,7 +170,7 @@ class TestTagTaxonomyService:
         """Test suggesting similar tags with exact match"""
         await service_with_collection.refresh_tag_cache()
 
-        similar = service.suggest_similar_tags("tech/ai/ml")
+        similar = service_with_collection.suggest_similar_tags("tech/ai/ml")
 
         assert len(similar) > 0
         # Exact match should have similarity 1.0
@@ -182,7 +182,7 @@ class TestTagTaxonomyService:
         """Test suggesting similar tags with substring match"""
         await service_with_collection.refresh_tag_cache()
 
-        similar = service.suggest_similar_tags("tech/ai")
+        similar = service_with_collection.suggest_similar_tags("tech/ai")
 
         assert len(similar) > 0
         # Should find "tech/ai" or "tech/ai/ml"
@@ -195,7 +195,7 @@ class TestTagTaxonomyService:
         """Test suggesting similar tags with hierarchical matching"""
         await service_with_collection.refresh_tag_cache()
 
-        similar = service.suggest_similar_tags("technology/artificial-intelligence")
+        similar = service_with_collection.suggest_similar_tags("technology/artificial-intelligence")
 
         # Should find tags with similar path components
         assert isinstance(similar, list)
@@ -218,7 +218,7 @@ class TestTagTaxonomyService:
             "x"  # Too short
         ]
 
-        validated = service.validate_and_deduplicate_tags(proposed)
+        validated = service_with_collection.validate_and_deduplicate_tags(proposed)
 
         # Should normalize and deduplicate
         assert isinstance(validated, list)
@@ -238,7 +238,7 @@ class TestTagTaxonomyService:
         # Propose tag very similar to existing "tech/ai/ml"
         proposed = ["tech/ai/ml", "tech-ai-ml"]
 
-        validated = service.validate_and_deduplicate_tags(proposed)
+        validated = service_with_collection.validate_and_deduplicate_tags(proposed)
 
         # Should merge similar tags (exact match has similarity 1.0)
         # At least one variant should be present
@@ -279,7 +279,7 @@ class TestTagTaxonomyService:
         """Test LLM tag suggestions with populated cache"""
         await service_with_collection.refresh_tag_cache()
 
-        suggestions = service.get_tag_suggestions_for_llm(domain="technology")
+        suggestions = service_with_collection.get_tag_suggestions_for_llm(domain="technology")
 
         assert isinstance(suggestions, str)
         # Should include existing tags
@@ -364,13 +364,15 @@ class TestEdgeCases:
         # Should not crash, no tags should be added
         assert service.tag_cache['unique_tags'] == 0
 
-    def test_validate_with_empty_list(self, service):
+    def test_validate_with_empty_list(self):
         """Test validation with empty tag list"""
+        service = TagTaxonomyService()
         validated = service.validate_and_deduplicate_tags([])
         assert validated == []
 
-    def test_suggest_similar_with_special_characters(self, service):
+    def test_suggest_similar_with_special_characters(self):
         """Test suggesting similar tags with special characters"""
+        service = TagTaxonomyService()
         # Should not crash with special regex characters
         similar = service.suggest_similar_tags("test[tag]")
         assert isinstance(similar, list)
