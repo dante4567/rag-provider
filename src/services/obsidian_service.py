@@ -350,26 +350,26 @@ class ObsidianService:
         lines = ["## Related", ""]
 
         if people:
-            # Create wiki-links to person stubs in refs/persons/
-            people_links = [f"[[{person}]]" for person in people]
+            # Create wiki-links to person stubs using slugified paths
+            people_links = [f"[[refs/persons/{slugify(person)}|{person}]]" for person in people]
             lines.append("**People:** " + " · ".join(people_links))
             lines.append("")
 
         if places:
-            # Create wiki-links to place stubs in refs/places/
-            place_links = [f"[[{place}]]" for place in places]
+            # Create wiki-links to place stubs using slugified paths
+            place_links = [f"[[refs/places/{slugify(place)}|{place}]]" for place in places]
             lines.append("**Places:** " + " · ".join(place_links))
             lines.append("")
 
         if organizations:
-            # Create wiki-links to org stubs in refs/orgs/
-            org_links = [f"[[{org}]]" for org in organizations]
+            # Create wiki-links to org stubs using slugified paths
+            org_links = [f"[[refs/orgs/{slugify(org)}|{org}]]" for org in organizations]
             lines.append("**Organizations:** " + " · ".join(org_links))
             lines.append("")
 
         if projects:
-            # Create wiki-links to project stubs in refs/projects/
-            project_links = [f"[[{project}]]" for project in projects]
+            # Create wiki-links to project stubs using slugified paths
+            project_links = [f"[[refs/projects/{slugify(project)}|{project}]]" for project in projects]
             lines.append("**Projects:** " + " · ".join(project_links))
             lines.append("")
 
@@ -565,7 +565,6 @@ class ObsidianService:
 
 ```dataview
 TABLE file.link as "Document", summary as "Summary", dates_detailed as "Date Context"
-FROM "."
 WHERE dates != null AND contains(dates, "{name}")
 SORT file.mtime DESC
 ```
@@ -626,7 +625,6 @@ SORT file.mtime DESC
 
 ```dataview
 TABLE file.link as "Document", summary as "Summary", topics as "Topics"
-FROM "."
 WHERE people != null AND contains(people, "{name}")
 SORT file.mtime DESC
 ```
@@ -640,7 +638,6 @@ SORT file.mtime DESC
 
 ```dataview
 TABLE file.link as "Document", summary as "Summary", topics as "Topics"
-FROM "."
 WHERE {field_name} != null AND contains({field_name}, "{name}")
 SORT file.mtime DESC
 ```
