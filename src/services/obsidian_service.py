@@ -565,8 +565,9 @@ class ObsidianService:
 
 ```dataview
 TABLE file.link as "Document", summary as "Summary", dates_detailed as "Date Context"
-WHERE dates != null AND contains(dates, "{name}")
+WHERE contains(dates, "{name}")
 SORT file.mtime DESC
+LIMIT 50
 ```
 
 **Note:** Shows all documents with events/deadlines on this date. The "Date Context" column shows details (meeting, deadline, birthday, etc.).
@@ -625,8 +626,9 @@ SORT file.mtime DESC
 
 ```dataview
 TABLE file.link as "Document", summary as "Summary", topics as "Topics"
-WHERE people != null AND contains(people, "{name}")
+WHERE contains(people, "{name}")
 SORT file.mtime DESC
+LIMIT 50
 ```
 
 """
@@ -638,8 +640,9 @@ SORT file.mtime DESC
 
 ```dataview
 TABLE file.link as "Document", summary as "Summary", topics as "Topics"
-WHERE {field_name} != null AND contains({field_name}, "{name}")
+WHERE contains({field_name}, "{name}")
 SORT file.mtime DESC
+LIMIT 50
 ```
 """
 
