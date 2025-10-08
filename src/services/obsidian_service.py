@@ -114,25 +114,18 @@ class ObsidianService:
         type_str = str(doc_type).replace('DocumentType.', '')
         tags.append(f"doc/{type_str}")
 
-        # Project tags
+        # Project tags (time-bound categories)
         for project in projects:
             tags.append(f"project/{slugify(project)}")
 
-        # Place tags
-        for place in places:
-            tags.append(f"place/{slugify(place)}")
-
-        # Topic tags
+        # Topic tags (categorical - suitable for tags)
         for topic in topics:
             tags.append(f"topic/{slugify(topic)}")
 
-        # People tags
-        for person in people:
-            tags.append(f"person/{slugify(person)}")
-
-        # Organization tags
-        for org in organizations:
-            tags.append(f"org/{slugify(org)}")
+        # NOTE: People, places, orgs are NOT tags - they're entities with their own pages
+        # They should be referenced via wiki-links in content, not as tags
+        # Tags are for: document types, topics, projects, status
+        # Links are for: specific people, places, organizations
 
         return tags
 
@@ -328,41 +321,33 @@ class ObsidianService:
         organizations: List[str]
     ) -> str:
         """
-        Build wiki-link xref block for Obsidian graph edges
+        Build "Related" section with plain text entity references
 
-        Wrapped in <!-- RAG:IGNORE --> so chunker excludes it
-        Uses sanitized entity names for valid Obsidian links
+        NO wiki-links - entities are stored in frontmatter and queried via Dataview
+        This section is for human readability only
+        Dataview queries in entity stub files will find documents via frontmatter fields
         """
         if not any([projects, places, people, organizations]):
             return ""
 
-        lines = ["<!-- RAG:IGNORE-START -->"]
-        lines.append("")
-        lines.append("## Xref")
-        lines.append("")
+        # Build entity reference section (plain text, human-readable)
+        lines = ["## Related", ""]
 
-        # Project links (with display text)
-        for project in projects:
-            safe_name = slugify(project) or project.replace(' ', '-')
-            lines.append(f"[[project:{safe_name}|{project}]] ")
+        if people:
+            lines.append("**People:** " + " · ".join(people))
+            lines.append("")
 
-        # Place links (with display text)
-        for place in places:
-            safe_name = slugify(place) or place.replace(' ', '-')
-            lines.append(f"[[place:{safe_name}|{place}]] ")
+        if places:
+            lines.append("**Places:** " + " · ".join(places))
+            lines.append("")
 
-        # People links (with display text)
-        for person in people:
-            safe_name = slugify(person) or person.replace(' ', '-')
-            lines.append(f"[[person:{safe_name}|{person}]] ")
+        if organizations:
+            lines.append("**Organizations:** " + " · ".join(organizations))
+            lines.append("")
 
-        # Organization links (with display text)
-        for org in organizations:
-            safe_name = slugify(org) or org.replace(' ', '-')
-            lines.append(f"[[org:{safe_name}|{org}]] ")
-
-        lines.append("")
-        lines.append("<!-- RAG:IGNORE-END -->")
+        if projects:
+            lines.append("**Projects:** " + " · ".join(projects))
+            lines.append("")
 
         return "\n".join(lines)
 
@@ -408,8 +393,8 @@ class ObsidianService:
 
         body_parts.append("## Source")
         body_parts.append("")
-        # Always create wiki-link (ingest route will copy file to attachments/)
-        body_parts.append(f"📄 [[attachments/{original_filename}|Open Original]]")
+        # Show source filename (no wiki-link, file path stored in frontmatter)
+        body_parts.append(f"📄 `{original_filename}`")
         body_parts.append("")
 
         # Key Facts
@@ -515,25 +500,29 @@ class ObsidianService:
 ```dataview
 TABLE summary, topics
 WHERE contains(dates, "{name}")
-SORT file.name DESC
+SORT file.mtime DESC
 ```
 """
         else:
-            # Regular entity stub
+            # Regular entity stub - use file.link to find backlinks
             stub_body = f"""# {name}
 
+## Related Documents
+
 ```dataview
-LIST FROM "10_normalized_md"
+TABLE summary, topics
 WHERE contains({field_name}, "{name}")
-SORT created_at DESC
+SORT file.mtime DESC
 ```
 """
 
-        # Add extra links section if provided
+        # Add extra resources section if provided (no wiki-links)
         if extra_links:
             stub_body += "\n## Resources\n\n"
             for label, link in extra_links.items():
-                stub_body += f"- {label}: [[{link}]]\n"
+                # Extract just the filename from the path
+                filename = link.split('/')[-1]
+                stub_body += f"- {label}: `{filename}`\n"
 
         # Write stub
         stub_content = f"---\n{stub_yaml}---\n\n{stub_body}"
