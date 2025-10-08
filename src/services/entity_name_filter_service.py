@@ -68,12 +68,12 @@ class EntityNameFilterService:
     def __init__(self):
         self.generic_roles = self.GERMAN_ROLES | self.ENGLISH_ROLES
 
-    def filter_people(self, people: List[str]) -> List[str]:
+    def filter_people(self, people: List) -> List:
         """
         Filter out generic roles, keep specific named people
 
         Args:
-            people: List of extracted people/roles
+            people: List of extracted people/roles (strings or person objects)
 
         Returns:
             List of specific people (generic roles removed)
@@ -83,10 +83,19 @@ class EntityNameFilterService:
 
         filtered = []
         for person in people:
-            if self.is_specific_person(person):
-                filtered.append(person)
+            # Handle both formats: string or dict
+            if isinstance(person, dict):
+                name = person.get('name', '')
+                if self.is_specific_person(name):
+                    filtered.append(person)  # Keep the whole object
+                else:
+                    logger.debug(f"Filtered out generic role: {name}")
             else:
-                logger.debug(f"Filtered out generic role: {person}")
+                # String format
+                if self.is_specific_person(person):
+                    filtered.append(person)
+                else:
+                    logger.debug(f"Filtered out generic role: {person}")
 
         logger.info(f"Filtered {len(people)} people → {len(filtered)} specific people")
         return filtered

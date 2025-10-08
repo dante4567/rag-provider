@@ -5,7 +5,7 @@ Automatically creates vCard files for people mentioned in documents.
 """
 
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 from datetime import datetime
 import logging
 import re
@@ -41,6 +41,7 @@ class ContactService:
         organization: Optional[str] = None,
         email: Optional[str] = None,
         phone: Optional[str] = None,
+        address: Optional[str] = None,
         document_sources: List[str] = None,
         notes: Optional[str] = None
     ) -> Path:
@@ -53,6 +54,7 @@ class ContactService:
             organization: Organization name
             email: Email address
             phone: Phone number
+            address: Physical address
             document_sources: List of documents where person was mentioned
             notes: Additional notes
 
@@ -87,6 +89,11 @@ class ContactService:
 
         if phone:
             vcard_lines.append(f"TEL;TYPE=CELL:{phone}")
+
+        if address:
+            # vCard 3.0 ADR format: ;;street;city;state;postalcode;country
+            # Simple format: just use the full address in street field
+            vcard_lines.append(f"ADR;TYPE=WORK:;;{address};;;;")
 
         # Add notes with document sources
         note_parts = []
@@ -204,7 +211,7 @@ class ContactService:
 
     def create_vcards_from_metadata(
         self,
-        people: List[str],
+        people: List[Union[str, Dict]],  # Accept both strings and person objects
         organizations: List[str] = None,
         document_title: str = None,
         document_id: str = None
@@ -213,7 +220,7 @@ class ContactService:
         Create vCards from document metadata
 
         Args:
-            people: List of people names/roles
+            people: List of people (strings or person objects with contact details)
             organizations: List of organizations
             document_title: Source document title
             document_id: Source document ID
@@ -224,23 +231,65 @@ class ContactService:
         vcards = []
 
         # Create mapping of people to organizations (if mentioned together)
-        org_mapping = self._infer_organization_mapping(people, organizations)
+        # (only for string format, person objects have their own org field)
+        org_mapping = self._infer_organization_mapping(
+            [p if isinstance(p, str) else p.get('name', '') for p in people],
+            organizations
+        )
 
         for person in people:
-            # Infer role from name (e.g., "Richterin" → role)
-            role = self._infer_role(person)
+            # Handle both formats: string or dict
+            if isinstance(person, dict):
+                # New format: person object with contact details
+                name = person.get('name', '')
+                if not name:
+                    continue  # Skip entries without names
 
-            # Get organization if mapped
-            org = org_mapping.get(person)
+                role = person.get('role')
+                org = person.get('organization')
+                email = person.get('email')
+                phone = person.get('phone')
+                address = person.get('address')
+                bank_account = person.get('bank_account')
+
+                # If no explicit role, try to infer from name
+                if not role:
+                    role = self._infer_role(name)
+
+                # If no explicit org, use mapping
+                if not org:
+                    org = org_mapping.get(name)
+
+            else:
+                # Old format: simple string name
+                name = person
+                role = self._infer_role(name)
+                org = org_mapping.get(name)
+                email = None
+                phone = None
+                address = None
+                bank_account = None
 
             # Create source reference
             source = document_title or document_id
 
+            # Build kwargs for additional contact fields
+            extra_fields = {}
+            if email:
+                extra_fields['email'] = email
+            if phone:
+                extra_fields['phone'] = phone
+            if address:
+                extra_fields['address'] = address
+            if bank_account:
+                extra_fields['notes'] = f"Bank account: {bank_account}"  # Add to notes
+
             vcard_path = self.update_or_create_vcard(
-                name=person,
+                name=name,
                 role=role,
                 organization=org,
-                document_source=source
+                document_source=source,
+                **extra_fields
             )
 
             vcards.append(vcard_path)

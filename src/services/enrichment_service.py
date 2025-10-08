@@ -425,11 +425,28 @@ Extract the following (return as JSON):
    (These will be reviewed by user, not used directly)
 
 4. **entities**: Extract ONLY entities that are EXPLICITLY mentioned in the text:
-   - organizations: Company/organization names that appear in the text (leave empty if none)
-   - people_roles: Role titles mentioned in the text (NOT example roles, only actual ones)
-   - dates: Dates in ISO format YYYY-MM-DD (only dates found in text)
-   - numbers: Significant numbers (case numbers, amounts, percentages, phone numbers, account numbers, times)
-   - contacts: Email addresses (if present in text)
+   - organizations: Company/organization names that appear in the text (e.g., "Amtsgericht Köln", "Sparkasse")
+   - people: Extract people as STRUCTURED OBJECTS with contact details when available. Include:
+     * name: Full name with titles/roles (required)
+     * role: Their role/function if mentioned (optional)
+     * phone: Phone number if mentioned (optional)
+     * email: Email address if mentioned (optional)
+     * address: Physical address if mentioned (optional)
+     * organization: Organization they belong to if mentioned (optional)
+     * bank_account: Bank account/IBAN if mentioned (optional)
+
+     Examples to EXTRACT:
+     * {{"name": "Rechtsanwalt Dr. Schmidt", "role": "representing the plaintiff", "email": "schmidt@lawfirm.de"}}
+     * {{"name": "Richterin Meyer", "role": "presiding judge"}}
+     * {{"name": "Prof. Dr. Weber", "phone": "0221-12345", "address": "Hauptstraße 1, Köln"}}
+
+     Examples to SKIP:
+     * "Rechtsanwalt" (just a role, no specific person)
+     * "Richterin" (just a role, no name)
+     * "der Lehrer" (generic role reference)
+
+   - dates: Dates in ISO format YYYY-MM-DD (only dates found in text, NOT document creation dates)
+   - numbers: Significant numbers (case numbers, amounts, percentages - NOT phone/bank numbers, those go in people objects)
 
    CRITICAL: Do NOT extract entities from examples or generic references. Only extract entities that are actual content of this specific document.
 
@@ -447,13 +464,23 @@ Return ONLY this JSON structure (no markdown, no explanations):
   "topics": ["topic1", "topic2"],
   "suggested_topics": ["new_topic_if_needed"],
   "entities": {{
-    "organizations": [],
-    "people_roles": [],
-    "dates": [],
-    "numbers": [],
-    "contacts": []
+    "organizations": ["Organization Name 1", "Organization Name 2"],
+    "people": [
+      {{
+        "name": "Rechtsanwalt Dr. Schmidt",
+        "role": "representing the plaintiff",
+        "email": "schmidt@lawfirm.de",
+        "phone": "0221-12345"
+      }},
+      {{
+        "name": "Richterin Meyer",
+        "role": "presiding judge"
+      }}
+    ],
+    "dates": ["2025-11-15", "2025-10-08"],
+    "numbers": ["310 F 141/25", "€1,500"]
   }},
-  "places": [],
+  "places": ["Köln", "Berlin"],
   "quality_indicators": {{
     "ocr_quality": 1.0,
     "content_completeness": 1.0
@@ -575,7 +602,7 @@ Return ONLY this JSON structure (no markdown, no explanations):
         known_keys = {
             "content_hash", "content_hash_short", "filename", "document_type",
             "title", "summary", "topics", "places", "projects",
-            "suggested_topics", "organizations", "people_roles", "dates", "numbers", "contacts",
+            "suggested_topics", "organizations", "people", "people_roles", "dates", "numbers", "contacts",
             "quality_score", "recency_score", "ocr_quality",
             "enrichment_version", "enrichment_date", "enrichment_cost",
             "word_count", "char_count", "created_at", "enriched", "entities"
@@ -602,7 +629,8 @@ Return ONLY this JSON structure (no markdown, no explanations):
 
             # === EXTRACTED ENTITIES (not controlled) ===
             "organizations": ",".join(entities.get("organizations", [])[:10]),
-            "people_roles": ",".join(entities.get("people_roles", [])[:10]),
+            "people": entities.get("people", [])[:20],  # NEW: list of people (not comma-separated)
+            "people_roles": ",".join(entities.get("people_roles", [])[:10]),  # Legacy field
             "dates": ",".join(entities.get("dates", [])[:30]),  # Increased from 10 to 30
             "numbers": ",".join(entities.get("numbers", [])[:50]),  # NEW: numbers
             "contacts": ",".join(entities.get("contacts", [])[:5]),

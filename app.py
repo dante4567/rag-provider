@@ -1011,10 +1011,14 @@ class RAGService:
                         # Show what was filtered
                         filtered_out = [p for p in people if p not in filtered_people]
                         if filtered_out:
-                            logger.info(f"🔍 Filtered out generic roles: {', '.join(filtered_out)}")
+                            # Handle both string and dict formats
+                            filtered_names = [p if isinstance(p, str) else p.get('name', '') for p in filtered_out]
+                            logger.info(f"🔍 Filtered out generic roles: {', '.join(filtered_names)}")
 
                         if filtered_people:
-                            logger.info(f"👥 Creating vCards for {len(filtered_people)} specific people: {', '.join(filtered_people)}")
+                            # Handle both string and dict formats
+                            people_names = [p if isinstance(p, str) else p.get('name', '') for p in filtered_people]
+                            logger.info(f"👥 Creating vCards for {len(filtered_people)} specific people: {', '.join(people_names)}")
                             vcards_created = self.contact_service.create_vcards_from_metadata(
                                 people=filtered_people,
                                 organizations=enriched_metadata.get('entities', {}).get('orgs', []),
