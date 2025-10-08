@@ -39,9 +39,10 @@ curl -X POST http://localhost:8001/search \
 - ✅ **Retrieval tuning** - 4x multiplier, BM25 0.4 weight
 
 **What Works:**
-- ✅ **524 tests** (469 passing = 90% pass rate) across 22 services
+- ✅ **524 tests** (479 passing = 91% pass rate) across 22 services
   - **Phase 1 tests**: 54/54 passing (100%)
-  - **Legacy tests**: 469/524 passing (90%)
+  - **LLM service tests**: 18/18 passing (100%) ✅ FIXED
+  - **Legacy tests**: 407/452 remaining (90%)
 - ✅ **Complete self-improvement** - Opt-in via `use_iteration=true` parameter
 - ✅ Core RAG pipeline: enrichment, chunking, vocabulary, hybrid search
 - ✅ Multi-LLM fallback chain with cost tracking ($0.000063/doc + $0.005/critique)
@@ -50,17 +51,18 @@ curl -X POST http://localhost:8001/search \
 - ✅ Modular architecture (1,472 LOC app.py + 22 services)
 
 **Remaining Gaps:**
-- ⚠️ **55 failing legacy tests** - Mock configuration and API changes (4-6 hours)
-  - 10 LLM service tests (mock settings missing attributes)
-  - 16 WhatsApp parser tests (API changes)
+- ⚠️ **45 failing legacy tests** - Mock configuration and API changes (3-4 hours)
+  - ✅ ~~10 LLM service tests~~ - FIXED!
+  - 13 WhatsApp parser tests (API changed - parse() returns different structure)
   - 8 tag taxonomy tests (service interface changes)
   - 6 Obsidian tests (schema updates)
-  - Others: models, auth, reranking
+  - 12 Others: models (5), auth (2), hybrid search (1), evaluation (1), reranking errors (4)
 - ⚠️ **No entity deduplication** - "Dr. Weber" ≠ "Thomas Weber" (1-2 days)
 
 **Next Steps:**
-- Fix mock configurations for LLM service tests
-- Update WhatsApp parser tests to new API
+- ✅ LLM service tests fixed (10/10 passing)
+- Update WhatsApp parser tests to match new API
+- Fix tag taxonomy service interface tests
 - Entity deduplication and linking
 
 ## Phase 1 Self-Improvement Details
