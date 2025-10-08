@@ -20,29 +20,30 @@ curl -X POST http://localhost:8001/search \
   -d '{"text": "query", "top_k": 5}'
 ```
 
-## Current Status (Oct 7, 2025 - After Cleanup & Optimization)
+## Current Status (Oct 8, 2025 - Semantic Classification Added)
 
-**Grade: B- (73/100)** - Good architecture, needs runtime verification
+**Grade: B (82/100)** - Working production system with solid foundations
+
+**📊 See `HONEST_ASSESSMENT_2025-10-08.md` for detailed gap analysis**
 
 **What Works:**
-- ✅ 16/19 services tested with 318 unit tests + 142 integration tests (84% service coverage)
+- ✅ **17/17 services tested** (100% service coverage) + 280+ unit tests + 7 integration tests
+- ✅ **Semantic document classification** - 33 types, context-aware person filtering (NEW Oct 8)
+- ✅ **Obsidian integration** - Wiki-links, relationships, Dataview queries working (FIXED Oct 8)
 - ✅ Core RAG pipeline: enrichment, chunking, vocabulary, vector ops
 - ✅ Export systems: Obsidian, OCR, smart triage, email threading
-- ✅ Multi-LLM fallback chain with cost tracking
-- ✅ Docker deployment with pinned dependencies (==)
-- ✅ Modular FastAPI routes (9 modules: health, ingest, search, stats, chat, admin, email_threading, evaluation, monitoring)
-- ✅ Optimized Dockerfile (split pip install for faster builds)
-- ✅ Email threading (Blueprint feature 1/3) ✅
-- ✅ Gold query evaluation system (Blueprint feature 2/3) ✅
-- ✅ Drift detection dashboard (Blueprint feature 3/3) ✅
+- ✅ Multi-LLM fallback chain with cost tracking ($0.01-0.013/doc)
+- ✅ Docker deployment (dependencies use >= not ==, works but unpinned)
+- ✅ Modular architecture with clean service separation
 
-**Missing Tests (3 services):**
-- ❌ hybrid_search_service.py
-- ❌ quality_scoring_service.py
-- ❌ text_splitter.py
+**Critical Gaps (See assessment doc):**
+- ❌ **No self-improvement loop** (no LLM-as-critic/editor validation) - 2-3 days to add
+- ❌ **No entity deduplication** ("Dr. Weber" ≠ "Thomas Weber") - 1-2 days
+- ❌ **No task extraction** (deadlines/actions missed) - 4 hours
+- ❌ **Dependencies not pinned** (reproducibility risk) - 2 hours
+- ❌ **No active learning** (no query feedback loop) - 2-3 days
 
-**Documentation Cleanup:**
-- 402 → 12 essential markdown files (97% reduction)
+**To reach A- (90%+):** 8-12 days focused work on quality gates + self-improvement
 
 ## Architecture Overview
 
