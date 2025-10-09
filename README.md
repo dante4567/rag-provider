@@ -3,6 +3,8 @@
 ![Tests](https://github.com/dante4567/rag-provider/workflows/Tests/badge.svg)
 ![Nightly Tests](https://github.com/dante4567/rag-provider/workflows/Nightly%20Tests/badge.svg)
 
+**📖 Quick Navigation:** [Project Status](PROJECT_STATUS.md) • [Testing Guide](TESTING_GUIDE.md) • [CI/CD Setup](.github/README.md) • [Architecture](CLAUDE.md)
+
 ## 🚨 **BRUTALLY HONEST STATUS - READ FIRST**
 
 **Current State: Production-Ready System (Grade A+, 97/100 → Oct 9, 2025)**
@@ -202,8 +204,11 @@ rag-provider/
 
 ## 📚 Documentation
 
-- **[Production Guide](PRODUCTION_GUIDE.md)** - Complete setup and deployment
-- **[Honest Assessment](HONEST_NO_BS_FINAL_ASSESSMENT.md)** - Real production readiness
+- **[Project Status Report](PROJECT_STATUS.md)** - Comprehensive status (Oct 9, 2025)
+- **[Testing Guide](TESTING_GUIDE.md)** - Complete testing handbook
+- **[CI/CD Setup](.github/README.md)** - GitHub Actions configuration
+- **[Integration Test Analysis](INTEGRATION_TEST_ANALYSIS.md)** - Technical optimization details
+- **[Architecture Overview](CLAUDE.md)** - Development guide and current status
 
 ## 🔥 **Honest No-BS Assessment - ALWAYS READ THIS FIRST**
 
