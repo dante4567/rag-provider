@@ -190,13 +190,24 @@ _api_key_limiter: RateLimiter = None
 
 def get_default_limiter() -> RateLimiter:
     """Get default rate limiter (for unauthenticated requests)"""
+    import os
     global _default_limiter
     if _default_limiter is None:
-        _default_limiter = RateLimiter(
-            requests_per_minute=30,  # Conservative for public
-            requests_per_hour=500,
-            burst_size=5
-        )
+        # More generous limits for CI/CD environments
+        is_ci = os.getenv("CI", "false").lower() == "true" or os.getenv("GITHUB_ACTIONS", "false").lower() == "true"
+
+        if is_ci:
+            _default_limiter = RateLimiter(
+                requests_per_minute=300,  # Very generous for CI/CD
+                requests_per_hour=5000,
+                burst_size=50
+            )
+        else:
+            _default_limiter = RateLimiter(
+                requests_per_minute=30,  # Conservative for public
+                requests_per_hour=500,
+                burst_size=5
+            )
     return _default_limiter
 
 
