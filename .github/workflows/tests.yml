@@ -53,7 +53,7 @@ jobs:
 
     - name: Start RAG service
       run: |
-        python app.py &
+        nohup python app.py > app.log 2>&1 &
         sleep 10
 
     - name: Wait for service
@@ -170,7 +170,7 @@ jobs:
 
     - name: Start RAG service
       run: |
-        python app.py &
+        nohup python app.py > app.log 2>&1 &
         sleep 10
 
     - name: Wait for service
