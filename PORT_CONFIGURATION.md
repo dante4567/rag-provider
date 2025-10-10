@@ -28,6 +28,12 @@ docker-compose down
 docker-compose up -d
 ```
 
+**Or set at runtime:**
+```bash
+export APP_PORT=9001
+docker-compose up -d
+```
+
 ### Option 2: Docker Compose Override
 
 **Create `docker-compose.override.yml`:**
@@ -61,12 +67,16 @@ The RAG service now **automatically finds an available port** if the configured 
 # 8002, 8003, 8004, ... 8010
 ```
 
+**Implementation:** The service uses socket binding to check port availability before startup. This happens in `app.py` (lines 1505-1536) and works both in Docker and local environments.
+
 **Logs will show:**
 ```
 ⚠️  Port 8001 is already in use, trying alternative ports...
 ✅ Using alternative port 8002
 🚀 Starting RAG service on 0.0.0.0:8002
 ```
+
+**Note:** The Dockerfile now uses `python app.py` instead of `uvicorn` directly, which enables this automatic port detection feature.
 
 ### Manual Port Check
 
