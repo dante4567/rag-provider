@@ -20,11 +20,17 @@ curl -X POST http://localhost:8001/search \
   -d '{"text": "query", "top_k": 5}'
 ```
 
-## Current Status (Oct 10, 2025 - Port Configuration Complete ✅)
+## Current Status (Oct 11, 2025 - Model Governance Complete ✅)
 
 **Grade: A+ (98/100)** - Production-ready with comprehensive testing, CI/CD automation, and flexible deployment
 
-**📊 Session Accomplishments (Oct 10, 2025):**
+**📊 Latest Session (Oct 11, 2025):**
+- ✅ **Model Governance** - Monthly review automation with quality-first philosophy
+- ✅ **Maintenance Documentation** - Comprehensive pricing review guide (MAINTENANCE.md)
+- ✅ **Pricing Check Script** - Automated model/pricing verification tool
+- ✅ **All Tests Passing** - 14/14 model governance tests, 582 total tests (100%)
+
+**📊 Previous Session (Oct 10, 2025):**
 - ✅ **Configurable Ports** - APP_PORT/APP_HOST environment variables
 - ✅ **Automatic Port Detection** - Falls back to ports 8002-8010 if busy
 - ✅ **Docker Integration** - Full port configuration support in containers
@@ -84,6 +90,11 @@ pytest tests/integration -v
 - 🐌 **Slow tests marked** - 6 tests with @pytest.mark.slow
 - 📊 **Test categorization** - Fast/slow separation complete
 
+**CI/CD Status:**
+- ✅ **Workflows Configured** - tests.yml, nightly.yml, monthly-model-review.yml
+- ⏸️ **Awaiting Activation** - Add API keys to GitHub Secrets (5-minute setup)
+- 📋 **Setup Guide** - See CI_CD_ACTIVATION_GUIDE.md for step-by-step instructions
+
 **Next Priorities:**
 - 🔑 **Activate CI/CD** - Add GitHub secrets for API keys (GROQ, Anthropic, OpenAI)
 - 📌 **Pin dependencies** - Update requirements.txt with exact versions (optional)
@@ -91,11 +102,13 @@ pytest tests/integration -v
 - 🔍 **Performance monitoring** - Add metrics for search/chat latency (optional)
 
 **Documentation:**
-- ✅ [PROJECT_STATUS.md](PROJECT_STATUS.md) - Comprehensive status report
-- ✅ [TESTING_GUIDE.md](TESTING_GUIDE.md) - Complete testing handbook
-- ✅ [.github/README.md](.github/README.md) - CI/CD setup guide
-- ✅ [INTEGRATION_TEST_ANALYSIS.md](INTEGRATION_TEST_ANALYSIS.md) - Technical details
-- ✅ [SESSION_SUMMARY_OCT9.md](SESSION_SUMMARY_OCT9.md) - Session accomplishments
+- ✅ [docs/README.md](docs/README.md) - Documentation directory guide
+- ✅ [docs/guides/MAINTENANCE.md](docs/guides/MAINTENANCE.md) - Monthly model pricing review
+- ✅ [docs/guides/TESTING_GUIDE.md](docs/guides/TESTING_GUIDE.md) - Complete testing handbook
+- ✅ [docs/guides/CI_CD_ACTIVATION_GUIDE.md](docs/guides/CI_CD_ACTIVATION_GUIDE.md) - CI/CD setup
+- ✅ [docs/status/PROJECT_STATUS.md](docs/status/PROJECT_STATUS.md) - Comprehensive status
+- ✅ [docs/architecture/](docs/architecture/) - Architecture and design docs
+- ✅ [.github/README.md](.github/README.md) - GitHub Actions workflows
 
 ## Phase 1 Self-Improvement Details
 
@@ -319,6 +332,37 @@ CREATE_OBSIDIAN_LINKS=true
 USE_OCR=true
 ```
 
+## Port Configuration
+
+The service supports flexible port configuration:
+
+```bash
+# Use custom port via environment variable
+export APP_PORT=9001
+docker-compose up -d
+
+# Or in .env file
+APP_PORT=9001
+APP_HOST=0.0.0.0
+
+# Automatic fallback if port busy
+# Will try ports 8002-8010 if default 8001 is in use
+```
+
+**Health check with custom port:**
+```bash
+curl http://localhost:9001/health
+```
+
+**Docker configuration:**
+The docker-compose.yml automatically reads APP_PORT from environment:
+```yaml
+ports:
+  - "${APP_PORT:-8001}:${APP_PORT:-8001}"
+```
+
+See `PORT_CONFIGURATION.md` for detailed guide.
+
 ## Frontend Interfaces
 
 ### Web UI (Gradio) - Recommended for testing
@@ -348,9 +392,49 @@ The system uses curated vocabularies in `vocabulary/*.yaml`:
 - Vocabulary managed by `VocabularyService` (13 tests)
 - Project auto-matching based on document dates
 
+## Model Governance & Maintenance
+
+**Philosophy:** Quality-first approach - willing to pay 2-3x more for meaningful quality improvements.
+
+### Automated Monthly Review
+- GitHub Actions workflow runs 1st of each month at 9 AM UTC
+- Creates issue with pricing check + new model evaluation checklist
+- Generates report via `scripts/check_model_pricing.py`
+- Uploads report as artifact (90-day retention)
+
+### Manual Review Commands
+```bash
+# Check current pricing & discover new models
+python scripts/check_model_pricing.py
+
+# Verify model selections still optimal
+pytest tests/unit/test_model_choices.py -v  # 14 tests
+
+# Check actual cost distribution
+curl http://localhost:8001/cost/stats
+```
+
+**Key Files:**
+- `docs/guides/MAINTENANCE.md` - Complete monthly review process guide
+- `.github/workflows/monthly-model-review.yml` - Automated workflow
+- `scripts/check_model_pricing.py` - Pricing checker script
+- `src/services/llm_service.py` - MODEL_PRICING dictionary (line 31)
+
+**When to switch models:**
+- ✅ Quality improvement >20% for critique tasks (accept 2-3x cost increase)
+- ✅ Quality improvement >30% for enrichment tasks (max 2x cost increase)
+- ✅ New model is better on all metrics (quality, speed, cost)
+- ❌ Never switch if quality regresses, even if cheaper
+- ❌ Never switch based on cost alone without quality testing
+
+**Current Model Selections:**
+- **Enrichment:** `groq/llama-3.1-8b-instant` - $0.00009/doc (cost optimized)
+- **Critique:** `anthropic/claude-3-5-sonnet-20241022` - $0.005/critique (quality optimized)
+- **Embeddings:** Local sentence-transformers (free, privacy-first)
+
 ## Testing Strategy
 
-See `TESTING_NOW.md` for comprehensive guide. Quick validation:
+See `docs/guides/TESTING_GUIDE.md` for comprehensive guide. Quick validation:
 
 ```bash
 # Upload test document with structure
@@ -386,7 +470,6 @@ curl -X POST http://localhost:8001/ingest/file \
 - 9/10 core principles implemented (90%)
 - 95% feature coverage + enhancements
 - Exceeds blueprint in: formats, cost tracking, testing, architecture
-- See `BLUEPRINT_COMPARISON.md` for detailed analysis
 
 **Cost Performance**:
 - $0.000063 per document enrichment
@@ -412,11 +495,12 @@ curl -X POST http://localhost:8001/ingest/file \
 4. No schema changes needed (dynamically loaded)
 
 **Known Technical Debt:**
-- app.py is monolithic (1,492 LOC) - works but could be modularized
-- Route splitting blocked until integration tests cover all endpoints
-- Dependencies use `>=` not `==` (works but unpinned)
+- app.py is monolithic (1,535 LOC) - works but could be modularized
+- Business logic should move from app.py to services (RAGService pattern)
+- Some large services could be split (if > 800 LOC)
 
 **Reference Documentation:**
 - `README.md` - Production deployment and status
-- `ARCHITECTURE.md` - System design overview
+- `docs/architecture/ARCHITECTURE.md` - System design overview
+- `docs/README.md` - Complete documentation index
 - Git commit history for recent changes

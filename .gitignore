@@ -53,3 +53,15 @@ temp/
 
 # SSL certificates
 ssl/
+
+# Backup files
+*.bak
+*.backup
+*~.backup
+*.old
+*_old.*
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

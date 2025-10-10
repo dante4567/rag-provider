@@ -26,7 +26,11 @@ except ImportError:
     logger.warning("Google Generative AI not available")
 
 
-# Model pricing (per 1M tokens) - Updated October 2025
+# Model pricing (per 1M tokens)
+# Last updated: 2025-10-10
+# Next review: 2025-11-01 (monthly - 1st of each month)
+# Review script: python scripts/check_model_pricing.py
+# Philosophy: Prioritize quality - willing to pay more for significant improvements
 MODEL_PRICING = {
     # Groq - Lightning fast inference
     "groq/llama-3.1-8b-instant": {"input": 0.05, "output": 0.08},
