@@ -56,14 +56,21 @@ async def get_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/cost-stats", response_model=CostStats)
+@router.get("/cost/stats", response_model=CostStats)
 async def get_cost_stats():
     """Get cost tracking statistics"""
     try:
-        from app import CostTracker
+        from src.services.rag_service import cost_tracking
 
-        cost_tracker = CostTracker()
-        return cost_tracker.get_stats()
+        return {
+            "total_cost_usd": cost_tracking["total_cost"],
+            "daily_budget": 10.0,  # From config
+            "budget_remaining": 10.0 - cost_tracking["total_cost"],
+            "operations_count": len(cost_tracking["operations"]),
+            "cost_by_provider": cost_tracking.get("cost_by_provider", {}),
+            "daily_totals": cost_tracking["daily_totals"],
+            "most_expensive_operation": max(cost_tracking["operations"], key=lambda x: x.get("cost", 0)) if cost_tracking["operations"] else None
+        }
     except Exception as e:
         logger.error(f"Failed to get cost stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -104,7 +111,9 @@ async def test_llm_provider(request: TestLLMRequest, _: bool = Depends(lambda: T
     In production, use proper verify_token dependency.
     """
     try:
-        from app import llm_clients, LLMService
+        from app import llm_clients
+        from src.services.llm_service import LLMService
+        from src.core.config import get_settings
 
         # Check if any LLM providers are available
         if not llm_clients:
@@ -113,7 +122,8 @@ async def test_llm_provider(request: TestLLMRequest, _: bool = Depends(lambda: T
                 detail="No LLM providers are configured with valid API keys. Please set your API keys in the .env file."
             )
 
-        llm_service = LLMService()
+        settings = get_settings()
+        llm_service = LLMService(settings)
 
         if request.model:
             # Test specific model

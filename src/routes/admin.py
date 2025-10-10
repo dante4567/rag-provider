@@ -92,3 +92,83 @@ async def cleanup_duplicates():
     except Exception as e:
         logger.error(f"Cleanup failed: {e}")
         raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
+
+
+@router.post("/reset-collection")
+async def reset_collection(confirm: str = None):
+    """Reset the entire collection (DANGEROUS - requires confirmation)"""
+    if confirm != "yes-delete-everything":
+        raise HTTPException(
+            status_code=400,
+            detail="Must provide confirm='yes-delete-everything' to reset collection"
+        )
+
+    try:
+        from app import collection
+
+        # Get all IDs
+        all_docs = collection.get()
+        if all_docs and all_docs['ids']:
+            collection.delete(ids=all_docs['ids'])
+            logger.warning(f"Collection reset - removed {len(all_docs['ids'])} documents")
+            return {
+                "success": True,
+                "removed_count": len(all_docs['ids']),
+                "message": "Collection successfully reset"
+            }
+        else:
+            return {
+                "success": True,
+                "removed_count": 0,
+                "message": "Collection was already empty"
+            }
+
+    except Exception as e:
+        logger.error(f"Collection reset failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")
+
+
+@router.get("/documents")
+async def list_documents(limit: int = 100, offset: int = 0):
+    """List all documents with metadata"""
+    try:
+        from app import collection
+
+        all_docs = collection.get()
+
+        if not all_docs or not all_docs['ids']:
+            return {
+                "documents": [],
+                "total": 0
+            }
+
+        # Get unique documents by doc_id
+        doc_map = {}
+        for i, metadata in enumerate(all_docs.get('metadatas', [])):
+            doc_id = metadata.get('doc_id')
+            if doc_id and doc_id not in doc_map:
+                doc_map[doc_id] = {
+                    "doc_id": doc_id,
+                    "filename": metadata.get('filename', 'Unknown'),
+                    "created_at": metadata.get('created_at'),
+                    "title": metadata.get('title'),
+                    "chunk_count": 0
+                }
+            if doc_id in doc_map:
+                doc_map[doc_id]["chunk_count"] += 1
+
+        documents = list(doc_map.values())
+
+        # Apply pagination
+        paginated = documents[offset:offset + limit]
+
+        return {
+            "documents": paginated,
+            "total": len(documents),
+            "offset": offset,
+            "limit": limit
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to list documents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
