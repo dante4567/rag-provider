@@ -3,7 +3,7 @@
 ![Tests](https://github.com/dante4567/rag-provider/workflows/Tests/badge.svg)
 ![Nightly Tests](https://github.com/dante4567/rag-provider/workflows/Nightly%20Tests/badge.svg)
 
-**📖 Quick Navigation:** [Project Status](PROJECT_STATUS.md) • [Testing Guide](TESTING_GUIDE.md) • [CI/CD Setup](.github/README.md) • [Architecture](CLAUDE.md)
+**📖 Quick Navigation:** [Project Status](PROJECT_STATUS.md) • [Testing Guide](TESTING_GUIDE.md) • [CI/CD Activation](CI_CD_ACTIVATION_GUIDE.md) • [Architecture](CLAUDE.md)
 
 ## 🚨 **BRUTALLY HONEST STATUS - READ FIRST**
 
@@ -56,8 +56,8 @@ This is a **production-ready RAG service** with comprehensive testing and CI/CD 
 - 📋 **app.py refactoring** - Split 1,472 LOC into smaller modules (optional)
 
 **Deployment Status**: ✅ Production-ready (A+ 97/100)
-**CI/CD Status**: ✅ Automated with GitHub Actions
-**Test Coverage**: ✅ 100% pass rate (582 tests)
+**CI/CD Status**: ⏸️ Configured, awaiting activation → [Activation Guide](CI_CD_ACTIVATION_GUIDE.md)
+**Test Coverage**: ✅ 100% pass rate (605 tests total)
 
 ## ⚡ Quick Start
 
@@ -205,10 +205,12 @@ rag-provider/
 ## 📚 Documentation
 
 - **[Project Status Report](PROJECT_STATUS.md)** - Comprehensive status (Oct 9, 2025)
-- **[Testing Guide](TESTING_GUIDE.md)** - Complete testing handbook
-- **[CI/CD Setup](.github/README.md)** - GitHub Actions configuration
-- **[Integration Test Analysis](INTEGRATION_TEST_ANALYSIS.md)** - Technical optimization details
-- **[Architecture Overview](CLAUDE.md)** - Development guide and current status
+- **[Testing Guide](TESTING_GUIDE.md)** - Complete testing handbook (400+ lines)
+- **[CI/CD Activation Guide](CI_CD_ACTIVATION_GUIDE.md)** - Step-by-step setup (5 minutes)
+- **[CI/CD Technical Docs](.github/README.md)** - Detailed workflow configuration
+- **[Integration Test Analysis](INTEGRATION_TEST_ANALYSIS.md)** - Technical optimization
+- **[Session Summary](SESSION_SUMMARY_OCT9.md)** - Oct 9 accomplishments
+- **[Architecture Overview](CLAUDE.md)** - Development guide
 
 ## 🔥 **Honest No-BS Assessment - ALWAYS READ THIS FIRST**
 
