@@ -17,11 +17,6 @@ jobs:
         image: chromadb/chroma:latest
         ports:
           - 8000:8000
-        options: >-
-          --health-cmd "curl -f http://localhost:8000/api/v1/heartbeat || exit 1"
-          --health-interval 10s
-          --health-timeout 10s
-          --health-retries 10
 
     steps:
     - name: Checkout code
@@ -67,13 +62,15 @@ jobs:
 
     - name: Wait for service
       run: |
-        for i in {1..30}; do
+        echo "Waiting for ChromaDB and RAG service to be ready..."
+        sleep 15
+        for i in {1..60}; do
           if curl -s http://localhost:8001/health > /dev/null; then
             echo "✅ Service is ready"
             break
           fi
-          echo "Waiting for service... ($i/30)"
-          sleep 2
+          echo "Waiting for service... ($i/60)"
+          sleep 3
         done
 
     - name: Run all unit tests
