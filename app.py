@@ -433,14 +433,15 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 # Global variables
-chroma_client = None
-collection = None
 text_splitter = None
 file_watcher = None
 executor = ThreadPoolExecutor(max_workers=4)
 
 # Initialize services
 rag_service = RAGService()
+
+# Expose chroma_client and collection from RAGService for health checks
+from src.services.rag_service import chroma_client, collection
 
 # Setup file watcher
 if ENABLE_FILE_WATCH:
