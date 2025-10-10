@@ -1504,4 +1504,33 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    import socket
+
+    # Get port from environment with fallback
+    APP_PORT = int(os.getenv("APP_PORT", "8001"))
+    APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
+
+    # Check if port is available
+    def is_port_available(port):
+        """Check if a port is available for binding"""
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('', port))
+                return True
+        except OSError:
+            return False
+
+    if not is_port_available(APP_PORT):
+        logger.warning(f"Port {APP_PORT} is already in use, trying alternative ports...")
+        # Try ports in range
+        for alt_port in range(APP_PORT + 1, APP_PORT + 10):
+            if is_port_available(alt_port):
+                logger.info(f"Using alternative port {alt_port}")
+                APP_PORT = alt_port
+                break
+        else:
+            logger.error(f"No available ports found in range {APP_PORT}-{APP_PORT+9}")
+            raise RuntimeError(f"Port {APP_PORT} and alternatives are all in use")
+
+    logger.info(f"Starting RAG service on {APP_HOST}:{APP_PORT}")
+    uvicorn.run(app, host=APP_HOST, port=APP_PORT)
