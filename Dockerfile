@@ -103,12 +103,12 @@ RUN useradd -m -u 1000 appuser \
     && chown -R appuser:appuser /app /data /tmp/rag_processing
 USER appuser
 
-# Expose port
-EXPOSE 8001
+# Expose port range (default 8001, can use alternatives)
+EXPOSE 8001-8010
 
-# Health check with Python instead of curl for better compatibility
+# Health check - uses APP_PORT environment variable
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8001/health', timeout=5)" || exit 1
+    CMD python -c "import os, requests; port = os.getenv('APP_PORT', '8001'); requests.get(f'http://localhost:{port}/health', timeout=5)" || exit 1
 
-# Run the application
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+# Run the application using app.py (which has port auto-detection)
+CMD ["python", "app.py"]
