@@ -207,8 +207,8 @@ def get_rag_service():
 
     if _rag_service_instance is None:
         try:
-            # Import here to avoid circular dependency
-            from app import RAGService
+            # Import from services module instead of app
+            from src.services.rag_service import RAGService
             _rag_service_instance = RAGService()
             logger.info("✅ RAGService singleton initialized")
         except Exception as e:
