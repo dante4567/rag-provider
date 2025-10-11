@@ -62,15 +62,24 @@ async def get_cost_stats():
     """Get cost tracking statistics"""
     try:
         from src.services.rag_service import cost_tracking
+        from datetime import date
+
+        today = str(date.today())
+        today_cost = cost_tracking["daily_totals"].get(today, 0.0)
 
         return {
+            # New format
             "total_cost_usd": cost_tracking["total_cost"],
             "daily_budget": 10.0,  # From config
             "budget_remaining": 10.0 - cost_tracking["total_cost"],
             "operations_count": len(cost_tracking["operations"]),
             "cost_by_provider": cost_tracking.get("cost_by_provider", {}),
             "daily_totals": cost_tracking["daily_totals"],
-            "most_expensive_operation": max(cost_tracking["operations"], key=lambda x: x.get("cost", 0)) if cost_tracking["operations"] else None
+            "most_expensive_operation": max(cost_tracking["operations"], key=lambda x: x.get("cost", 0)) if cost_tracking["operations"] else None,
+            # Legacy format for tests
+            "total_cost_today": today_cost,
+            "today_cost_usd": today_cost,
+            "total_cost_all_time": cost_tracking["total_cost"]
         }
     except Exception as e:
         logger.error(f"Failed to get cost stats: {e}", exc_info=True)
