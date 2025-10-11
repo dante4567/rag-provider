@@ -67,6 +67,9 @@ async def get_cost_stats():
         today = str(date.today())
         today_cost = cost_tracking["daily_totals"].get(today, 0.0)
 
+        # Count today's operations
+        operations_today = sum(1 for op in cost_tracking["operations"] if op.get("timestamp", "").startswith(today))
+
         return {
             # New format
             "total_cost_usd": cost_tracking["total_cost"],
@@ -79,7 +82,8 @@ async def get_cost_stats():
             # Legacy format for tests
             "total_cost_today": today_cost,
             "today_cost_usd": today_cost,
-            "total_cost_all_time": cost_tracking["total_cost"]
+            "total_cost_all_time": cost_tracking["total_cost"],
+            "operations_today": operations_today
         }
     except Exception as e:
         logger.error(f"Failed to get cost stats: {e}", exc_info=True)
