@@ -56,7 +56,8 @@ async def get_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/cost/stats", response_model=CostStats)
+@router.get("/cost/stats")
+@router.get("/cost-stats")  # Legacy path for compatibility
 async def get_cost_stats():
     """Get cost tracking statistics"""
     try:
@@ -72,8 +73,15 @@ async def get_cost_stats():
             "most_expensive_operation": max(cost_tracking["operations"], key=lambda x: x.get("cost", 0)) if cost_tracking["operations"] else None
         }
     except Exception as e:
-        logger.error(f"Failed to get cost stats: {e}")
+        logger.error(f"Failed to get cost stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/documents")
+async def list_documents(limit: int = 100, offset: int = 0):
+    """List all documents with metadata"""
+    from src.routes.admin import _list_documents_impl
+    return await _list_documents_impl(limit, offset)
 
 
 @router.get("/models")

@@ -129,8 +129,13 @@ async def reset_collection(confirm: str = None):
 
 
 @router.get("/documents")
-async def list_documents(limit: int = 100, offset: int = 0):
-    """List all documents with metadata"""
+async def list_documents_admin(limit: int = 100, offset: int = 0):
+    """List all documents with metadata (admin route)"""
+    return await _list_documents_impl(limit, offset)
+
+
+async def _list_documents_impl(limit: int = 100, offset: int = 0):
+    """Shared implementation for document listing"""
     try:
         from app import collection
 
