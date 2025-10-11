@@ -65,3 +65,6 @@ ssl/
 build/
 dist/
 *.egg-info/
+# Generated/processed files
+data/processed_originals/
+EASIEST_RAG_SETUP_2025.md

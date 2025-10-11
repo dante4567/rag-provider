@@ -4,7 +4,7 @@ import json
 import os
 from datetime import datetime
 
-RAG_URL = "http://localhost:8001"
+RAG_URL = os.getenv("RAG_SERVICE_URL", "http://localhost:8001")
 
 def check_health():
     """Check if RAG service is healthy"""
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     print("=" * 80)
 
     demo.launch(
-        server_name="127.0.0.1",
+        server_name="0.0.0.0",  # Allow Docker access
         server_port=7860,
         share=False
     )

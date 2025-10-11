@@ -29,7 +29,20 @@
       "Bash(python scripts/check_model_pricing.py:*)",
       "Bash(grep:*)",
       "Bash(tree:*)",
-      "Read(//private/tmp/**)"
+      "Read(//private/tmp/**)",
+      "Bash(python -m pytest tests/unit/test_auth.py -v)",
+      "Bash(docker ps:*)",
+      "Bash(awk:*)",
+      "Bash(git rm:*)",
+      "Bash(pytest:*)",
+      "Bash(python -m pytest tests/integration/ --collect-only -q)",
+      "Bash(gh run watch:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(docker logs:*)",
+      "WebSearch",
+      "Bash(docker run:*)",
+      "Bash(docker:*)"
     ],
     "deny": [],
     "ask": []

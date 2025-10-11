@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: Dockerfile
+    container_name: rag-telegram-bot
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - RAG_SERVICE_URL=http://host.docker.internal:8001
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  web-ui:
+    build:
+      context: ./web-ui
+      dockerfile: Dockerfile
+    container_name: rag-web-ui
+    ports:
+      - "7860:7860"
+    environment:
+      - RAG_SERVICE_URL=http://host.docker.internal:8001
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+networks:
+  rag-network:
+    driver: bridge

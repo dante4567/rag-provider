@@ -4,9 +4,9 @@ PRODID:-//RAG Provider//Calendar Service//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 BEGIN:VEVENT
-UID:f159846f578496eb@rag-provider.local
-DTSTART;VALUE=DATE:20250115
-DTEND;VALUE=DATE:20250116
+UID:6fe1176f681754e3@rag-provider.local
+DTSTART;VALUE=DATE:20251215
+DTEND;VALUE=DATE:20251216
 SUMMARY:Event: This main overview\, structured roughly by ar
 DESCRIPTION:Source: This main overview\, structured roughly by ar
 CATEGORIES:RAG-Extracted
