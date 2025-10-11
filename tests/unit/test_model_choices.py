@@ -215,15 +215,16 @@ class TestRerankingModelChoice:
     """Validate reranking model choice"""
 
     def test_reranking_uses_local_model(self):
-        """Reranking should use local cross-encoder (free)"""
+        """Reranking should use local self-hosted model (free)"""
         from src.services.reranking_service import RerankingService
 
         service = RerankingService()
 
-        assert "cross-encoder" in service.model_name.lower(), \
-            "Should use cross-encoder model"
-        assert "marco" in service.model_name.lower(), \
-            "Should use MS MARCO trained model"
+        # Should use Mixedbread mxbai-rerank-large-v2 (SOTA open-source)
+        assert "mixedbread-ai" in service.model_name.lower(), \
+            "Should use Mixedbread AI model"
+        assert "mxbai-rerank" in service.model_name.lower(), \
+            "Should use mxbai-rerank model"
 
     def test_local_reranking_cost_is_zero(self):
         """Local reranking has zero API cost"""

@@ -73,7 +73,8 @@ RUN pip install --no-cache-dir \
     anthropic==0.69.0 \
     openai==2.1.0 \
     groq==0.32.0 \
-    google-generativeai==0.8.5
+    google-generativeai==0.8.5 \
+    voyageai==0.2.3
 
 # Install heavy dependencies last (separate layers for easier debugging)
 RUN pip install --no-cache-dir chromadb==1.1.1

@@ -307,14 +307,41 @@ class RAGService:
             chroma_client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
             chroma_client.heartbeat()
 
+            # Use Voyage-3-lite embeddings (best value: 85% cheaper, better quality)
+            import voyageai
+            from chromadb.api.types import EmbeddingFunction
+
+            class VoyageEmbeddingFunction(EmbeddingFunction):
+                def __init__(self, api_key: str, model_name: str = "voyage-3-lite"):
+                    self.client = voyageai.Client(api_key=api_key)
+                    self.model_name = model_name
+
+                def __call__(self, input: list[str]) -> list[list[float]]:
+                    """Embed texts using Voyage AI"""
+                    response = self.client.embed(
+                        input,
+                        model=self.model_name,
+                        input_type="document"
+                    )
+                    return response.embeddings
+
+            voyage_ef = VoyageEmbeddingFunction(
+                api_key=os.getenv("VOYAGE_API_KEY"),
+                model_name="voyage-3-lite"
+            )
+
             try:
-                collection = chroma_client.get_collection(name=COLLECTION_NAME)
+                collection = chroma_client.get_collection(
+                    name=COLLECTION_NAME,
+                    embedding_function=voyage_ef
+                )
             except:
                 collection = chroma_client.create_collection(
                     name=COLLECTION_NAME,
+                    embedding_function=voyage_ef,
                     metadata={"hnsw:space": "cosine"}
                 )
-            logger.info("Connected to ChromaDB successfully")
+            logger.info("✅ Connected to ChromaDB with Voyage-3-lite (512 dims, $0.02/1M tokens)")
         except Exception as e:
             logger.error(f"Failed to connect to ChromaDB: {e}")
             raise

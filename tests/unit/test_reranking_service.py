@@ -50,7 +50,7 @@ class TestRerankingService:
         """Test that model is loaded lazily on first use"""
         assert service.model is None
 
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder):
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder):
             service._ensure_model_loaded()
             assert service.model is not None
             assert service.model == mock_cross_encoder
@@ -62,7 +62,7 @@ class TestRerankingService:
 
     def test_rerank_basic(self, service, mock_cross_encoder):
         """Test basic reranking functionality"""
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder):
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder):
             results = [
                 {'content': 'Short text', 'metadata': {'id': '1'}},
                 {'content': 'This is a much longer and more detailed text that should rank higher', 'metadata': {'id': '2'}},
@@ -83,7 +83,7 @@ class TestRerankingService:
 
     def test_rerank_with_top_k(self, service, mock_cross_encoder):
         """Test reranking with top_k limit"""
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder):
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder):
             results = [
                 {'content': f'Content {i}' * 10, 'metadata': {'id': str(i)}}
                 for i in range(10)
@@ -97,7 +97,7 @@ class TestRerankingService:
 
     def test_rerank_preserves_original_fields(self, service, mock_cross_encoder):
         """Test that reranking preserves original result fields"""
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder):
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder):
             results = [
                 {
                     'content': 'Test content',
@@ -120,7 +120,7 @@ class TestRerankingService:
 
     def test_rerank_with_metadata(self, service, mock_cross_encoder):
         """Test rerank_with_metadata method"""
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder):
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder):
             results = [
                 {'content': 'Content A' * 10, 'metadata': {'id': 'a'}},
                 {'content': 'Content B' * 5, 'metadata': {'id': 'b'}},
@@ -156,7 +156,7 @@ class TestRerankingService:
 
     def test_model_reused_after_loading(self, service, mock_cross_encoder):
         """Test that model is reused and not reloaded"""
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder) as mock_constructor:
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder) as mock_constructor:
             # First call loads model
             service._ensure_model_loaded()
             assert mock_constructor.call_count == 1
@@ -189,7 +189,7 @@ class TestSingletonPattern:
         from src.services import reranking_service
         reranking_service._reranking_service = None
 
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder):
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder):
             service1 = get_reranking_service()
             service1._ensure_model_loaded()
 
@@ -213,7 +213,7 @@ class TestEdgeCases:
 
     def test_rerank_results_without_content_field(self, service, mock_cross_encoder):
         """Test handling of results missing 'content' field"""
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder):
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder):
             results = [
                 {'metadata': {'id': '1'}},  # No content field
                 {'content': 'Has content', 'metadata': {'id': '2'}}
@@ -225,7 +225,7 @@ class TestEdgeCases:
 
     def test_rerank_single_result(self, service, mock_cross_encoder):
         """Test reranking with single result"""
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder):
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder):
             results = [{'content': 'Only one result', 'metadata': {'id': '1'}}]
 
             reranked = service.rerank(query="test", results=results)
@@ -235,7 +235,7 @@ class TestEdgeCases:
 
     def test_rerank_with_none_top_k(self, service, mock_cross_encoder):
         """Test that None top_k returns all results"""
-        with patch('src.services.reranking_service.CrossEncoder', return_value=mock_cross_encoder):
+        with patch('sentence_transformers.CrossEncoder', return_value=mock_cross_encoder):
             results = [
                 {'content': f'Result {i}', 'metadata': {'id': str(i)}}
                 for i in range(5)
