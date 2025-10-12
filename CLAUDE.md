@@ -504,3 +504,372 @@ curl -X POST http://localhost:8001/ingest/file \
 - `docs/architecture/ARCHITECTURE.md` - System design overview
 - `docs/README.md` - Complete documentation index
 - Git commit history for recent changes
+
+# V3.0 Migration Plan - Library Consolidation & Architecture Cleanup
+
+**Status:** Planning Phase (v3.0-migration branch created)  
+**Baseline:** v2.2.0 (Voyage + Mixedbread, 585 unit tests passing)  
+**Target Release:** v3.0.0  
+**Estimated Effort:** 12-16 hours over 3-4 weeks  
+
+## Overview
+
+Major architectural upgrade to consolidate custom code into battle-tested libraries, simplify maintenance, and improve reliability.
+
+## Phase 1: LiteLLM Integration (Week 1) - HIGHEST PRIORITY
+
+### What Changes
+Replace custom `llm_service.py` (400 LOC) with LiteLLM unified API.
+
+**Before:**
+```python
+# Custom fallback chain, retry logic, provider-specific code
+class LLMService:
+    def call_llm(self, provider, model, prompt):
+        try:
+            if provider == "groq":
+                return self._call_groq(...)
+            elif provider == "anthropic":
+                return self._call_anthropic(...)
+        except: fallback_to_next_provider()
+```
+
+**After:**
+```python
+from litellm import acompletion
+
+response = await acompletion(
+    model="groq/llama-3.1-8b-instant",
+    messages=[...],
+    fallbacks=["claude-3-5-sonnet-20241022", "gpt-4o"]
+)
+```
+
+### Benefits
+- ✅ -70% code reduction (400 → 120 LOC wrapper for cost tracking)
+- ✅ Automatic retries, rate limiting, timeout handling
+- ✅ Support for 100+ LLM providers (add new models in 1 line)
+- ✅ Streaming support built-in
+
+### Migration Steps
+1. Install: `pip install litellm==1.77.7` (already in Dockerfile)
+2. Create `LiteLLMService` wrapper (preserve cost tracking)
+3. Update enrichment_service.py, editor_service.py (5 files)
+4. Update 17 unit tests
+5. Verify cost tracking granularity preserved
+
+### Files Affected
+- `src/services/llm_service.py` - Rewrite as thin wrapper
+- `tests/unit/test_llm_service.py` - Update mocks
+- `src/services/enrichment_service.py` - Use new API
+- `src/services/editor_service.py` - Use new API
+- `requirements.txt` - Already has litellm==1.77.7
+
+### Testing
+```bash
+# Run enrichment tests
+docker exec rag_service pytest tests/unit/test_llm_service.py -v
+docker exec rag_service pytest tests/unit/test_enrichment_service.py -v
+
+# Verify cost tracking
+curl http://localhost:8001/cost/stats | jq '.cost_per_doc'
+```
+
+### Rollback Plan
+Keep v2.2.0 tag. If issues arise:
+```bash
+git checkout v2.2.0
+docker-compose up -d --build
+```
+
+---
+
+## Phase 2: Instructor Integration (Week 2)
+
+### What Changes
+Replace custom JSON validation with Instructor for type-safe LLM responses.
+
+**Before:**
+```python
+response = await llm.call(prompt)
+json_str = extract_json(response)
+validated = schema_validator.validate(json_str, EnrichmentSchema)
+```
+
+**After:**
+```python
+import instructor
+client = instructor.from_litellm(litellm_client)
+
+enrichment = await client.chat.completions.create(
+    model="groq/llama-3.1-8b-instant",
+    response_model=EnrichmentSchema,  # Pydantic model
+    messages=[...]
+)
+# enrichment is already validated Pydantic object
+```
+
+### Benefits
+- ✅ Remove schema_validator.py (-150 LOC)
+- ✅ Auto-retry on validation failures
+- ✅ Type-safe responses (no more JSON parsing bugs)
+- ✅ Works seamlessly with LiteLLM
+
+### Migration Steps
+1. Install: `pip install instructor`
+2. Remove `schema_validator.py`
+3. Update enrichment_service.py to use Instructor
+4. Simplify editor_service.py (no manual JSON validation)
+5. Update 30 unit tests
+
+### Files Affected
+- `src/services/schema_validator.py` - DELETE
+- `src/services/enrichment_service.py` - Simplify validation
+- `src/services/editor_service.py` - Simplify patch generation
+- `tests/unit/test_schema_validator.py` - DELETE (15 tests)
+- `tests/unit/test_enrichment_service.py` - Update assertions
+
+### Testing
+```bash
+# Enrichment with auto-validation
+docker exec rag_service pytest tests/unit/test_enrichment_service.py -v
+
+# Upload test document
+curl -X POST http://localhost:8001/ingest/file -F "file=@test.pdf" | jq
+```
+
+---
+
+## Phase 3: Unstructured Integration (Week 3) - OPTIONAL
+
+### What Changes
+Replace custom `document_service.py` (500 LOC) with Unstructured library for document parsing.
+
+**Before:**
+```python
+# Custom parsers for PDF, DOCX, etc.
+class DocumentService:
+    def extract_text(self, file_path):
+        if file_path.endswith('.pdf'):
+            return self._parse_pdf()
+        elif file_path.endswith('.docx'):
+            return self._parse_docx()
+        # ...13 more formats
+```
+
+**After:**
+```python
+from unstructured.partition.auto import partition
+
+elements = partition(file_path)  # Auto-detects format
+text = "\n".join([e.text for e in elements])
+```
+
+### Benefits
+- ✅ -90% code reduction (500 → 50 LOC wrapper)
+- ✅ Better table extraction
+- ✅ Better image/layout handling
+- ✅ Support for more formats automatically
+
+### Trade-offs
+- ⚠️ Docker image size: +500MB (models for layout detection)
+- ⚠️ First-time setup more complex
+
+### Migration Steps
+1. Install: `pip install unstructured[pdf]==0.18.15` (already in Dockerfile)
+2. Create `UnstructuredDocumentService` wrapper
+3. Preserve metadata extraction logic
+4. Update 15 unit tests
+5. Verify parsing quality on test corpus
+
+### Files Affected
+- `src/services/document_service.py` - Rewrite as thin wrapper
+- `tests/unit/test_document_service.py` - Update test fixtures
+- `Dockerfile` - Already has unstructured installed
+
+### Testing
+```bash
+# Test document parsing
+docker exec rag_service pytest tests/unit/test_document_service.py -v
+
+# Upload complex PDF with tables
+curl -X POST http://localhost:8001/ingest/file -F "file=@complex.pdf"
+```
+
+### Decision Point
+Evaluate after Phase 1+2. If parsing quality is acceptable, may defer to v3.1.
+
+---
+
+## Phase 4: Architecture Cleanup (Week 4) - FOLLOW-UP
+
+### Modularize app.py (1,472 LOC)
+
+**Move business logic to services:**
+```python
+# NEW: src/services/rag_orchestrator.py
+class RAGOrchestrator:
+    async def ingest_document(self, file):
+        # Document → Parse → Enrich → Chunk → Embed → Store
+        
+# app.py becomes thin routing layer (~200 LOC)
+@router.post("/ingest/file")
+async def ingest_file(file):
+    return await rag_orchestrator.ingest_document(file)
+```
+
+### Benefits
+- ✅ Easier to test (pure Python vs FastAPI routes)
+- ✅ Clearer separation of concerns
+- ✅ Reusable orchestration logic
+
+### Files Affected
+- `src/services/rag_orchestrator.py` - NEW
+- `src/services/search_orchestrator.py` - NEW  
+- `app.py` - Reduce to ~200 LOC
+
+---
+
+## Expected Outcomes
+
+### Code Reduction
+```
+llm_service.py:           400 → 120 LOC  (-70%)
+document_service.py:      500 → 50 LOC   (-90%)
+schema_validator.py:      150 → 0 LOC    (-100%)
+enrichment_service.py:    -30% simplification
+app.py:                   1472 → 200 LOC (-86%)
+---
+Total:                    ~1,500 LOC eliminated
+```
+
+### Test Changes
+```
+Before: 585 unit tests
+After:  ~555 unit tests (-30 eliminated, cleaner)
+Pass rate: 100% maintained
+```
+
+### Dependency Changes
+```
+Add:    litellm (already present)
+Add:    instructor
+Keep:   unstructured (already present, optional use)
+Remove: None (only consolidating)
+```
+
+### Performance Impact
+- Latency: No change (same underlying APIs)
+- Reliability: ↑ (battle-tested libraries)
+- Cost: No change (same models)
+- Maintainability: ↑↑ (less custom code)
+
+---
+
+## Risk Mitigation
+
+### Low-Risk Approach
+1. **Incremental:** One phase per week, fully tested before next
+2. **Reversible:** Keep v2.2.0 tag, can rollback any phase
+3. **Tested:** Maintain 100% unit test pass rate throughout
+4. **Documented:** Update docs after each phase
+
+### Rollback Strategy
+```bash
+# Rollback entire v3.0
+git checkout v2.2.0 && docker-compose up -d --build
+
+# Rollback specific phase (if on feature branch)
+git revert <phase_commit>
+```
+
+---
+
+## Success Criteria
+
+### Phase 1 (LiteLLM)
+- ✅ All 585 unit tests passing
+- ✅ Cost tracking preserved ($0.000063/doc)
+- ✅ Enrichment quality unchanged (spot-check 10 docs)
+- ✅ Fallback chain works (test with invalid API key)
+
+### Phase 2 (Instructor)
+- ✅ All ~570 unit tests passing  
+- ✅ No JSON parsing errors (monitor for 1 week)
+- ✅ Enrichment schema validation works
+- ✅ Performance unchanged (<10ms overhead)
+
+### Phase 3 (Unstructured - Optional)
+- ✅ All ~570 unit tests passing
+- ✅ Parsing quality ≥ current (test corpus of 50 docs)
+- ✅ Table extraction improved (visual inspection)
+- ✅ Docker image size acceptable (<3GB total)
+
+### Phase 4 (Cleanup)
+- ✅ app.py reduced to <300 LOC
+- ✅ Clear service boundaries
+- ✅ All tests passing
+- ✅ Documentation updated
+
+---
+
+## Timeline
+
+**Week 1 (Days 1-3):** LiteLLM Integration
+- Day 1: Setup + llm_service rewrite
+- Day 2: Update dependent services + tests
+- Day 3: Integration testing + verification
+
+**Week 2 (Days 4-6):** Instructor Integration  
+- Day 4: Install Instructor + remove schema_validator
+- Day 5: Update enrichment/editor services
+- Day 6: Testing + validation
+
+**Week 3 (Days 7-9):** Unstructured (Optional)
+- Day 7: Evaluate necessity + setup if proceeding
+- Day 8: Migrate document_service
+- Day 9: Quality testing
+
+**Week 4 (Days 10-12):** Architecture Cleanup
+- Day 10: Create orchestrator services
+- Day 11: Refactor app.py
+- Day 12: Final testing + docs
+
+**Total: 12-16 hours over 3-4 weeks**
+
+---
+
+## v3.0.0 Release Checklist
+
+- [ ] Phase 1 complete: LiteLLM integrated
+- [ ] Phase 2 complete: Instructor integrated  
+- [ ] Phase 3 evaluated: Unstructured decision made
+- [ ] Phase 4 complete (optional): Architecture cleanup
+- [ ] All unit tests passing (≥555 tests, 100% pass rate)
+- [ ] Integration tests passing (11 smoke tests)
+- [ ] Documentation updated (CLAUDE.md, README.md)
+- [ ] CHANGELOG.md updated with breaking changes
+- [ ] Migration guide written (UPGRADE_V2_TO_V3.md)
+- [ ] Docker image tested and tagged
+- [ ] Git tag created: `git tag -a v3.0.0 -m "..."`
+
+---
+
+## Questions/Discussion
+
+**Q: Why not do all at once?**  
+A: Incremental approach reduces risk. Each phase is independently valuable.
+
+**Q: What if LiteLLM doesn't preserve cost tracking?**  
+A: Create thin wrapper that logs costs via callbacks. LiteLLM supports custom callbacks.
+
+**Q: Can we skip Unstructured?**  
+A: Yes, Phase 3 is optional. Current document parsing works well. Evaluate after Phase 1+2.
+
+**Q: What about existing data in ChromaDB?**  
+A: No changes to embeddings/storage. All existing data compatible.
+
+---
+
+**Next Step:** Begin Phase 1 (LiteLLM integration) when ready.
+

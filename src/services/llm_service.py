@@ -1,33 +1,28 @@
 """
-LLM (Large Language Model) service
+LLM (Large Language Model) service - LiteLLM Integration
 
-Handles LLM provider management, API calls, cost tracking, and fallback logic
+Unified LLM interface using LiteLLM for provider management,
+with preserved cost tracking and budget enforcement.
 """
 import logging
 from typing import Optional, Dict, Any, List, Tuple
 from datetime import datetime
+import os
 
-# LLM provider SDKs
-import anthropic
-import openai
-import groq
+# LiteLLM unified interface
+import litellm
 
 from src.core.config import Settings
 from src.models.schemas import LLMProvider, CostInfo, CostStats
 
 logger = logging.getLogger(__name__)
 
-# Check Google availability
-try:
-    import google.generativeai as genai
-    GOOGLE_AVAILABLE = True
-except ImportError:
-    GOOGLE_AVAILABLE = False
-    logger.warning("Google Generative AI not available")
+# Suppress LiteLLM verbose logging
+litellm.suppress_debug_info = True
 
 
 # Model pricing (per 1M tokens)
-# Last updated: 2025-10-10
+# Last updated: 2025-10-12 (v3.0 migration)
 # Next review: 2025-11-01 (monthly - 1st of each month)
 # Review script: python scripts/check_model_pricing.py
 # Philosophy: Prioritize quality - willing to pay more for significant improvements
@@ -190,20 +185,23 @@ class CostTracker:
 
 class LLMService:
     """
-    Service for managing multiple LLM providers with fallback and cost tracking
+    LiteLLM-powered LLM service with automatic fallback and cost tracking
 
-    Supports: Anthropic, OpenAI, Groq, Google Gemini
+    Supports 100+ LLM providers via unified LiteLLM interface
     """
 
     def __init__(self, settings: Settings):
         """
-        Initialize LLM service
+        Initialize LLM service with LiteLLM
 
         Args:
             settings: Application settings with API keys
         """
         self.settings = settings
         self.cost_tracker = CostTracker(daily_budget=settings.daily_budget_usd)
+
+        # Configure LiteLLM with environment variables
+        self._configure_litellm()
 
         # Provider order for fallbacks
         self.provider_order = [
@@ -212,141 +210,47 @@ class LLMService:
             settings.emergency_llm
         ]
 
-        # Initialize provider clients
-        self.clients: Dict[str, Any] = {}
-        self._initialize_clients()
+        # Available providers (determined by API keys)
+        self.available_providers = self._detect_available_providers()
 
-        # Provider configurations
-        self.provider_configs = self._build_provider_configs()
+        # Provider-to-model mapping for fallbacks
+        self.fallback_models = self._build_fallback_models()
 
-    def _initialize_clients(self):
-        """Initialize LLM provider clients based on available API keys"""
+        logger.info(f"✅ LiteLLM service initialized with providers: {self.available_providers}")
 
-        # Anthropic
+    def _configure_litellm(self):
+        """Configure LiteLLM with API keys from settings"""
+        # Set API keys in environment (LiteLLM reads from env)
         if self.settings.anthropic_api_key:
-            try:
-                self.clients["anthropic"] = anthropic.Anthropic(
-                    api_key=self.settings.anthropic_api_key
-                )
-                logger.info("Initialized Anthropic client")
-            except Exception as e:
-                logger.error(f"Failed to initialize Anthropic: {e}")
-
-        # OpenAI
+            os.environ["ANTHROPIC_API_KEY"] = self.settings.anthropic_api_key
         if self.settings.openai_api_key:
-            try:
-                self.clients["openai"] = openai.OpenAI(
-                    api_key=self.settings.openai_api_key
-                )
-                logger.info("Initialized OpenAI client")
-            except Exception as e:
-                logger.error(f"Failed to initialize OpenAI: {e}")
-
-        # Groq
+            os.environ["OPENAI_API_KEY"] = self.settings.openai_api_key
         if self.settings.groq_api_key:
-            try:
-                self.clients["groq"] = groq.Groq(
-                    api_key=self.settings.groq_api_key
-                )
-                logger.info("Initialized Groq client")
-            except Exception as e:
-                logger.error(f"Failed to initialize Groq: {e}")
+            os.environ["GROQ_API_KEY"] = self.settings.groq_api_key
+        if self.settings.google_api_key:
+            os.environ["GOOGLE_API_KEY"] = self.settings.google_api_key
 
-        # Google Gemini
-        if self.settings.google_api_key and GOOGLE_AVAILABLE:
-            try:
-                genai.configure(api_key=self.settings.google_api_key)
-                # Note: Model is selected per-call, just store genai module
-                self.clients["google"] = genai
-                logger.info("Initialized Google Gemini client")
-            except Exception as e:
-                logger.error(f"Failed to initialize Google: {e}")
+    def _detect_available_providers(self) -> List[str]:
+        """Detect which providers are available based on API keys"""
+        providers = []
+        if self.settings.anthropic_api_key:
+            providers.append("anthropic")
+        if self.settings.openai_api_key:
+            providers.append("openai")
+        if self.settings.groq_api_key:
+            providers.append("groq")
+        if self.settings.google_api_key:
+            providers.append("google")
+        return providers
 
-    def _build_provider_configs(self) -> Dict[str, Dict]:
-        """Build provider configuration dictionary"""
+    def _build_fallback_models(self) -> Dict[str, str]:
+        """Build provider-to-default-model mapping"""
         return {
-            "anthropic": {
-                "models": {
-                    "anthropic/claude-3-haiku-20240307": {
-                        "max_tokens": 4000,
-                        "model_name": "claude-3-haiku-20240307"
-                    },
-                    "anthropic/claude-3-5-sonnet-20241022": {
-                        "max_tokens": 4000,
-                        "model_name": "claude-3-5-sonnet-20241022"
-                    },
-                    "anthropic/claude-3-5-sonnet-latest": {
-                        "max_tokens": 4000,
-                        "model_name": "claude-3-5-sonnet-latest"
-                    },
-                    "anthropic/claude-3-opus-20240229": {
-                        "max_tokens": 4000,
-                        "model_name": "claude-3-opus-20240229"
-                    }
-                }
-            },
-            "openai": {
-                "models": {
-                    "openai/gpt-4o-mini": {
-                        "max_tokens": 4000,
-                        "model_name": "gpt-4o-mini"
-                    },
-                    "openai/gpt-4o": {
-                        "max_tokens": 4000,
-                        "model_name": "gpt-4o"
-                    }
-                }
-            },
-            "groq": {
-                "models": {
-                    "groq/llama-3.1-8b-instant": {
-                        "max_tokens": 8000,
-                        "model_name": "llama-3.1-8b-instant"
-                    },
-                    "groq/llama3-70b-8192": {
-                        "max_tokens": 8192,
-                        "model_name": "llama3-70b-8192"
-                    }
-                }
-            },
-            "google": {
-                "models": {
-                    "google/gemini-pro-latest": {
-                        "max_tokens": 8000,
-                        "model_name": "models/gemini-pro-latest"
-                    },
-                    "google/gemini-2.5-pro": {
-                        "max_tokens": 8000,
-                        "model_name": "models/gemini-2.5-pro"
-                    },
-                    "google/gemini-2.0-flash": {
-                        "max_tokens": 8000,
-                        "model_name": "models/gemini-2.0-flash"
-                    }
-                }
-            }
+            "anthropic": "anthropic/claude-3-5-sonnet-20241022",
+            "openai": "openai/gpt-4o-mini",
+            "groq": "groq/llama-3.1-8b-instant",
+            "google": "google/gemini-2.0-flash"
         }
-
-    def get_model_info(self, model_id: str) -> Tuple[Optional[str], Optional[Dict]]:
-        """
-        Extract provider and model config from model ID
-
-        Args:
-            model_id: Full model ID (e.g., "groq/llama-3.1-8b-instant")
-
-        Returns:
-            Tuple of (provider_name, model_config) or (None, None) if not found
-        """
-        try:
-            provider = model_id.split('/')[0]
-            if provider in self.provider_configs:
-                models = self.provider_configs[provider]["models"]
-                if model_id in models:
-                    return provider, models[model_id]
-        except Exception as e:
-            logger.error(f"Error parsing model ID '{model_id}': {e}")
-
-        return None, None
 
     async def call_llm(
         self,
@@ -356,7 +260,7 @@ class LLMService:
         temperature: Optional[float] = None
     ) -> Tuple[str, float, str]:
         """
-        Call LLM with automatic fallback
+        Call LLM via LiteLLM with automatic fallback
 
         Args:
             prompt: Input prompt
@@ -368,54 +272,54 @@ class LLMService:
             Tuple of (response_text, cost_usd, model_used)
 
         Raises:
-            Exception: If all providers fail
+            Exception: If all providers fail or budget exceeded
         """
         # Check budget
         if self.settings.enable_cost_tracking and not self.cost_tracker.check_budget():
             raise Exception(f"Daily budget limit (${self.settings.daily_budget_usd}) reached")
 
-        # If specific model requested, try it
+        # Determine which model(s) to try
         if model_id:
+            # Specific model requested
+            models_to_try = [model_id]
+        else:
+            # Build fallback chain from provider order
+            models_to_try = []
+            for provider in self.provider_order:
+                if provider in self.available_providers:
+                    models_to_try.append(self.fallback_models.get(provider))
+
+        # Remove None values
+        models_to_try = [m for m in models_to_try if m]
+
+        if not models_to_try:
+            raise Exception("No LLM providers available")
+
+        # Try models in order (LiteLLM handles fallback automatically)
+        for attempt_model in models_to_try:
             try:
-                result, cost = await self._call_specific_model(
+                result, cost = await self._call_with_litellm(
                     prompt=prompt,
-                    model_id=model_id,
+                    model_id=attempt_model,
                     max_tokens=max_tokens,
                     temperature=temperature
                 )
-                return result, cost, model_id
-            except Exception as e:
-                logger.error(f"Failed to call specific model {model_id}: {e}")
-                raise
-
-        # Otherwise, try providers in order
-        for provider in self.provider_order:
-            if provider not in self.clients:
-                continue
-
-            # Get first model for provider
-            provider_models = self.provider_configs.get(provider, {}).get("models", {})
-            if not provider_models:
-                continue
-
-            default_model = list(provider_models.keys())[0]
-
-            try:
-                result, cost = await self._call_specific_model(
-                    prompt=prompt,
-                    model_id=default_model,
-                    max_tokens=max_tokens,
-                    temperature=temperature
-                )
-                return result, cost, default_model
+                return result, cost, attempt_model
 
             except Exception as e:
-                logger.warning(f"LLM provider {provider} failed: {e}")
+                provider = attempt_model.split('/')[0] if '/' in attempt_model else "unknown"
+                logger.warning(f"LLM call failed for {attempt_model}: {e}")
+
+                # If this was the last model, raise the exception
+                if attempt_model == models_to_try[-1]:
+                    raise Exception(f"All LLM providers failed. Last error: {e}")
+
+                # Otherwise continue to next model
                 continue
 
         raise Exception("All LLM providers failed")
 
-    async def _call_specific_model(
+    async def _call_with_litellm(
         self,
         prompt: str,
         model_id: str,
@@ -423,11 +327,11 @@ class LLMService:
         temperature: Optional[float] = None
     ) -> Tuple[str, float]:
         """
-        Call specific LLM model and return response with cost
+        Call LiteLLM and return response with cost tracking
 
         Args:
             prompt: Input prompt
-            model_id: Model ID to use
+            model_id: Model ID to use (LiteLLM format: "provider/model")
             max_tokens: Maximum tokens
             temperature: Sampling temperature
 
@@ -435,57 +339,37 @@ class LLMService:
             Tuple of (response_text, cost_usd)
 
         Raises:
-            Exception: If model not available or call fails
+            Exception: If LiteLLM call fails
         """
-        provider, model_config = self.get_model_info(model_id)
-
-        if not provider or provider not in self.clients:
-            raise Exception(f"Model {model_id} not available")
-
-        client = self.clients[provider]
-        model_name = model_config["model_name"]
-        tokens = max_tokens or model_config["max_tokens"]
-        temp = temperature if temperature is not None else self.settings.llm_temperature
-
-        # Estimate input tokens
+        # Estimate input tokens for cost tracking
         input_tokens = self.cost_tracker.estimate_tokens(prompt)
 
+        # Set default parameters
+        tokens = max_tokens or 4000
+        temp = temperature if temperature is not None else self.settings.llm_temperature
+
         try:
-            # Call appropriate provider API
-            if provider == "anthropic":
-                response = client.messages.create(
-                    model=model_name,
-                    max_tokens=tokens,
-                    temperature=temp,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                result = response.content[0].text
-                output_tokens = self.cost_tracker.estimate_tokens(result)
+            # Call LiteLLM (async)
+            response = await litellm.acompletion(
+                model=model_id,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=tokens,
+                temperature=temp,
+                timeout=30
+            )
 
-            elif provider in ["openai", "groq"]:
-                response = client.chat.completions.create(
-                    model=model_name,
-                    max_tokens=tokens,
-                    temperature=temp,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                result = response.choices[0].message.content
-                output_tokens = self.cost_tracker.estimate_tokens(result)
+            # Extract response text
+            result = response.choices[0].message.content
 
-            elif provider == "google":
-                # Create model instance per-call with specific model_name
-                model = client.GenerativeModel(model_name)
-                response = model.generate_content(prompt)
-                result = response.text
-                output_tokens = self.cost_tracker.estimate_tokens(result)
+            # Estimate output tokens
+            output_tokens = self.cost_tracker.estimate_tokens(result)
 
-            else:
-                raise Exception(f"Unknown provider: {provider}")
-
-            # Calculate and record cost
+            # Calculate cost
             cost = self.cost_tracker.calculate_cost(model_id, input_tokens, output_tokens)
 
+            # Record operation
             if self.settings.enable_cost_tracking:
+                provider = model_id.split('/')[0] if '/' in model_id else "unknown"
                 self.cost_tracker.record_operation(
                     provider=provider,
                     model=model_id,
@@ -497,8 +381,106 @@ class LLMService:
             return result, cost
 
         except Exception as e:
-            logger.error(f"LLM call failed for {provider}/{model_id}: {e}")
+            logger.error(f"LiteLLM call failed for {model_id}: {e}")
             raise
+
+    async def call_llm_structured(
+        self,
+        prompt: str,
+        response_model: Any,
+        model_id: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None
+    ) -> Tuple[Any, float, str]:
+        """
+        Call LLM with Instructor for type-safe structured outputs
+
+        Args:
+            prompt: Input prompt
+            response_model: Pydantic model class for structured response
+            model_id: Specific model to use (optional)
+            max_tokens: Maximum tokens to generate
+            temperature: Sampling temperature
+
+        Returns:
+            Tuple of (structured_response, cost_usd, model_used)
+
+        Raises:
+            Exception: If all providers fail or budget exceeded
+        """
+        import instructor
+        from pydantic import BaseModel
+
+        # Check budget
+        if self.settings.enable_cost_tracking and not self.cost_tracker.check_budget():
+            raise Exception(f"Daily budget limit (${self.settings.daily_budget_usd}) reached")
+
+        # Determine which model(s) to try
+        if model_id:
+            models_to_try = [model_id]
+        else:
+            models_to_try = []
+            for provider in self.provider_order:
+                if provider in self.available_providers:
+                    models_to_try.append(self.fallback_models.get(provider))
+            models_to_try = [m for m in models_to_try if m]
+
+        if not models_to_try:
+            raise Exception("No LLM providers available")
+
+        # Try models in order
+        for attempt_model in models_to_try:
+            try:
+                # Estimate input tokens
+                input_tokens = self.cost_tracker.estimate_tokens(prompt)
+
+                # Set parameters
+                tokens = max_tokens or 4000
+                temp = temperature if temperature is not None else self.settings.llm_temperature
+
+                # Create Instructor client wrapping LiteLLM
+                client = instructor.from_litellm(litellm.acompletion)
+
+                # Call with structured output using OpenAI-style interface
+                response = await client.chat.completions.create(
+                    model=attempt_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    response_model=response_model,
+                    max_tokens=tokens,
+                    temperature=temp,
+                    timeout=30
+                )
+
+                # Estimate output tokens (use serialized response)
+                response_text = response.model_dump_json() if isinstance(response, BaseModel) else str(response)
+                output_tokens = self.cost_tracker.estimate_tokens(response_text)
+
+                # Calculate cost
+                cost = self.cost_tracker.calculate_cost(attempt_model, input_tokens, output_tokens)
+
+                # Record operation
+                if self.settings.enable_cost_tracking:
+                    provider = attempt_model.split('/')[0] if '/' in attempt_model else "unknown"
+                    self.cost_tracker.record_operation(
+                        provider=provider,
+                        model=attempt_model,
+                        input_tokens=input_tokens,
+                        output_tokens=output_tokens,
+                        cost=cost
+                    )
+
+                return response, cost, attempt_model
+
+            except Exception as e:
+                provider = attempt_model.split('/')[0] if '/' in attempt_model else "unknown"
+                logger.warning(f"Structured LLM call failed for {attempt_model}: {e}")
+
+                if attempt_model == models_to_try[-1]:
+                    raise Exception(f"All LLM providers failed. Last error: {e}")
+
+                continue
+
+        raise Exception("All LLM providers failed")
 
     def get_cost_stats(self) -> CostStats:
         """
@@ -511,7 +493,7 @@ class LLMService:
 
     def is_provider_available(self, provider: str) -> bool:
         """
-        Check if provider is initialized and available
+        Check if provider is available
 
         Args:
             provider: Provider name
@@ -519,26 +501,28 @@ class LLMService:
         Returns:
             True if available
         """
-        return provider in self.clients
+        return provider in self.available_providers
 
     def get_available_providers(self) -> List[str]:
         """
-        Get list of available (initialized) providers
+        Get list of available providers
 
         Returns:
             List of provider names
         """
-        return list(self.clients.keys())
+        return self.available_providers
 
     def get_available_models(self) -> List[str]:
         """
         Get list of all available models
 
         Returns:
-            List of model IDs
+            List of model IDs from MODEL_PRICING
         """
+        # Return models for available providers
         models = []
-        for provider in self.clients.keys():
-            if provider in self.provider_configs:
-                models.extend(self.provider_configs[provider]["models"].keys())
+        for model_id in MODEL_PRICING.keys():
+            provider = model_id.split('/')[0]
+            if provider in self.available_providers:
+                models.append(model_id)
         return models

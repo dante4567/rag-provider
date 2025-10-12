@@ -212,31 +212,6 @@ class TestLLMService:
         assert service.cost_tracker is not None
         assert service.cost_tracker.daily_budget == 10.0
 
-    def test_get_model_info_known_model(self, mock_settings):
-        """Test getting model info for known models"""
-        service = LLMService(mock_settings)
-
-        # Test Groq model
-        provider, config = service.get_model_info("groq/llama-3.1-8b-instant")
-        assert provider == "groq"
-        assert config is not None
-        assert "model_name" in config
-        assert "max_tokens" in config
-
-        # Test Anthropic model
-        provider, config = service.get_model_info("anthropic/claude-3-haiku-20240307")
-        assert provider == "anthropic"
-        assert config is not None
-        assert "model_name" in config
-
-    def test_get_model_info_unknown_model(self, mock_settings):
-        """Test getting model info for unknown models"""
-        service = LLMService(mock_settings)
-
-        provider, config = service.get_model_info("unknown/model")
-        assert provider is None
-        assert config is None
-
     def test_is_provider_available(self, mock_settings):
         """Test checking if providers are available"""
         service = LLMService(mock_settings)
@@ -311,23 +286,17 @@ class TestLLMService:
             )
 
     @pytest.mark.asyncio
-    @patch('src.services.llm_service.groq.Groq')
-    async def test_call_llm_success_groq(self, mock_groq_class, mock_settings):
-        """Test successful LLM call to Groq"""
-        # Mock Groq client response
+    @patch('src.services.llm_service.litellm.acompletion')
+    async def test_call_llm_success_groq(self, mock_acompletion, mock_settings):
+        """Test successful LLM call via LiteLLM"""
+        # Mock LiteLLM response
         mock_response = Mock()
         mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Test response"
-        mock_response.usage = Mock()
-        mock_response.usage.prompt_tokens = 100
-        mock_response.usage.completion_tokens = 50
+        mock_response.choices[0].message.content = "Test response from LiteLLM"
 
-        mock_client = Mock()
-        mock_client.chat.completions.create.return_value = mock_response
-        mock_groq_class.return_value = mock_client
+        mock_acompletion.return_value = mock_response
 
         service = LLMService(mock_settings)
-        service.clients["groq"] = mock_client  # Override with mocked client
 
         response, cost, model_used = await service.call_llm(
             prompt="Test prompt",
@@ -335,9 +304,16 @@ class TestLLMService:
             temperature=0.7
         )
 
-        assert response == "Test response"
+        assert response == "Test response from LiteLLM"
         assert cost > 0
+        assert model_used == "groq/llama-3.1-8b-instant"
         assert len(service.cost_tracker.operations) == 1
+
+        # Verify LiteLLM was called with correct parameters
+        mock_acompletion.assert_called_once()
+        call_args = mock_acompletion.call_args
+        assert call_args[1]['model'] == "groq/llama-3.1-8b-instant"
+        assert call_args[1]['temperature'] == 0.7
 
 
 # =============================================================================
