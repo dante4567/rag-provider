@@ -94,6 +94,62 @@ cost_tracking = {
     "total_cost": 0.0
 }
 
+
+class VoyageEmbeddingFunction:
+    """
+    Custom embedding function for Voyage AI embeddings
+
+    Supports:
+    - voyage-3-lite (512 dims, MTEB ~68, $0.02/1M tokens)
+    - Batch processing (up to 128 inputs)
+    - Input type specification (document vs query)
+    """
+
+    def __init__(self, api_key: str, model_name: str = "voyage-3-lite"):
+        """
+        Initialize Voyage embedding function
+
+        Args:
+            api_key: Voyage AI API key
+            model_name: Model name (default: voyage-3-lite)
+        """
+        try:
+            import voyageai
+            self.client = voyageai.Client(api_key=api_key)
+            self.model_name = model_name
+            logger.info(f"✅ Initialized Voyage AI embeddings: {model_name}")
+        except ImportError:
+            logger.error("voyageai package not installed. Run: pip install voyageai")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to initialize Voyage AI: {e}")
+            raise
+
+    def __call__(self, input: List[str]) -> List[List[float]]:
+        """
+        Generate embeddings for input texts
+
+        Args:
+            input: List of texts to embed
+
+        Returns:
+            List of embedding vectors
+        """
+        if not input:
+            return []
+
+        try:
+            response = self.client.embed(
+                input,
+                model=self.model_name,
+                input_type="document"  # Use "document" for indexing
+            )
+            return response.embeddings
+        except Exception as e:
+            logger.error(f"Voyage embedding failed: {e}")
+            raise
+
+
 class SimpleTextSplitter:
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
         self.chunk_size = chunk_size
@@ -307,27 +363,47 @@ class RAGService:
             chroma_client = chromadb.HttpClient(host=CHROMA_HOST, port=CHROMA_PORT)
             chroma_client.heartbeat()
 
-            # Use sentence-transformers (local, free, 384 dims)
-            # Fallback from Voyage-3-lite due to API key requirement
-            # Using all-MiniLM-L6-v2: Fast, small, good quality (MTEB 56.3)
-            from chromadb.utils import embedding_functions
+            # Try Voyage embeddings first, fall back to sentence-transformers
+            voyage_api_key = os.getenv("VOYAGE_API_KEY")
+            embedding_function = None
 
-            sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2"
-            )
+            if voyage_api_key:
+                try:
+                    # Use Voyage-3-lite (512 dims, MTEB ~68, $0.02/1M tokens)
+                    embedding_function = VoyageEmbeddingFunction(
+                        api_key=voyage_api_key,
+                        model_name="voyage-3-lite"
+                    )
+                    embedding_info = "Voyage-3-lite (512 dims, MTEB ~68, $0.02/1M tokens)"
+                    logger.info(f"✅ Using Voyage AI embeddings: {embedding_info}")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize Voyage embeddings: {e}")
+                    logger.info("Falling back to sentence-transformers")
+                    embedding_function = None
 
+            if embedding_function is None:
+                # Fallback: sentence-transformers (local, free, 384 dims)
+                from chromadb.utils import embedding_functions
+                embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+                    model_name="all-MiniLM-L6-v2"
+                )
+                embedding_info = "sentence-transformers all-MiniLM-L6-v2 (384 dims, MTEB 56.3, local/free)"
+                logger.info(f"✅ Using fallback embeddings: {embedding_info}")
+
+            # Get or create collection with selected embedding function
             try:
                 collection = chroma_client.get_collection(
                     name=COLLECTION_NAME,
-                    embedding_function=sentence_transformer_ef
+                    embedding_function=embedding_function
                 )
             except:
                 collection = chroma_client.create_collection(
                     name=COLLECTION_NAME,
-                    embedding_function=sentence_transformer_ef,
+                    embedding_function=embedding_function,
                     metadata={"hnsw:space": "cosine"}
                 )
-            logger.info("✅ Connected to ChromaDB with sentence-transformers all-MiniLM-L6-v2 (384 dims, local/free)")
+
+            logger.info(f"✅ Connected to ChromaDB with {embedding_info}")
         except Exception as e:
             logger.error(f"Failed to connect to ChromaDB: {e}")
             raise

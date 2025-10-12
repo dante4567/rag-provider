@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     google_api_key: Optional[str] = Field(default=None, description="Google Generative AI API key")
     cohere_api_key: Optional[str] = Field(default=None, description="Cohere API key")
     mistral_api_key: Optional[str] = Field(default=None, description="Mistral API key")
+    voyage_api_key: Optional[str] = Field(default=None, description="Voyage AI API key for embeddings")
 
     # ===== OCR Configuration =====
     use_ocr: bool = Field(default=True, description="Enable OCR for images and scanned PDFs")
