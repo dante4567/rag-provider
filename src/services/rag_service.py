@@ -168,8 +168,10 @@ class VoyageEmbeddingFunction:
             input: Alternative name for query (ChromaDB compatibility)
 
         Returns:
-            Embedding vector(s) for the query (as list of floats)
+            Embedding vector(s) for the query (numpy array for ChromaDB)
         """
+        import numpy as np
+
         # Accept either query or input parameter
         text = query if query is not None else input
         if not text:
@@ -190,8 +192,9 @@ class VoyageEmbeddingFunction:
                 model=self.model_name,
                 input_type="query"  # Use "query" for search
             )
-            # Return as plain Python list (ChromaDB expects sequence)
-            return response.embeddings[0]
+            # Convert to numpy array (ChromaDB expects .tolist() method)
+            embeddings_array = np.array(response.embeddings, dtype=np.float32)
+            return embeddings_array
         except Exception as e:
             logger.error(f"Voyage query embedding failed: {e}")
             raise
