@@ -384,6 +384,104 @@ class LLMService:
             logger.error(f"LiteLLM call failed for {model_id}: {e}")
             raise
 
+    async def call_llm_structured(
+        self,
+        prompt: str,
+        response_model: Any,
+        model_id: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None
+    ) -> Tuple[Any, float, str]:
+        """
+        Call LLM with Instructor for type-safe structured outputs
+
+        Args:
+            prompt: Input prompt
+            response_model: Pydantic model class for structured response
+            model_id: Specific model to use (optional)
+            max_tokens: Maximum tokens to generate
+            temperature: Sampling temperature
+
+        Returns:
+            Tuple of (structured_response, cost_usd, model_used)
+
+        Raises:
+            Exception: If all providers fail or budget exceeded
+        """
+        import instructor
+        from pydantic import BaseModel
+
+        # Check budget
+        if self.settings.enable_cost_tracking and not self.cost_tracker.check_budget():
+            raise Exception(f"Daily budget limit (${self.settings.daily_budget_usd}) reached")
+
+        # Determine which model(s) to try
+        if model_id:
+            models_to_try = [model_id]
+        else:
+            models_to_try = []
+            for provider in self.provider_order:
+                if provider in self.available_providers:
+                    models_to_try.append(self.fallback_models.get(provider))
+            models_to_try = [m for m in models_to_try if m]
+
+        if not models_to_try:
+            raise Exception("No LLM providers available")
+
+        # Try models in order
+        for attempt_model in models_to_try:
+            try:
+                # Estimate input tokens
+                input_tokens = self.cost_tracker.estimate_tokens(prompt)
+
+                # Set parameters
+                tokens = max_tokens or 4000
+                temp = temperature if temperature is not None else self.settings.llm_temperature
+
+                # Create Instructor client wrapping LiteLLM
+                client = instructor.from_litellm(litellm.acompletion)
+
+                # Call with structured output using OpenAI-style interface
+                response = await client.chat.completions.create(
+                    model=attempt_model,
+                    messages=[{"role": "user", "content": prompt}],
+                    response_model=response_model,
+                    max_tokens=tokens,
+                    temperature=temp,
+                    timeout=30
+                )
+
+                # Estimate output tokens (use serialized response)
+                response_text = response.model_dump_json() if isinstance(response, BaseModel) else str(response)
+                output_tokens = self.cost_tracker.estimate_tokens(response_text)
+
+                # Calculate cost
+                cost = self.cost_tracker.calculate_cost(attempt_model, input_tokens, output_tokens)
+
+                # Record operation
+                if self.settings.enable_cost_tracking:
+                    provider = attempt_model.split('/')[0] if '/' in attempt_model else "unknown"
+                    self.cost_tracker.record_operation(
+                        provider=provider,
+                        model=attempt_model,
+                        input_tokens=input_tokens,
+                        output_tokens=output_tokens,
+                        cost=cost
+                    )
+
+                return response, cost, attempt_model
+
+            except Exception as e:
+                provider = attempt_model.split('/')[0] if '/' in attempt_model else "unknown"
+                logger.warning(f"Structured LLM call failed for {attempt_model}: {e}")
+
+                if attempt_model == models_to_try[-1]:
+                    raise Exception(f"All LLM providers failed. Last error: {e}")
+
+                continue
+
+        raise Exception("All LLM providers failed")
+
     def get_cost_stats(self) -> CostStats:
         """
         Get current cost tracking statistics

@@ -81,6 +81,8 @@ RUN pip install --no-cache-dir chromadb==1.1.1
 
 RUN pip install --no-cache-dir litellm==1.77.7
 
+RUN pip install --no-cache-dir instructor==1.3.5
+
 # Install unstructured (VERY heavy - includes detectron2, torch, etc.)
 RUN pip install --no-cache-dir unstructured[pdf]==0.18.15 pdfminer.six==20250506
 

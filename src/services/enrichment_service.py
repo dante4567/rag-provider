@@ -619,23 +619,29 @@ Return ONLY the category string, nothing else."""
         )
 
         try:
-            # Use Groq for enrichment
-            llm_response_text, cost, model_used = await self.llm_service.call_llm(
+            # Use Groq for enrichment with Instructor for type-safe structured output
+            from src.models.enrichment_models import EnrichmentResponse
+
+            llm_response, cost, model_used = await self.llm_service.call_llm_structured(
                 prompt=prompt,
+                response_model=EnrichmentResponse,
                 model_id="groq/llama-3.1-8b-instant",
                 temperature=0.1
             )
 
-            # Debug: Log raw LLM response
+            # Debug: Log structured LLM response
             print(f"\n{'='*80}")
-            print(f"[DEBUG] Raw LLM Response (first 500 chars):")
-            print(f"{llm_response_text[:500]}...")
+            print(f"[DEBUG] Structured Instructor Response:")
+            print(f"  - Topics: {llm_response.topics}")
+            print(f"  - People count: {len(llm_response.entities.people)}")
+            print(f"  - Summary: {llm_response.summary[:100]}...")
             print(f"{'='*80}\n")
 
-            llm_data = self._parse_llm_response(llm_response_text)
+            # Convert Pydantic model to dict for backwards compatibility
+            llm_data = llm_response.model_dump()
 
             # Debug: Log parsed data
-            print(f"\n[DEBUG] Parsed LLM Data:")
+            print(f"\n[DEBUG] Converted to Dict:")
             print(f"  - Topics: {llm_data.get('topics', [])}")
             print(f"  - People: {llm_data.get('entities', {}).get('people', [])}")
             print(f"  - Dates: {llm_data.get('entities', {}).get('dates', [])}")
