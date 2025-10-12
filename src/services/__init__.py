@@ -9,6 +9,7 @@ from src.services.ocr_service import OCRService
 from src.services.whatsapp_parser import WhatsAppParser
 from src.services.llm_service import LLMService, CostTracker
 from src.services.vector_service import VectorService
+from src.services.search_cache_service import SearchResultCache, get_search_cache, clear_search_cache
 
 __all__ = [
     "DocumentService",
@@ -18,6 +19,9 @@ __all__ = [
     "LLMService",
     "CostTracker",
     "VectorService",
+    "SearchResultCache",
+    "get_search_cache",
+    "clear_search_cache",
 ]
 
 # Self-improvement loop services

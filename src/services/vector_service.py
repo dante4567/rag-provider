@@ -11,6 +11,7 @@ import chromadb
 
 from src.core.config import Settings
 from src.services.hybrid_search_service import get_hybrid_search_service
+from src.services.search_cache_service import get_search_cache
 
 logger = logging.getLogger(__name__)
 
@@ -22,17 +23,27 @@ class VectorService:
     Manages document chunks, embeddings, and similarity search
     """
 
-    def __init__(self, collection: chromadb.Collection, settings: Settings):
+    def __init__(
+        self,
+        collection: chromadb.Collection,
+        settings: Settings,
+        enable_cache: bool = True
+    ):
         """
         Initialize vector service
 
         Args:
             collection: ChromaDB collection instance
             settings: Application settings
+            enable_cache: Enable search result caching (default True)
         """
         self.collection = collection
         self.settings = settings
         self.hybrid_search_service = get_hybrid_search_service()
+        self.enable_cache = enable_cache
+        self.cache = get_search_cache(max_size=500, ttl_seconds=300) if enable_cache else None
+        if enable_cache:
+            logger.info("🚀 Search result caching enabled (500 entries, 5min TTL)")
 
     async def add_document(
         self,
@@ -110,19 +121,28 @@ class VectorService:
         self,
         query: str,
         top_k: int = 5,
-        filter: Optional[Dict[str, Any]] = None
+        filter: Optional[Dict[str, Any]] = None,
+        use_cache: bool = True
     ) -> List[Dict[str, Any]]:
         """
-        Search for similar documents
+        Search for similar documents with optional caching
 
         Args:
             query: Search query text
             top_k: Number of results to return
             filter: Metadata filters (optional)
+            use_cache: Use cache if enabled (default True)
 
         Returns:
             List of search results with content, metadata, and scores
         """
+        # Check cache first
+        if self.enable_cache and use_cache and self.cache:
+            cached = self.cache.get(query, top_k, filter, search_type="dense")
+            if cached is not None:
+                logger.info(f"✅ Cache HIT for dense search: '{query[:50]}...'")
+                return cached
+
         try:
             # Perform similarity search
             results = self.collection.query(
@@ -149,6 +169,10 @@ class VectorService:
                         "relevance_score": relevance_score,
                     })
 
+            # Store in cache
+            if self.enable_cache and use_cache and self.cache:
+                self.cache.set(query, top_k, formatted_results, filter, search_type="dense")
+
             logger.info(f"Search for '{query[:50]}...' returned {len(formatted_results)} results")
             return formatted_results
 
@@ -161,10 +185,11 @@ class VectorService:
         query: str,
         top_k: int = 5,
         filter: Optional[Dict[str, Any]] = None,
-        apply_mmr: bool = True
+        apply_mmr: bool = True,
+        use_cache: bool = True
     ) -> List[Dict[str, Any]]:
         """
-        Hybrid search combining BM25 + dense embeddings
+        Hybrid search combining BM25 + dense embeddings with caching
 
         Uses:
         1. Dense vector search (semantic similarity)
@@ -177,13 +202,22 @@ class VectorService:
             top_k: Number of results to return
             filter: Metadata filters (optional)
             apply_mmr: Whether to apply MMR for diversity
+            use_cache: Use cache if enabled (default True)
 
         Returns:
             List of hybrid search results
         """
+        # Check cache first
+        if self.enable_cache and use_cache and self.cache:
+            cached = self.cache.get(query, top_k, filter, search_type="hybrid")
+            if cached is not None:
+                logger.info(f"✅ Cache HIT for hybrid search: '{query[:50]}...'")
+                return cached
+
         try:
             # First, get dense search results (fetch more for better fusion)
-            dense_results = await self.search(query, top_k=top_k * 3, filter=filter)
+            # Pass use_cache=False to avoid nested caching
+            dense_results = await self.search(query, top_k=top_k * 3, filter=filter, use_cache=False)
 
             # Use hybrid search service to fuse with BM25
             hybrid_results = self.hybrid_search_service.hybrid_search(
@@ -192,6 +226,10 @@ class VectorService:
                 top_k=top_k,
                 apply_mmr=apply_mmr
             )
+
+            # Store in cache
+            if self.enable_cache and use_cache and self.cache:
+                self.cache.set(query, top_k, hybrid_results, filter, search_type="hybrid")
 
             logger.info(f"🔀 Hybrid search for '{query[:50]}...' returned {len(hybrid_results)} results")
             return hybrid_results
@@ -443,3 +481,23 @@ class VectorService:
         except Exception as e:
             logger.error(f"Failed to find duplicates: {e}")
             raise
+
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """
+        Get search cache statistics
+
+        Returns:
+            Dictionary with cache stats or empty dict if caching disabled
+        """
+        if not self.enable_cache or not self.cache:
+            return {"enabled": False}
+
+        stats = self.cache.get_stats()
+        stats["enabled"] = True
+        return stats
+
+    def clear_cache(self):
+        """Clear search result cache"""
+        if self.cache:
+            self.cache.clear()
+            logger.info("✅ Search cache cleared")
