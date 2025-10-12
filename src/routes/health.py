@@ -1,9 +1,10 @@
 """
 Health check and stats endpoints
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
 import logging
+from src.core.dependencies import get_rag_service, get_chroma_client
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,10 @@ router = APIRouter(tags=["health"])
 
 
 @router.get("/health")
-async def health_check():
+async def health_check(
+    rag_service = Depends(get_rag_service),
+    chroma_client = Depends(get_chroma_client)
+):
     """
     Comprehensive health check
 
@@ -23,8 +27,8 @@ async def health_check():
     - OCR and file watching
     """
     try:
-        # Import dependencies (these will be injected by the main app)
-        from app import chroma_client, rag_service, PLATFORM, IS_DOCKER, OCR_AVAILABLE, ENABLE_FILE_WATCH, PATHS
+        # Import static config (not services)
+        from app import PLATFORM, IS_DOCKER, OCR_AVAILABLE, ENABLE_FILE_WATCH, PATHS
 
         # Test ChromaDB connection
         chroma_client.heartbeat()

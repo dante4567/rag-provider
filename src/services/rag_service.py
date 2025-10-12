@@ -125,9 +125,18 @@ class VoyageEmbeddingFunction:
             logger.error(f"Failed to initialize Voyage AI: {e}")
             raise
 
+    def name(self) -> str:
+        """
+        Return the name of the embedding function (required by ChromaDB)
+
+        Returns:
+            str: Embedding function name
+        """
+        return f"voyage-{self.model_name}"
+
     def __call__(self, input: List[str]) -> List[List[float]]:
         """
-        Generate embeddings for input texts
+        Generate embeddings for input texts (documents)
 
         Args:
             input: List of texts to embed
@@ -144,9 +153,47 @@ class VoyageEmbeddingFunction:
                 model=self.model_name,
                 input_type="document"  # Use "document" for indexing
             )
+            # Return plain Python lists (ChromaDB handles conversion internally)
             return response.embeddings
         except Exception as e:
             logger.error(f"Voyage embedding failed: {e}")
+            raise
+
+    def embed_query(self, query = None, input = None):
+        """
+        Generate embedding for a search query
+
+        Args:
+            query: Query text or list of texts to embed
+            input: Alternative name for query (ChromaDB compatibility)
+
+        Returns:
+            Embedding vector(s) for the query (as list of floats)
+        """
+        # Accept either query or input parameter
+        text = query if query is not None else input
+        if not text:
+            return []
+
+        # Handle both string and list inputs
+        if isinstance(text, list):
+            if len(text) == 0:
+                return []
+            text = text[0]  # Use first element
+
+        if not text:
+            return []
+
+        try:
+            response = self.client.embed(
+                [text],
+                model=self.model_name,
+                input_type="query"  # Use "query" for search
+            )
+            # Return as plain Python list (ChromaDB expects sequence)
+            return response.embeddings[0]
+        except Exception as e:
+            logger.error(f"Voyage query embedding failed: {e}")
             raise
 
 
