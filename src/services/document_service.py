@@ -245,8 +245,8 @@ class DocumentService:
                     # Merge metadata
                     metadata.update(llm_metadata)
 
-                    # Return as special document type
-                    return result, DocumentType.text, metadata
+                    # Return as LLM chat document type
+                    return result, DocumentType.llm_chat, metadata
                 else:
                     # Fallback if parsing fails
                     return content, DocumentType.text, metadata

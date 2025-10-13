@@ -22,6 +22,7 @@ class DocumentType(str, Enum):
     scanned = "scanned"
     office = "office"
     code = "code"
+    llm_chat = "llm_chat"
 
 
 class LLMProvider(str, Enum):
