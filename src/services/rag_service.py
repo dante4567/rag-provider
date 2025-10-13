@@ -446,7 +446,7 @@ class RAGService:
                     name=COLLECTION_NAME,
                     embedding_function=embedding_function
                 )
-            except:
+            except (ValueError, Exception):
                 collection = chroma_client.create_collection(
                     name=COLLECTION_NAME,
                     embedding_function=embedding_function,
@@ -552,7 +552,7 @@ class RAGService:
             if file_metadata and 'created_date' in file_metadata:
                 try:
                     created_date = date_type.fromisoformat(file_metadata['created_date'])
-                except:
+                except (ValueError, TypeError):
                     pass
 
             # Use iteration loop if requested (slower but higher quality)
@@ -660,7 +660,7 @@ class RAGService:
                     try:
                         # Get active projects as watchlist
                         watchlist_projects = [p['name'] for p in self.vocabulary_service.get_active_projects()]
-                    except:
+                    except (AttributeError, KeyError, FileNotFoundError, Exception):
                         pass
 
                 # Calculate quality scores

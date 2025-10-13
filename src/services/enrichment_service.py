@@ -901,7 +901,7 @@ Return ONLY this JSON structure (no markdown, no explanations):
             if match:
                 try:
                     return json.loads(match.group())
-                except:
+                except json.JSONDecodeError:
                     pass
             return {}
 
