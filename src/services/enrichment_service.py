@@ -777,8 +777,9 @@ Extract the following (return as JSON):
    - Meeting notes, agendas → "meeting/notes", "meeting/agenda"
    - Privacy policies, data protection → "education/privacy", "education/data-protection"
 
-   Only use topics from the controlled list above. Choose the 3-5 most specific and relevant topics.
+   Only use topics from the controlled list above. Choose ALL relevant topics (typically 5-15).
    Prefer specific topics (e.g., "legal/court/decision") over generic ones (e.g., "communication/announcement").
+   Include both broad and specific tags to enable flexible searching.
 
 3. **suggested_topics**: Array of NEW topics you think should be added to vocabulary
    (These will be reviewed by user, not used directly)
@@ -798,20 +799,21 @@ Extract the following (return as JSON):
 
      **RELATIONSHIP EXTRACTION IS MANDATORY when text mentions ANY family/professional connection.**
 
-     CORRECT Examples:
-     ✅ Input: "Anna Lins was born. Steven Lins is the father"
-        Output: [
-          {{"name": "Anna Lins", "birth_date": "2025-01-15", "relationships": [{{"type": "daughter", "person": "Steven Lins"}}]}},
-          {{"name": "Steven Lins", "role": "father", "relationships": [{{"type": "father", "person": "Anna Lins"}}]}}
-        ]
+     ⚠️ FORMAT EXAMPLES ONLY - DO NOT EXTRACT THESE NAMES FROM EXAMPLES ⚠️
+     These are FICTIONAL examples showing the STRUCTURE, NOT real people to extract:
 
-     ✅ Input: "Dr. Schmidt (lawyer) representing Mr. Weber"
-        Output: [
-          {{"name": "Dr. Schmidt", "role": "lawyer"}},
-          {{"name": "Mr. Weber", "relationships": [{{"type": "client", "person": "Dr. Schmidt"}}]}}
-        ]
+     Example Structure #1: "Jane Doe was born. John Doe is the father"
+        → [{{"name": "Jane Doe", "birth_date": "YYYY-MM-DD", "relationships": [{{"type": "daughter", "person": "John Doe"}}]}},
+           {{"name": "John Doe", "role": "father", "relationships": [{{"type": "father", "person": "Jane Doe"}}]}}]
 
-     ❌ WRONG: {{"name": "Anna Lins"}} when text says "Steven is her father" (missing relationship!)
+     Example Structure #2: "Attorney Smith representing Client Jones"
+        → [{{"name": "Attorney Smith", "role": "lawyer"}},
+           {{"name": "Client Jones", "relationships": [{{"type": "client", "person": "Attorney Smith"}}]}}]
+
+     ⚠️ ONLY extract people WHO ARE ACTUALLY MENTIONED in the document content above ⚠️
+
+     ❌ WRONG: {{"name": "Jane Doe"}} when text says "John Doe is her father" (missing relationship!)
+     ✅ CORRECT: Include relationships: [{{"type": "daughter", "person": "John Doe"}}]
 
      Skip ONLY generic roles without names: "the lawyer", "a teacher", etc.
 
