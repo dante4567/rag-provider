@@ -223,20 +223,21 @@ if __name__ == "__main__":
         # Test query
         query = "What are the kita handover times after autumn break?"
 
-        print(f"Original query: {query}\n")
+        logging.basicConfig(level=logging.INFO)
+        logger.info(f"Original query: {query}\n")
 
         # Generate hypothetical documents
         hypothetical_docs = await hyde.generate_hypothetical_document(query, num_variants=2)
 
-        print(f"✅ Generated {len(hypothetical_docs)} hypothetical documents:\n")
+        logger.info(f"✅ Generated {len(hypothetical_docs)} hypothetical documents:\n")
         for idx, doc in enumerate(hypothetical_docs, 1):
-            print(f"Variant {idx}:")
-            print(doc)
-            print(f"\n{'-'*60}\n")
+            logger.info(f"Variant {idx}:")
+            logger.info(doc)
+            logger.info(f"\n{'-'*60}\n")
 
         # Test query expansion
         expanded_queries = await hyde.expand_query_with_hyde(query, num_variants=2)
-        print(f"✅ Expanded into {len(expanded_queries)} queries")
+        logger.info(f"✅ Expanded into {len(expanded_queries)} queries")
 
     # Run test
     asyncio.run(test_hyde())

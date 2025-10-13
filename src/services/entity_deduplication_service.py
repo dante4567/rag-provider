@@ -474,18 +474,19 @@ if __name__ == "__main__":
         ("Dr. Meyer", "person", "doc10"),
     ]
 
-    print("\n=== Entity Deduplication Test ===\n")
+    logging.basicConfig(level=logging.INFO)
+    logger.info("\n=== Entity Deduplication Test ===\n")
 
     for name, entity_type, doc_id in test_people:
         entity = service.add_entity(name, entity_type, doc_id)
-        print(f"Added: '{name}' → Canonical: '{entity.canonical_name}'")
+        logger.info(f"Added: '{name}' → Canonical: '{entity.canonical_name}'")
 
-    print("\n=== Final Entity Mappings ===\n")
+    logger.info("\n=== Final Entity Mappings ===\n")
     mappings = service.export_entity_mappings()
     for canonical, aliases in mappings.items():
-        print(f"'{canonical}': {aliases}")
+        logger.info(f"'{canonical}': {aliases}")
 
-    print("\n=== Statistics ===\n")
+    logger.info("\n=== Statistics ===\n")
     stats = service.get_statistics()
     for key, value in stats.items():
-        print(f"{key}: {value}")
+        logger.info(f"{key}: {value}")
