@@ -440,7 +440,7 @@ Return ONLY the category string, nothing else."""
             if doc_type in valid_types:
                 return doc_type
         except Exception as e:
-            print(f"[WARNING] LLM classification failed: {e}")
+            logger.warning(f"LLM classification failed: {e}")
 
         return SemanticDocumentType.unknown.value
 
@@ -466,7 +466,7 @@ Return ONLY the category string, nothing else."""
         if document_type.startswith('reference/report') or document_type.startswith('government/'):
             if len(people) > 10:
                 # Likely author list - keep first few
-                print(f"[FILTER] Report with {len(people)} people → keeping first 5 primary authors")
+                logger.debug(f"Report with {len(people)} people → keeping first 5 primary authors")
                 return people[:5]
 
         # For legal documents: Prioritize parties, lawyers, judges
@@ -478,7 +478,7 @@ Return ONLY the category string, nothing else."""
                 if any(role in str(p.get('role', '')).lower() for role in priority_roles)
             ]
             if priority_people:
-                print(f"[FILTER] Legal doc: keeping {len(priority_people)} parties/lawyers/judges from {len(people)} total")
+                logger.debug(f"Legal doc: keeping {len(priority_people)} parties/lawyers/judges from {len(people)} total")
                 return priority_people[:10]
 
         # For educational materials: Keep instructors, not all mentioned names
@@ -490,11 +490,11 @@ Return ONLY the category string, nothing else."""
                 if any(role in str(p.get('role', '')).lower() for role in ['instructor', 'professor', 'teacher', 'dozent'])
             ]
             if instructor_people:
-                print(f"[FILTER] Educational doc: keeping {len(instructor_people)} instructors from {len(people)} total")
+                logger.debug(f"Educational doc: keeping {len(instructor_people)} instructors from {len(people)} total")
                 return instructor_people[:5]
             # If no explicit instructors, keep max 5
             if len(people) > 5:
-                print(f"[FILTER] Educational doc: limiting to 5 key people from {len(people)} total")
+                logger.debug(f"Educational doc: limiting to 5 key people from {len(people)} total")
                 return people[:5]
 
         # For brochures/marketing: Usually don't need person extraction
@@ -505,23 +505,23 @@ Return ONLY the category string, nothing else."""
                 if p.get('email') or p.get('phone') or p.get('role')
             ]
             if len(contact_people) < len(people):
-                print(f"[FILTER] Brochure: keeping {len(contact_people)} contacts from {len(people)} mentioned people")
+                logger.debug(f"Brochure: keeping {len(contact_people)} contacts from {len(people)} mentioned people")
                 return contact_people
 
         # For forms/questionnaires: Keep all (these are important people)
         if document_type.startswith('form/'):
             # Forms contain relevant people (form subjects)
-            print(f"[FILTER] Form: keeping all {len(people)} people (relevant)")
+            logger.debug(f"Form: keeping all {len(people)} people (relevant)")
             return people
 
         # For meeting notes: Keep all attendees
         if document_type.startswith('communication/meeting'):
-            print(f"[FILTER] Meeting notes: keeping all {len(people)} attendees")
+            logger.debug(f"Meeting notes: keeping all {len(people)} attendees")
             return people
 
         # Default: Limit to reasonable number
         if len(people) > 15:
-            print(f"[FILTER] Default: limiting to 15 people from {len(people)} total")
+            logger.debug(f"Default: limiting to 15 people from {len(people)} total")
             return people[:15]
 
         return people
@@ -605,7 +605,7 @@ Return ONLY the category string, nothing else."""
         semantic_doc_type = await self.classify_semantic_document_type(
             content, filename, extracted_title
         )
-        print(f"[CLASSIFY] Document type: {semantic_doc_type}")
+        logger.info(f"Document type: {semantic_doc_type}")
 
         # Calculate recency score
         recency_score = self.calculate_recency_score(created_at)
@@ -630,22 +630,23 @@ Return ONLY the category string, nothing else."""
             )
 
             # Debug: Log structured LLM response
-            print(f"\n{'='*80}")
-            print(f"[DEBUG] Structured Instructor Response:")
-            print(f"  - Topics: {llm_response.topics}")
-            print(f"  - People count: {len(llm_response.entities.people)}")
-            print(f"  - Summary: {llm_response.summary[:100]}...")
-            print(f"{'='*80}\n")
+            logger.debug("=" * 80)
+            logger.debug(f"Structured Instructor Response:")
+            logger.debug(f"  - Topics: {llm_response.topics}")
+            logger.debug(f"  - People count: {len(llm_response.entities.people)}")
+            logger.debug(f"  - Summary: {llm_response.summary[:100]}...")
+            logger.debug("=" * 80)
 
             # Convert Pydantic model to dict for backwards compatibility
             llm_data = llm_response.model_dump()
 
             # Debug: Log parsed data
-            print(f"\n[DEBUG] Converted to Dict:")
-            print(f"  - Topics: {llm_data.get('topics', [])}")
-            print(f"  - People: {llm_data.get('entities', {}).get('people', [])}")
-            print(f"  - Dates: {llm_data.get('entities', {}).get('dates', [])}")
-            print(f"  - Empty? {len(llm_data) == 0}\n")
+            logger.debug(f"
+[DEBUG] Converted to Dict:")
+            logger.debug(f"  - Topics: {llm_data.get('topics', [])}")
+            logger.debug(f"  - People: {llm_data.get('entities', {}).get('people', [])}")
+            logger.debug(f"  - Dates: {llm_data.get('entities', {}).get('dates', [])}")
+            logger.debug(f"  - Empty? {len(llm_data) == 0}\n")
 
             # Extract dates, numbers, and people using regex (in addition to LLM extraction)
             regex_dates = self.extract_dates_from_content(content)
@@ -660,7 +661,8 @@ Return ONLY the category string, nothing else."""
 
             # FALLBACK: Use regex-extracted people if LLM returned none
             if not llm_people:
-                print(f"\n[FALLBACK] LLM returned no people, using regex extraction: {len(regex_people)} found")
+                logger.debug(f"
+[FALLBACK] LLM returned no people, using regex extraction: {len(regex_people)} found")
                 llm_people = regex_people
 
             # Filter people by document type (context-aware)
@@ -691,9 +693,9 @@ Return ONLY the category string, nothing else."""
             llm_entities["numbers"] = sorted(all_numbers)[:50]  # Max 50 numbers
             llm_data["entities"] = llm_entities
 
-            print(f"[DEBUG] Final entities after fallback:")
-            print(f"  - People: {len(llm_entities.get('people', []))}")
-            print(f"  - Dates: {len(llm_entities.get('dates', []))}")
+            logger.debug(f"Final entities after fallback:")
+            logger.debug(f"  - People: {len(llm_entities.get('people', []))}")
+            logger.debug(f"  - Dates: {len(llm_entities.get('dates', []))}")
 
             # Validate and clean with controlled vocabulary
             validated = self._validate_with_vocabulary(llm_data, created_at)
@@ -715,10 +717,11 @@ Return ONLY the category string, nothing else."""
             enriched["semantic_document_type"] = semantic_doc_type
 
             # Debug: Check if people/dates are in enriched metadata
-            print(f"\n[DEBUG] enriched metadata BEFORE return:")
-            print(f"  - people: {enriched.get('people', 'NOT IN DICT')}")
-            print(f"  - dates: {enriched.get('dates', 'NOT IN DICT')}")
-            print(f"  - dates_detailed: {enriched.get('dates_detailed', 'NOT IN DICT')}\n")
+            logger.debug(f"
+[DEBUG] enriched metadata BEFORE return:")
+            logger.debug(f"  - people: {enriched.get('people', 'NOT IN DICT')}")
+            logger.debug(f"  - dates: {enriched.get('dates', 'NOT IN DICT')}")
+            logger.debug(f"  - dates_detailed: {enriched.get('dates_detailed', 'NOT IN DICT')}\n")
 
             return enriched
 
@@ -1137,7 +1140,7 @@ Return ONLY this JSON structure (no markdown, no explanations):
             scores = critique_data.get("scores", {})
             for key, value in scores.items():
                 if not isinstance(value, (int, float)) or value < 0 or value > 5:
-                    print(f"[WARNING] Invalid score for {key}: {value}, defaulting to 2.5")
+                    logger.warning(f"Invalid score for {key}: {value}, defaulting to 2.5")
                     scores[key] = 2.5
 
             # Calculate overall quality (weighted average)
@@ -1161,7 +1164,7 @@ Return ONLY this JSON structure (no markdown, no explanations):
             }
 
         except Exception as e:
-            print(f"[ERROR] Critic enrichment failed: {str(e)}")
+            logger.error(f"Critic enrichment failed: {str(e)}")
             import traceback
             traceback.print_exc()
 
