@@ -43,7 +43,7 @@ class EnrichmentService:
             try:
                 self.vocab = VocabularyService("vocabulary")
             except Exception as e:
-                print(f"Warning: Could not load vocabulary service: {e}")
+                logger.warning(f"Could not load vocabulary service: {e}")
                 self.vocab = None
 
         # Load entity deduplication service
@@ -723,9 +723,7 @@ Return ONLY the category string, nothing else."""
             return enriched
 
         except Exception as e:
-            print(f"[ERROR] Enrichment V2 failed: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Enrichment V2 failed: {str(e)}", exc_info=True)
 
             # Fallback
             return self._fallback_metadata(

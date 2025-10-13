@@ -77,6 +77,7 @@ class TestProviderAvailability:
 class TestEnrichmentWithDifferentProviders:
     """Test enrichment quality across different LLM providers"""
 
+    @pytest.mark.slow
     def test_enrichment_with_groq(self):
         """Test enrichment using Groq (default fast provider)"""
         content = """
@@ -117,6 +118,7 @@ class TestEnrichmentWithDifferentProviders:
             assert "essen" in places.lower() or "florianschule" in places.lower(), \
                 f"Should extract location, got: {places}"
 
+    @pytest.mark.slow
     def test_cost_tracking_varies_by_provider(self):
         """Cost should be tracked and vary by provider model"""
         # Ingest same content multiple times (will hit different providers via fallback)
@@ -153,6 +155,7 @@ class TestEnrichmentWithDifferentProviders:
 class TestProviderFallback:
     """Test LLM provider fallback chain"""
 
+    @pytest.mark.slow
     def test_enrichment_succeeds_with_any_provider(self):
         """Enrichment should work even if primary provider fails"""
         # The system should automatically fall back
@@ -187,6 +190,7 @@ class TestProviderFallback:
 class TestProviderConsistency:
     """Test that different providers produce consistent results"""
 
+    @pytest.mark.slow
     def test_entity_extraction_consistency(self):
         """Different providers should extract similar entities"""
         content = """
@@ -235,6 +239,7 @@ class TestProviderConsistency:
 class TestProviderSpecificFeatures:
     """Test provider-specific capabilities"""
 
+    @pytest.mark.slow
     def test_groq_speed_advantage(self):
         """Groq should be faster than other providers"""
         content = "Quick test document for speed comparison."
@@ -255,6 +260,7 @@ class TestProviderSpecificFeatures:
         # Note: This is loose since we don't control which provider is used
         assert elapsed < 30, f"Ingestion should be reasonably fast, took {elapsed}s"
 
+    @pytest.mark.slow
     def test_anthropic_quality_for_complex_content(self):
         """Anthropic models should handle complex content well"""
         content = """
@@ -350,6 +356,7 @@ class TestCostEfficiency:
             total_models = pricing.get("total_models_with_pricing", 0)
             assert total_models > 0, "Pricing should be tracked for cost optimization"
 
+    @pytest.mark.slow
     def test_document_ingestion_cost_reasonable(self):
         """Document ingestion should cost under $0.02"""
         content = """
