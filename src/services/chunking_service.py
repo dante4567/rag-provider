@@ -12,10 +12,13 @@ Key Features:
 - Tables and code blocks = standalone chunks
 """
 
+import logging
 import re
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class ChunkType(str, Enum):
@@ -487,16 +490,17 @@ Final thoughts and summary.
     service = ChunkingService(target_size=200, max_size=400)
     chunks = service.chunk_text(test_content)
 
-    print(f"\n📄 Created {len(chunks)} chunks from test document\n")
-    print("=" * 60)
+    logging.basicConfig(level=logging.INFO)
+    logger.info(f"\n📄 Created {len(chunks)} chunks from test document\n")
+    logger.info("=" * 60)
 
     for i, chunk_dict in enumerate(chunks):
-        print(f"\n🔹 Chunk {i + 1}:")
-        print(f"   Type: {chunk_dict['metadata']['chunk_type']}")
-        print(f"   Title: {chunk_dict['metadata'].get('section_title', 'N/A')}")
-        print(f"   Tokens: ~{chunk_dict['estimated_tokens']}")
-        print(f"   Preview: {chunk_dict['content'][:100]}...")
-        print()
+        logger.info(f"\n🔹 Chunk {i + 1}:")
+        logger.info(f"   Type: {chunk_dict['metadata']['chunk_type']}")
+        logger.info(f"   Title: {chunk_dict['metadata'].get('section_title', 'N/A')}")
+        logger.info(f"   Tokens: ~{chunk_dict['estimated_tokens']}")
+        logger.info(f"   Preview: {chunk_dict['content'][:100]}...")
+        logger.info("")
 
-    print("=" * 60)
-    print("✅ Structure-aware chunking working!")
+    logger.info("=" * 60)
+    logger.info("✅ Structure-aware chunking working!")
