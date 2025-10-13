@@ -45,7 +45,16 @@
       "Bash(docker:*)",
       "Bash(git tag -a v2.2.0 -m \"$(cat <<''EOF''\nRelease v2.2.0 - Voyage + Mixedbread Upgrade\n\nMajor cost optimization and quality improvement release.\n\n## Highlights\n- 🚀 Voyage-3-lite embeddings (MTEB 68, $0.02/1M tokens)\n- 🎯 Mixedbread mxbai-rerank-large-v2 (BEIR 57.49, self-hosted)\n- 💰 99% cost reduction ($2.013 → $0.002 per 1K queries)\n- 📊 +5% retrieval quality improvement\n- ✅ 585/585 unit tests passing\n\n## What''s Changed\n- Embeddings: OpenAI → Voyage-3-lite (+5.3% quality, 85% cheaper)\n- Reranking: Cohere → Mixedbread mxbai (+ 4.5% quality, 100% free)\n- Storage: 3072 → 512 dimensions (84% reduction per document)\n\n## Breaking Changes\n- Requires VOYAGE_API_KEY environment variable\n- ChromaDB collection must be recreated (dimension change)\n- First search will download mxbai model (~3GB, one-time)\n\n## Documentation\n- UPGRADE_TO_VOYAGE_MXBAI.md - Complete deployment guide\n- RAG_MODELS_COMPARISON_OCT2025.md - Model comparisons\n\n## Tested On\n- Python 3.11\n- Docker 27.x\n- ChromaDB 1.1.1\n- 585 unit tests, 11 smoke tests passing\nEOF\n)\")",
       "Bash(git checkout:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge:*)",
+      "Bash(git tag:*)",
+      "Bash(gh run rerun:*)",
+      "Bash(pip index:*)",
+      "Bash(pip show:*)",
+      "Bash(gh release view:*)",
+      "Bash(gh release create:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

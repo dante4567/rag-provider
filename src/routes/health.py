@@ -30,9 +30,13 @@ async def health_check(
         # Import static config (not services)
         from app import PLATFORM, IS_DOCKER, OCR_AVAILABLE, ENABLE_FILE_WATCH, PATHS
 
-        # Test ChromaDB connection
-        chroma_client.heartbeat()
-        chromadb_status = "connected"
+        # Test ChromaDB connection (gracefully handle failure)
+        try:
+            chroma_client.heartbeat()
+            chromadb_status = "connected"
+        except Exception as chroma_error:
+            logger.warning(f"ChromaDB connection failed: {chroma_error}")
+            chromadb_status = f"disconnected ({type(chroma_error).__name__})"
 
         # Get LLM service info
         available_providers = rag_service.llm_service.get_available_providers()
@@ -70,8 +74,11 @@ async def health_check(
                 "error": str(e)
             }
 
+        # Determine overall health status
+        overall_status = "healthy" if chromadb_status == "connected" else "degraded"
+
         return {
-            "status": "healthy",
+            "status": overall_status,
             "timestamp": datetime.now().isoformat(),
             "platform": PLATFORM,
             "docker": IS_DOCKER,

@@ -38,6 +38,10 @@ data/processed/*
 !data/processed/.gitkeep
 data/obsidian/*
 !data/obsidian/.gitkeep
+data/calendar/*
+!data/calendar/.gitkeep
+data/contacts/*
+!data/contacts/.gitkeep
 
 # Docker volumes
 volumes/
