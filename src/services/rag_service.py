@@ -379,14 +379,20 @@ class RAGService:
                 refs_dir=f"{obsidian_output_dir}/refs"
             )
 
-            # Initialize contact/calendar export services
-            # Use absolute paths for Docker, relative for local dev
-            contacts_default = "/data/contacts" if IS_DOCKER else "./data/contacts"
-            calendar_default = "/data/calendar" if IS_DOCKER else "./data/calendar"
-            contacts_output_dir = Path(os.getenv("CONTACTS_PATH", contacts_default))
-            calendar_output_dir = Path(os.getenv("CALENDAR_PATH", calendar_default))
-            self.contact_service = ContactService(output_dir=contacts_output_dir)
-            self.calendar_service = CalendarService(output_dir=calendar_output_dir)
+            # Initialize contact/calendar export services (opt-in via ENABLE_VCF_ICS=true)
+            # Disabled by default for personal use (entities are in Obsidian wiki-links)
+            enable_vcf_ics = os.getenv("ENABLE_VCF_ICS", "false").lower() == "true"
+            if enable_vcf_ics:
+                # Use absolute paths for Docker, relative for local dev
+                contacts_default = "/data/contacts" if IS_DOCKER else "./data/contacts"
+                calendar_default = "/data/calendar" if IS_DOCKER else "./data/calendar"
+                contacts_output_dir = Path(os.getenv("CONTACTS_PATH", contacts_default))
+                calendar_output_dir = Path(os.getenv("CALENDAR_PATH", calendar_default))
+                self.contact_service = ContactService(output_dir=contacts_output_dir)
+                self.calendar_service = CalendarService(output_dir=calendar_output_dir)
+            else:
+                self.contact_service = None
+                self.calendar_service = None
 
             # Initialize entity name filter (filters generic roles)
             self.entity_filter = EntityNameFilterService()
@@ -401,8 +407,11 @@ class RAGService:
             logger.info(f"   📍 Places: {len(self.vocabulary_service.get_all_places())}")
             logger.info("✅ Structure-aware chunking enabled (ignores RAG:IGNORE blocks)")
             logger.info(f"✅ ObsidianService initialized (RAG-first format) → {obsidian_output_dir}")
-            logger.info(f"✅ ContactService initialized → {contacts_output_dir}")
-            logger.info(f"✅ CalendarService initialized → {calendar_output_dir}")
+            if enable_vcf_ics:
+                logger.info(f"✅ ContactService enabled → {contacts_output_dir}")
+                logger.info(f"✅ CalendarService enabled → {calendar_output_dir}")
+            else:
+                logger.info("ℹ️  VCF/ICS export disabled (enable with ENABLE_VCF_ICS=true)")
         except Exception as e:
             logger.error(f"❌ Service layer initialization failed: {e}")
             raise RuntimeError(f"Service layer is required but initialization failed: {e}")
@@ -905,7 +914,7 @@ class RAGService:
                             filtered_names = [p if isinstance(p, str) else p.get('name', '') for p in filtered_out]
                             logger.info(f"🔍 Filtered out generic roles: {', '.join(filtered_names)}")
 
-                        if filtered_people:
+                        if filtered_people and self.contact_service:
                             # Handle both string and dict formats
                             people_names = [p if isinstance(p, str) else p.get('name', '') for p in filtered_people]
                             logger.info(f"👥 Creating vCards for {len(filtered_people)} specific people: {', '.join(people_names)}")
@@ -916,15 +925,17 @@ class RAGService:
                                 document_id=doc_id
                             )
                             logger.info(f"✅ Created {len(vcards_created)} vCard(s) → {self.contact_service.output_dir}")
+                        elif filtered_people:
+                            logger.debug(f"ℹ️  VCF export disabled, skipping {len(filtered_people)} people")
                         else:
                             logger.info(f"ℹ️  No specific people found (all {len(people)} were generic roles)")
                 except Exception as e:
                     logger.warning(f"⚠️ vCard generation failed: {e}")
 
-                # Generate iCal events for dates (if any)
+                # Generate iCal events for dates (if any, and if service enabled)
                 try:
                     dates = enriched_metadata.get('entities', {}).get('dates', [])
-                    if dates:
+                    if dates and self.calendar_service:
                         logger.info(f"📅 Generating calendar events for {len(dates)} dates...")
                         events_created = self.calendar_service.create_events_from_metadata(
                             dates=dates,
@@ -933,6 +944,8 @@ class RAGService:
                             document_topics=enriched_metadata.get('topics', [])
                         )
                         logger.info(f"✅ Created {len(events_created)} calendar event(s) → {self.calendar_service.output_dir}")
+                    elif dates:
+                        logger.debug(f"ℹ️  ICS export disabled, skipping {len(dates)} dates")
                 except Exception as e:
                     logger.warning(f"⚠️ Calendar event generation failed: {e}")
 

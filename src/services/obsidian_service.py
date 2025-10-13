@@ -182,34 +182,34 @@ class ObsidianService:
         # Organizations go into entities section per blueprint
         orgs = organizations if organizations else []
 
-        # Build frontmatter dict (BLUEPRINT-COMPLIANT)
+        # Build frontmatter dict (COMPLETE VERSION - All metadata preserved)
         frontmatter = {
+            # === Core Identification ===
             'id': id,
             'title': title,
             'source': source,
-            'path': f"data/obsidian/{id}.md",  # Blueprint spec
+            'path': f"data/obsidian/{id}.md",
             'doc_type': type_str,
             'semantic_document_type': metadata.get('semantic_document_type', 'unknown/uncategorized'),
             'created_at': created_at.strftime('%Y-%m-%d'),
             'ingested_at': ingested_at.strftime('%Y-%m-%d'),
 
-            # Controlled vocabulary (top-level lists) - converted to wiki-links for clickability
-            'people': [f"[[refs/persons/{slugify(p)}|{p}]]" for p in people] if people else [],
-            'places': [f"[[refs/places/{slugify(p)}|{p}]]" for p in places] if places else [],
-            'projects': [f"[[refs/projects/{slugify(p)}|{p}]]" for p in projects] if projects else [],
-            'topics': topics if topics else [],  # Topics remain as plain strings (hierarchical paths)
-
-            # Entities (FLATTENED for Obsidian Dataview compatibility)
-            'organizations': [f"[[refs/orgs/{slugify(o)}|{o}]]" for o in orgs] if orgs else [],
-            'people_detailed': people_objects if people_objects else [],  # Full person objects with relationships
-            'dates': [f"[[refs/days/{d}]]" for d in dates] if dates else [],
-            'dates_detailed': entities_data.get('dates_detailed', []),  # Full date context
-            'numbers': numbers,
-
-            # Summary (top-level)
+            # === Summary ===
             'summary': metadata.get('summary', ''),
 
-            # Scores (FLAT for Dataview queries)
+            # === Entities (Wiki-linked for Obsidian navigation) ===
+            'people': [f"[[refs/persons/{slugify(p)}|{p}]]" for p in people] if people else [],
+            'places': [f"[[refs/places/{slugify(p)}|{p}]]" for p in places] if places else [],
+            'topics': topics if topics else [],
+            'organizations': [f"[[refs/orgs/{slugify(o)}|{o}]]" for o in orgs] if orgs else [],
+
+            # === Detailed Entity Objects (structured data) ===
+            'people_detailed': people_objects if people_objects else [],
+            'dates': [f"[[refs/days/{d}]]" for d in dates] if dates else [],
+            'dates_detailed': entities_data.get('dates_detailed', []),
+            'numbers': numbers,
+
+            # === Quality Scores (for filtering/sorting) ===
             'quality_score': float(metadata.get('quality_score', 0.0)),
             'novelty_score': float(metadata.get('novelty_score', 0.0)),
             'actionability_score': float(metadata.get('actionability_score', 0.0)),
@@ -217,22 +217,23 @@ class ObsidianService:
             'signalness': float(metadata.get('signalness', 0.0)),
             'do_index': metadata.get('do_index', True),
 
-            # Provenance (FLATTENED for Dataview)
+            # === Provenance (deduplication, troubleshooting) ===
             'sha256': metadata.get('content_hash', '')[:16],
             'sha256_full': metadata.get('content_hash', ''),
             'source_ref': source,
             'file_size_mb': metadata.get('file_size_mb', 0.0),
             'ingestion_date': ingested_at.isoformat(),
 
-            # Enrichment metadata (top-level)
+            # === Enrichment Metadata (cost tracking, versioning) ===
             'enrichment_version': metadata.get('enrichment_version', 'v2.1'),
             'enrichment_cost_usd': metadata.get('enrichment_cost', 0.0),
 
-            # Optional fields
+            # === Optional Fields ===
             'page_span': metadata.get('page_span'),
             'canonical': metadata.get('canonical', True),
 
-            # Auto-derived tags (for Obsidian graph/search)
+            # === Projects & Tags ===
+            'projects': [f"[[refs/projects/{slugify(p)}|{p}]]" for p in projects] if projects else [],
             'tags': tags
         }
 
@@ -387,7 +388,8 @@ class ObsidianService:
         key_facts: List[str],
         outcomes: List[str],
         next_actions: List[str],
-        timeline: List[Dict[str, str]]
+        timeline: List[Dict[str, str]],
+        chunks: List[Dict[str, Any]] = None
     ) -> str:
         """
         Build structured body (helps both humans and RAG)
@@ -444,8 +446,19 @@ class ObsidianService:
         clean_content = self._strip_frontmatter(content)
         # Ensure proper paragraph spacing
         formatted_content = self._format_paragraphs(clean_content)
-        body_parts.append("## Evidence / Excerpts\n")
-        body_parts.append("_Note: This document was chunked for vector search. See `chunks` in frontmatter for count._\n")
+        body_parts.append("## Content\n")
+
+        # Show chunking information if available
+        if chunks:
+            chunk_count = len(chunks)
+            body_parts.append(f"_This document was split into {chunk_count} chunks for vector search:_\n")
+            for i, chunk in enumerate(chunks, 1):
+                chunk_preview = chunk.get('content', '')[:100].replace('\n', ' ')
+                if len(chunk.get('content', '')) > 100:
+                    chunk_preview += "..."
+                body_parts.append(f"- **Chunk {i}**: {chunk_preview}")
+            body_parts.append("")
+
         body_parts.append(formatted_content)
         body_parts.append("")
 
