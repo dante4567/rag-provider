@@ -13,6 +13,7 @@ Schema: Single unified frontmatter (no Obsidian-only fields)
 """
 
 import hashlib
+import logging
 import re
 import yaml
 from datetime import datetime
@@ -21,6 +22,8 @@ from typing import Dict, List, Optional, Any
 from slugify import slugify
 
 from src.models.schemas import DocumentType
+
+logger = logging.getLogger(__name__)
 
 
 class ObsidianService:
@@ -681,10 +684,10 @@ LIMIT 50
         ingested_at = datetime.now()
 
         # Debug: Log what metadata we received
-        print(f"\n[OBSIDIAN DEBUG] export_document() received metadata:")
-        print(f"  - people field: {metadata.get('people', 'NOT FOUND')}")
-        print(f"  - dates field: {metadata.get('dates', 'NOT FOUND')}")
-        print(f"  - dates_detailed field: {metadata.get('entities', {}).get('dates_detailed', 'NOT FOUND')}\n")
+        logger.debug(f"export_document() received metadata:\n"
+                    f"  - people field: {metadata.get('people', 'NOT FOUND')}\n"
+                    f"  - dates field: {metadata.get('dates', 'NOT FOUND')}\n"
+                    f"  - dates_detailed field: {metadata.get('entities', {}).get('dates_detailed', 'NOT FOUND')}")
 
         # Parse metadata lists
         # Handle both old format (people_roles string) and new format (people list of dicts/strings)
@@ -903,14 +906,14 @@ Contact information: handover@kita-astronauten.de
         source="email"
     )
 
-    print(f"\n✅ Exported to: {result}")
-    print(f"\n📄 Content preview:")
-    print("=" * 60)
-    print(result.read_text()[:800])
-    print("=" * 60)
+    logger.info(f"\n✅ Exported to: {result}")
+    logger.info(f"\n📄 Content preview:")
+    logger.info("=" * 60)
+    logger.info(result.read_text()[:800])
+    logger.info("=" * 60)
 
     # Check entity stubs
     refs_created = list((Path("./test_obsidian_v3/refs")).rglob("*.md"))
-    print(f"\n📁 Created {len(refs_created)} entity stubs:")
+    logger.info(f"\n📁 Created {len(refs_created)} entity stubs:")
     for ref in refs_created:
-        print(f"   - {ref.relative_to('./test_obsidian_v3')}")
+        logger.info(f"   - {ref.relative_to('./test_obsidian_v3')}")

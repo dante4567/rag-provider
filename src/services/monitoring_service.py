@@ -446,20 +446,22 @@ class MonitoringService:
 
 # Test
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    test_logger = logging.getLogger(__name__)
     monitor = MonitoringService("test_service")
 
-    print("=" * 60)
-    print("Monitoring Service Test")
-    print("=" * 60)
+    test_logger.info("=" * 60)
+    test_logger.info("Monitoring Service Test")
+    test_logger.info("=" * 60)
 
     # Test 1: Structured logging
-    print("\n1. Structured logging:")
+    test_logger.info("\n1. Structured logging:")
     monitor.logger.info("Service started", version="1.0.0")
     monitor.logger.warning("High memory usage", memory_mb=1024)
-    print("   ✓ Logged structured messages")
+    test_logger.info("   ✓ Logged structured messages")
 
     # Test 2: Metrics
-    print("\n2. Metrics collection:")
+    test_logger.info("\n2. Metrics collection:")
     monitor.metrics.increment_counter("requests", labels={"endpoint": "/search"})
     monitor.metrics.increment_counter("requests", labels={"endpoint": "/search"})
     monitor.metrics.set_gauge("memory_mb", 512)
@@ -467,13 +469,13 @@ if __name__ == "__main__":
     monitor.metrics.observe_histogram("latency_ms", 67)
     monitor.metrics.observe_histogram("latency_ms", 89)
 
-    print(f"   Counter 'requests': {monitor.metrics.get_counter('requests', {'endpoint': '/search'})}")
-    print(f"   Gauge 'memory_mb': {monitor.metrics.get_gauge('memory_mb')}")
+    test_logger.info(f"   Counter 'requests': {monitor.metrics.get_counter('requests', {'endpoint': '/search'})}")
+    test_logger.info(f"   Gauge 'memory_mb': {monitor.metrics.get_gauge('memory_mb')}")
     stats = monitor.metrics.get_histogram_stats("latency_ms")
-    print(f"   Histogram 'latency_ms': avg={stats['avg']:.1f}ms, p95={stats['p95']:.1f}ms")
+    test_logger.info(f"   Histogram 'latency_ms': avg={stats['avg']:.1f}ms, p95={stats['p95']:.1f}ms")
 
     # Test 3: Health checks
-    print("\n3. Health checks:")
+    test_logger.info("\n3. Health checks:")
 
     def check_database():
         return (HealthStatus.HEALTHY, "Database connection OK")
@@ -484,23 +486,23 @@ if __name__ == "__main__":
     monitor.health.check_component("database", check_database)
     monitor.health.check_component("cache", check_cache)
 
-    print(f"   Overall health: {monitor.health.get_overall_health().value}")
+    test_logger.info(f"   Overall health: {monitor.health.get_overall_health().value}")
     for comp, status in monitor.health.component_status.items():
-        print(f"   - {comp}: {status.value}")
+        test_logger.info(f"   - {comp}: {status.value}")
 
     # Test 4: Request logging
-    print("\n4. Request logging:")
+    test_logger.info("\n4. Request logging:")
     monitor.log_request("/search", "POST", 200, 123.4)
     monitor.log_request("/ingest", "POST", 201, 456.7)
-    print("   ✓ Logged HTTP requests")
+    test_logger.info("   ✓ Logged HTTP requests")
 
     # Test 5: Summary
-    print("\n5. Monitoring summary:")
+    test_logger.info("\n5. Monitoring summary:")
     summary = monitor.get_monitoring_summary()
-    print(f"   Uptime: {summary['uptime_seconds']:.1f}s")
-    print(f"   Health: {summary['health']['overall']}")
-    print(f"   Metrics: {len(summary['metrics']['counters'])} counters, "
+    test_logger.info(f"   Uptime: {summary['uptime_seconds']:.1f}s")
+    test_logger.info(f"   Health: {summary['health']['overall']}")
+    test_logger.info(f"   Metrics: {len(summary['metrics']['counters'])} counters, "
           f"{len(summary['metrics']['gauges'])} gauges")
 
-    print("\n" + "=" * 60)
-    print("✅ All tests passed")
+    test_logger.info("\n" + "=" * 60)
+    test_logger.info("✅ All tests passed")
