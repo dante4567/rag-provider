@@ -660,8 +660,7 @@ Return ONLY the category string, nothing else."""
 
             # FALLBACK: Use regex-extracted people if LLM returned none
             if not llm_people:
-                logger.debug(f"
-[FALLBACK] LLM returned no people, using regex extraction: {len(regex_people)} found")
+                logger.debug(f"[FALLBACK] LLM returned no people, using regex extraction: {len(regex_people)} found")
                 llm_people = regex_people
 
             # Filter people by document type (context-aware)
@@ -716,8 +715,7 @@ Return ONLY the category string, nothing else."""
             enriched["semantic_document_type"] = semantic_doc_type
 
             # Debug: Check if people/dates are in enriched metadata
-            logger.debug(f"
-[DEBUG] enriched metadata BEFORE return:")
+            logger.debug("[DEBUG] enriched metadata BEFORE return:")
             logger.debug(f"  - people: {enriched.get('people', 'NOT IN DICT')}")
             logger.debug(f"  - dates: {enriched.get('dates', 'NOT IN DICT')}")
             logger.debug(f"  - dates_detailed: {enriched.get('dates_detailed', 'NOT IN DICT')}\n")
