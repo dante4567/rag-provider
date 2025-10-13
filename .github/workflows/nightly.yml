@@ -54,6 +54,7 @@ jobs:
         echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> $GITHUB_ENV
         echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
         echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> $GITHUB_ENV
+        echo "VOYAGE_API_KEY=${{ secrets.VOYAGE_API_KEY }}" >> $GITHUB_ENV
 
     - name: Start RAG service
       run: |

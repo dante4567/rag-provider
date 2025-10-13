@@ -21,12 +21,14 @@ Click **"New repository secret"** and add each of the following:
 | `GROQ_API_KEY` | `gsk_...` | ✅ Yes | Primary LLM (ultra-cheap) |
 | `ANTHROPIC_API_KEY` | `sk-ant-...` | ✅ Yes | Fallback LLM |
 | `OPENAI_API_KEY` | `sk-...` | ⚠️ Recommended | Emergency fallback |
+| `VOYAGE_API_KEY` | `pa-...` | ✅ Yes | Embeddings (Voyage-3-lite) |
 | `GOOGLE_API_KEY` | `...` | ❌ Optional | Gemini Vision |
 
 **Where to get keys:**
 - **Groq:** https://console.groq.com/keys
 - **Anthropic:** https://console.anthropic.com/settings/keys
 - **OpenAI:** https://platform.openai.com/api-keys
+- **Voyage:** https://dash.voyageai.com/
 - **Google:** https://makersuite.google.com/app/apikey
 
 ### Step 2: Verify Workflows Exist
