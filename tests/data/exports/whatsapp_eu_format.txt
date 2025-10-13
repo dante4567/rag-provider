@@ -1,0 +1,21 @@
+15.01.24, 15:45 - Anna: Hallo! Kommst du morgen zum Meeting?
+15.01.24, 15:46 - Klaus: Ja, ich bin dabei. Um wie viel Uhr?
+15.01.24, 15:47 - Anna: 10 Uhr im Konferenzraum
+15.01.24, 15:48 - Klaus: Perfekt, bis dann!
+15.01.24, 15:49 - Anna: Vergiss nicht die Präsentationsfolien
+15.01.24, 15:50 - Klaus: Habe sie gestern schon vorbereitet 👍
+
+16.01.24, 09:00 - Anna: Guten Morgen! Ich bin unterwegs
+16.01.24, 09:15 - Klaus: Morgen! Ich bin schon da und bereite alles vor
+16.01.24, 09:18 - Anna: Super, bin in 5 Minuten da
+16.01.24, 09:25 - Anna: Bin jetzt da, wo bist du?
+16.01.24, 09:26 - Klaus: In Raum B. Komm hoch!
+
+16.01.24, 11:30 - Klaus: Das ist sehr gut gelaufen!
+16.01.24, 11:31 - Anna: Stimmt! Der Kunde wirkte sehr interessiert
+16.01.24, 11:32 - Klaus: Sollen wir nächste Woche nachfassen?
+16.01.24, 11:33 - Anna: Ja, ich schicke das Angebot am Montag
+16.01.24, 11:35 - Klaus: Perfekt. Lust auf Mittagessen?
+16.01.24, 11:36 - Anna: Gerne! Wohin möchtest du?
+16.01.24, 11:37 - Klaus: Wie wäre es mit dem italienischen Restaurant?
+16.01.24, 11:38 - Anna: Klingt gut! Treffen wir uns in 10 Minuten in der Lobby

@@ -399,7 +399,7 @@ class EnrichmentService:
             return SemanticDocumentType.government_policy.value
 
         # If no keyword match, use LLM for classification from controlled vocabulary
-        allowed_types = self.vocab_service.get_all_document_types()
+        allowed_types = self.vocab.get_all_document_types() if self.vocab else []
 
         # Format types list for LLM prompt
         types_list = "\n".join([f"- {t}" for t in allowed_types])

@@ -1,0 +1,50 @@
+{
+  "uuid": "conv-abc123-def456-ghi789",
+  "name": "RAG System Architecture Discussion",
+  "created_at": "2024-01-15T14:30:00.000Z",
+  "updated_at": "2024-01-15T15:45:00.000Z",
+  "chat_messages": [
+    {
+      "uuid": "msg-001",
+      "text": "I'm building a RAG system and need advice on the architecture. What should I consider?",
+      "sender": "human",
+      "created_at": "2024-01-15T14:30:00.000Z",
+      "updated_at": "2024-01-15T14:30:00.000Z"
+    },
+    {
+      "uuid": "msg-002",
+      "text": "Great question! Here are the key architectural considerations for a RAG system:\n\n1. **Document Processing Pipeline**\n   - Ingestion: How documents enter the system\n   - Parsing: Extracting text from various formats (PDF, DOCX, etc.)\n   - Chunking: Breaking documents into semantic units\n\n2. **Embedding Strategy**\n   - Model selection (local vs API)\n   - Dimension size vs quality tradeoff\n   - Update frequency\n\n3. **Vector Database**\n   - Storage backend (ChromaDB, Pinecone, Weaviate)\n   - Indexing strategy\n   - Query performance\n\n4. **Retrieval Strategy**\n   - Hybrid search (keyword + semantic)\n   - Reranking layer\n   - Context window management\n\n5. **LLM Integration**\n   - Model selection\n   - Prompt engineering\n   - Cost optimization\n\nWhat's your primary use case?",
+      "sender": "assistant",
+      "created_at": "2024-01-15T14:31:30.000Z",
+      "updated_at": "2024-01-15T14:31:30.000Z"
+    },
+    {
+      "uuid": "msg-003",
+      "text": "I'm building it for personal document management - emails, PDFs, notes, etc. Cost is a concern.",
+      "sender": "human",
+      "created_at": "2024-01-15T14:33:00.000Z",
+      "updated_at": "2024-01-15T14:33:00.000Z"
+    },
+    {
+      "uuid": "msg-004",
+      "text": "Perfect! For personal use with cost constraints, here's what I recommend:\n\n**Embeddings**: Use local sentence-transformers models (free)\n- `all-MiniLM-L6-v2` for speed (384 dimensions)\n- `all-mpnet-base-v2` for quality (768 dimensions)\n\n**Vector DB**: ChromaDB (free, local, easy)\n\n**LLM Strategy**: Tiered fallback\n1. Primary: Groq (ultra-cheap, fast)\n2. Fallback: Claude Haiku (balanced)\n3. Emergency: GPT-4o-mini (reliable)\n\n**Document Processing**:\n- WhatsApp: Group by conversation threads (4-hour gaps)\n- Emails: Thread by subject + references\n- PDFs: Structure-aware chunking\n\nThis setup costs ~$0.01-0.05 per day for typical personal use.\n\nWant me to elaborate on any component?",
+      "sender": "assistant",
+      "created_at": "2024-01-15T14:35:00.000Z",
+      "updated_at": "2024-01-15T14:35:00.000Z"
+    },
+    {
+      "uuid": "msg-005",
+      "text": "That sounds perfect! Can you explain more about the WhatsApp threading?",
+      "sender": "human",
+      "created_at": "2024-01-15T14:37:00.000Z",
+      "updated_at": "2024-01-15T14:37:00.000Z"
+    },
+    {
+      "uuid": "msg-006",
+      "text": "Absolutely! WhatsApp threading is crucial for preserving conversation context:\n\n**Problem**: Raw WhatsApp exports are flat message lists. Without threading, RAG retrieves random messages without context.\n\n**Solution**: Time-based thread detection\n```python\ndef group_into_threads(messages, gap_hours=4):\n    threads = []\n    current_thread = [messages[0]]\n    \n    for msg in messages[1:]:\n        time_gap = msg.timestamp - current_thread[-1].timestamp\n        \n        if time_gap > gap_hours:\n            threads.append(current_thread)\n            current_thread = [msg]\n        else:\n            current_thread.append(msg)\n    \n    return threads\n```\n\n**Why 4 hours?** Research shows most WhatsApp conversations have natural breaks:\n- Work chats: lunch/end of day\n- Personal: activity changes\n- Groups: topic shifts\n\n**Benefits**:\n- Better retrieval: Get whole conversation, not fragments\n- Richer metadata: participants, duration, topic continuity\n- Semantic chunking: Natural conversation boundaries\n\nSame principle applies to email (thread by subject/references) and LLM chats (natural conversation units).",
+      "sender": "assistant",
+      "created_at": "2024-01-15T14:40:00.000Z",
+      "updated_at": "2024-01-15T14:40:00.000Z"
+    }
+  ]
+}

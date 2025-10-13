@@ -269,6 +269,7 @@ class TestEnrichmentServiceIntegration:
         vocab.get_active_projects.return_value = ["school-2026"]
         vocab.get_all_places.return_value = ["Florianschule Essen"]
         vocab.get_all_people.return_value = []
+        vocab.get_all_document_types.return_value = ["communication/email", "education/letter"]
         vocab.is_valid_topic.return_value = True
         vocab.is_valid_place.return_value = True
         vocab.is_valid_person.return_value = True

@@ -1,0 +1,21 @@
+1/15/24, 3:45 PM - Alice: Hey, are you coming to the meeting tomorrow?
+1/15/24, 3:46 PM - Bob: Yes, I'll be there. What time does it start?
+1/15/24, 3:47 PM - Alice: 10 AM in the conference room
+1/15/24, 3:48 PM - Bob: Perfect, see you then!
+1/15/24, 3:49 PM - Alice: Don't forget to bring the presentation slides
+1/15/24, 3:50 PM - Bob: Already prepared them yesterday 👍
+
+1/16/24, 9:00 AM - Alice: Good morning! I'm on my way
+1/16/24, 9:15 AM - Bob: Morning! I'm already here setting up
+1/16/24, 9:18 AM - Alice: Great, I'll be there in 5 minutes
+1/16/24, 9:25 AM - Alice: Here now, where are you?
+1/16/24, 9:26 AM - Bob: In room B. Come on up!
+
+1/16/24, 11:30 AM - Bob: That went really well!
+1/16/24, 11:31 AM - Alice: Agreed! The client seemed very interested
+1/16/24, 11:32 AM - Bob: Should we follow up with them next week?
+1/16/24, 11:33 AM - Alice: Yes, I'll send the proposal on Monday
+1/16/24, 11:35 AM - Bob: Perfect. Want to grab lunch?
+1/16/24, 11:36 AM - Alice: Sure! Where do you want to go?
+1/16/24, 11:37 AM - Bob: How about that Italian place nearby?
+1/16/24, 11:38 AM - Alice: Sounds good! Meet you in the lobby in 10

@@ -1,0 +1,17 @@
+2024-01-15 15:45:00 - Alice: Hey, quick question about the project
+2024-01-15 15:46:30 - Bob: Sure, what's up?
+2024-01-15 15:47:15 - Alice: Did you finish the documentation?
+2024-01-15 15:48:00 - Bob: Almost done, will send it tonight
+2024-01-15 15:49:30 - Alice: Perfect, thanks!
+
+2024-01-16 09:00:00 - Alice: Morning! Got your email
+2024-01-16 09:05:00 - Bob: Great! What do you think?
+2024-01-16 09:10:00 - Alice: Looks good, just a few minor changes needed
+2024-01-16 09:12:00 - Bob: Can you mark them up?
+2024-01-16 09:15:00 - Alice: Yes, sending you the annotated version now
+
+2024-01-16 14:00:00 - Bob: Got it, making the changes
+2024-01-16 14:30:00 - Bob: Done! Final version sent
+2024-01-16 14:35:00 - Alice: Excellent work! This is ready to ship
+2024-01-16 14:36:00 - Bob: Awesome! When do we launch?
+2024-01-16 14:37:00 - Alice: Tomorrow morning, 9 AM

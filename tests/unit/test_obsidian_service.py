@@ -260,7 +260,7 @@ class TestObsidianService:
         # Check sections
         assert "Summary:" in body
         assert "## Key Facts" in body
-        assert "## Evidence / Excerpts" in body
+        assert "## Content" in body
         assert "Main content here" in body
         assert "## Outcomes / Decisions" in body
         assert "## Next Actions" in body
@@ -278,7 +278,7 @@ class TestObsidianService:
         )
 
         # Should have at least evidence section
-        assert "## Evidence / Excerpts" in body
+        assert "## Content" in body
         assert "Just content" in body
 
     def test_create_entity_stub_person(self, service):
@@ -465,7 +465,7 @@ class TestObsidianServiceIntegration:
         assert content.startswith("---\n")  # Frontmatter
         assert "# Test Document" in content  # Title
         assert "Summary:" in content  # Summary
-        assert "## Evidence / Excerpts" in content  # Body section
+        assert "## Content" in content  # Body section
         assert "Test content" in content  # Actual content
 
     def test_entity_stubs_have_correct_dataview_queries(self, service):
