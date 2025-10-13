@@ -212,9 +212,10 @@ if __name__ == "__main__":
         base_filename="test_doc"
     )
 
-    print(f"✅ Created test CSV: {csv_path}")
-    print(f"📄 Content: {csv_path.read_text()[:200]}")
+    logging.basicConfig(level=logging.INFO)
+    logger.info(f"✅ Created test CSV: {csv_path}")
+    logger.info(f"📄 Content: {csv_path.read_text()[:200]}")
 
     # Generate markdown
     markdown = service.generate_table_references_markdown({"table_1": csv_path})
-    print(f"\n📝 Markdown:\n{markdown}")
+    logger.info(f"\n📝 Markdown:\n{markdown}")

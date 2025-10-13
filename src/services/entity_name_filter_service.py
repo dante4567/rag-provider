@@ -244,9 +244,10 @@ if __name__ == "__main__":
         ("Rechtsanwältin Staatsanwältin", False),  # Role + role
     ]
 
-    print("\n=== Entity Name Filter Tests ===\n")
+    logging.basicConfig(level=logging.INFO)
+    logger.info("\n=== Entity Name Filter Tests ===\n")
     for name, expected_keep in test_cases:
         result = service.is_specific_person(name)
         status = "✓" if result == expected_keep else "✗"
         action = "KEEP" if result else "FILTER"
-        print(f"{status} {action}: '{name}' (expected: {'KEEP' if expected_keep else 'FILTER'})")
+        logger.info(f"{status} {action}: '{name}' (expected: {'KEEP' if expected_keep else 'FILTER'})")

@@ -9,11 +9,14 @@ Manages an evolving tag hierarchy that:
 - Supports SmartNotes/Zettelkasten workflow patterns
 """
 
+import logging
 import re
 from typing import List, Dict, Set, Tuple, Optional
 from collections import Counter, defaultdict
 from datetime import datetime
 import json
+
+logger = logging.getLogger(__name__)
 
 
 class TagTaxonomyService:
@@ -93,10 +96,10 @@ class TagTaxonomyService:
 
             self.last_refresh = datetime.now()
 
-            print(f"[TagTaxonomy] Refreshed: {self.tag_cache['unique_tags']} unique tags across {self.tag_cache['total_docs']} documents")
+            logger.info(f"Refreshed tag cache: {self.tag_cache['unique_tags']} unique tags across {self.tag_cache['total_docs']} documents")
 
         except Exception as e:
-            print(f"[TagTaxonomy] Failed to refresh cache: {e}")
+            logger.error(f"Failed to refresh tag cache: {e}")
 
     def get_existing_tags_for_context(self, domain: str = None, limit: int = 50) -> List[str]:
         """Get existing tags to provide as context to LLM"""
@@ -195,7 +198,7 @@ class TagTaxonomyService:
                 existing_tag = similar[0][0]
                 if existing_tag not in validated:
                     validated.append(existing_tag)
-                    print(f"[TagTaxonomy] Merged '{tag}' → '{existing_tag}' (similarity: {similar[0][1]:.2f})")
+                    logger.debug(f"Merged tag '{tag}' → '{existing_tag}' (similarity: {similar[0][1]:.2f})")
             else:
                 # Use proposed tag (sufficiently unique)
                 if tag not in validated:
