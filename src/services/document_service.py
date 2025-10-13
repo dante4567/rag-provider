@@ -7,6 +7,7 @@ import logging
 import magic
 import aiofiles
 import email
+import mailbox
 from pathlib import Path
 from typing import Dict, Any, Tuple, Optional, List
 from fastapi import UploadFile
@@ -36,7 +37,7 @@ class DocumentService:
     - PDF (text and scanned with OCR)
     - Office: Word (.docx, .doc), PowerPoint (.pptx), Excel (.xlsx, .xls)
     - Text: .txt, .md, code files
-    - Email: .eml, .msg
+    - Email: .eml, .msg, .mbox (bulk archives)
     - Images: .png, .jpg, .jpeg, .tiff, .bmp (with OCR)
     - HTML/Webpages
     - WhatsApp exports
@@ -181,6 +182,10 @@ class DocumentService:
 
         elif file_extension in ['.eml', '.msg']:
             text = await self._process_email(file_path)
+            return text, DocumentType.email, metadata
+
+        elif file_extension == '.mbox':
+            text = await self._process_mbox(file_path)
             return text, DocumentType.email, metadata
 
         elif mime_type.startswith("text/html") or file_extension in ['.html', '.htm']:
@@ -360,6 +365,65 @@ class DocumentService:
         except Exception as e:
             logger.error(f"Email processing failed for {file_path}: {e}")
             return f"Failed to process email: {file_path.name}"
+
+    async def _process_mbox(self, file_path: Path) -> str:
+        """
+        Process mbox archive file containing multiple emails
+
+        Args:
+            file_path: Path to .mbox file
+
+        Returns:
+            Concatenated text from all emails with separators
+        """
+        try:
+            mbox = mailbox.mbox(str(file_path))
+            all_emails = []
+
+            logger.info(f"Processing mbox archive: {file_path.name}")
+
+            for idx, message in enumerate(mbox, 1):
+                try:
+                    # Extract headers
+                    email_text = f"\n{'='*80}\n"
+                    email_text += f"EMAIL {idx}\n"
+                    email_text += f"{'='*80}\n"
+                    email_text += f"From: {message.get('From', 'Unknown')}\n"
+                    email_text += f"To: {message.get('To', 'Unknown')}\n"
+                    email_text += f"Subject: {message.get('Subject', 'No Subject')}\n"
+                    email_text += f"Date: {message.get('Date', 'Unknown')}\n"
+                    email_text += f"{'-'*80}\n\n"
+
+                    # Extract body
+                    if message.is_multipart():
+                        for part in message.walk():
+                            if part.get_content_type() == "text/plain":
+                                payload = part.get_payload(decode=True)
+                                if payload:
+                                    email_text += payload.decode('utf-8', errors='ignore')
+                    else:
+                        payload = message.get_payload(decode=True)
+                        if payload:
+                            email_text += payload.decode('utf-8', errors='ignore')
+
+                    all_emails.append(email_text)
+
+                except Exception as e:
+                    logger.warning(f"Failed to process email {idx} in mbox: {e}")
+                    continue
+
+            logger.info(f"Extracted {len(all_emails)} emails from {file_path.name}")
+
+            # Concatenate all emails with clear separators
+            result = f"MBOX Archive: {file_path.name}\n"
+            result += f"Total Emails: {len(all_emails)}\n\n"
+            result += "\n".join(all_emails)
+
+            return result
+
+        except Exception as e:
+            logger.error(f"MBOX processing failed for {file_path}: {e}")
+            return f"Failed to process mbox archive: {file_path.name}"
 
     async def _process_html(self, file_path: Path) -> str:
         """Process HTML files and extract text"""
