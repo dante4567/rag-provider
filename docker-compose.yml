@@ -46,7 +46,7 @@ services:
       # Temporary processing
       - rag_temp:/tmp/rag_processing
       # Hugging Face model cache (reranking model persistence)
-      - huggingface_cache:/root/.cache/huggingface
+      - huggingface_cache:/home/appuser/.cache/huggingface
     environment:
       # Server configuration
       - APP_HOST=${APP_HOST:-0.0.0.0}
