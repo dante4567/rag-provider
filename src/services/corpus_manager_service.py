@@ -258,11 +258,12 @@ class CorpusManagerService:
 
 # Test
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     manager = CorpusManagerService()
 
-    print("=" * 60)
-    print("Corpus Manager Service Test")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("Corpus Manager Service Test")
+    logger.info("=" * 60)
 
     # Test documents
     high_quality_doc = {
@@ -287,45 +288,45 @@ if __name__ == "__main__":
     }
 
     # Test corpus assignment
-    print("\n1. High-quality document:")
+    logger.info("\n1. High-quality document:")
     views = manager.get_corpus_for_document(high_quality_doc)
-    print(f"   Assigned to: {[v.value for v in views]}")
-    print(f"   In canonical? {CorpusView.CANONICAL in views}")
+    logger.info(f"   Assigned to: {[v.value for v in views]}")
+    logger.info(f"   In canonical? {CorpusView.CANONICAL in views}")
 
-    print("\n2. Low-quality document:")
+    logger.info("\n2. Low-quality document:")
     views = manager.get_corpus_for_document(low_quality_doc)
-    print(f"   Assigned to: {[v.value for v in views]}")
-    print(f"   In canonical? {CorpusView.CANONICAL in views}")
+    logger.info(f"   Assigned to: {[v.value for v in views]}")
+    logger.info(f"   In canonical? {CorpusView.CANONICAL in views}")
 
-    print("\n3. Duplicate document:")
+    logger.info("\n3. Duplicate document:")
     views = manager.get_corpus_for_document(duplicate_doc)
-    print(f"   Assigned to: {[v.value for v in views]}")
-    print(f"   In canonical? {CorpusView.CANONICAL in views}")
+    logger.info(f"   Assigned to: {[v.value for v in views]}")
+    logger.info(f"   In canonical? {CorpusView.CANONICAL in views}")
 
     # Test document tracking
-    print("\n4. Document tracking:")
+    logger.info("\n4. Document tracking:")
     manager.add_document_to_view("doc1", CorpusView.CANONICAL)
     manager.add_document_to_view("doc1", CorpusView.FULL)
     manager.add_document_to_view("doc2", CorpusView.FULL)
 
-    print(f"   Canonical docs: {len(manager.canonical_doc_ids)}")
-    print(f"   Full docs: {len(manager.full_doc_ids)}")
+    logger.info(f"   Canonical docs: {len(manager.canonical_doc_ids)}")
+    logger.info(f"   Full docs: {len(manager.full_doc_ids)}")
 
     # Test collection names
-    print("\n5. Collection names:")
-    print(f"   Canonical: {manager.get_collection_name(CorpusView.CANONICAL)}")
-    print(f"   Full: {manager.get_collection_name(CorpusView.FULL)}")
+    logger.info("\n5. Collection names:")
+    logger.info(f"   Canonical: {manager.get_collection_name(CorpusView.CANONICAL)}")
+    logger.info(f"   Full: {manager.get_collection_name(CorpusView.FULL)}")
 
     # Test view suggestions
-    print("\n6. View suggestions:")
-    print(f"   Search query → {manager.suggest_view_for_query('search').value}")
-    print(f"   Audit query → {manager.suggest_view_for_query('audit').value}")
-    print(f"   Compliance → {manager.suggest_view_for_query('compliance').value}")
+    logger.info("\n6. View suggestions:")
+    logger.info(f"   Search query → {manager.suggest_view_for_query('search').value}")
+    logger.info(f"   Audit query → {manager.suggest_view_for_query('audit').value}")
+    logger.info(f"   Compliance → {manager.suggest_view_for_query('compliance').value}")
 
     # Stats
-    print("\n7. Statistics:")
-    print(f"   Canonical: {manager.get_stats(CorpusView.CANONICAL)}")
-    print(f"   Full: {manager.get_stats(CorpusView.FULL)}")
+    logger.info("\n7. Statistics:")
+    logger.info(f"   Canonical: {manager.get_stats(CorpusView.CANONICAL)}")
+    logger.info(f"   Full: {manager.get_stats(CorpusView.FULL)}")
 
-    print("\n" + "=" * 60)
-    print("✅ All tests passed")
+    logger.info("\n" + "=" * 60)
+    logger.info("✅ All tests passed")

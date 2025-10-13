@@ -304,6 +304,7 @@ class ConfidenceService:
 
 # Test
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     service = ConfidenceService()
 
     # Test case 1: Good retrieval
@@ -325,17 +326,17 @@ if __name__ == "__main__":
 
     assessment = service.assess_confidence(query, good_chunks)
 
-    print("=" * 60)
-    print("Test 1: Good Retrieval")
-    print("=" * 60)
-    print(f"Query: {query}")
-    print(f"\nOverall Confidence: {assessment.overall_confidence:.2f}")
-    print(f"Relevance: {assessment.relevance_score:.2f}")
-    print(f"Coverage: {assessment.coverage_score:.2f}")
-    print(f"Quality: {assessment.quality_score:.2f}")
-    print(f"Sufficient? {assessment.is_sufficient}")
-    print(f"Reason: {assessment.reason}")
-    print(f"Recommendation: {assessment.recommendation}")
+    logger.info("=" * 60)
+    logger.info("Test 1: Good Retrieval")
+    logger.info("=" * 60)
+    logger.info(f"Query: {query}")
+    logger.info(f"\nOverall Confidence: {assessment.overall_confidence:.2f}")
+    logger.info(f"Relevance: {assessment.relevance_score:.2f}")
+    logger.info(f"Coverage: {assessment.coverage_score:.2f}")
+    logger.info(f"Quality: {assessment.quality_score:.2f}")
+    logger.info(f"Sufficient? {assessment.is_sufficient}")
+    logger.info(f"Reason: {assessment.reason}")
+    logger.info(f"Recommendation: {assessment.recommendation}")
 
     # Test case 2: Poor retrieval
     poor_chunks = [
@@ -348,15 +349,15 @@ if __name__ == "__main__":
 
     assessment2 = service.assess_confidence(query, poor_chunks)
 
-    print("\n" + "=" * 60)
-    print("Test 2: Poor Retrieval")
-    print("=" * 60)
-    print(f"Query: {query}")
-    print(f"\nOverall Confidence: {assessment2.overall_confidence:.2f}")
-    print(f"Relevance: {assessment2.relevance_score:.2f}")
-    print(f"Coverage: {assessment2.coverage_score:.2f}")
-    print(f"Quality: {assessment2.quality_score:.2f}")
-    print(f"Sufficient? {assessment2.is_sufficient}")
-    print(f"Reason: {assessment2.reason}")
-    print(f"Recommendation: {assessment2.recommendation}")
-    print(f"\nResponse: {service.get_response_for_low_confidence(assessment2, query)}")
+    logger.info("\n" + "=" * 60)
+    logger.info("Test 2: Poor Retrieval")
+    logger.info("=" * 60)
+    logger.info(f"Query: {query}")
+    logger.info(f"\nOverall Confidence: {assessment2.overall_confidence:.2f}")
+    logger.info(f"Relevance: {assessment2.relevance_score:.2f}")
+    logger.info(f"Coverage: {assessment2.coverage_score:.2f}")
+    logger.info(f"Quality: {assessment2.quality_score:.2f}")
+    logger.info(f"Sufficient? {assessment2.is_sufficient}")
+    logger.info(f"Reason: {assessment2.reason}")
+    logger.info(f"Recommendation: {assessment2.recommendation}")
+    logger.info(f"\nResponse: {service.get_response_for_low_confidence(assessment2, query)}")

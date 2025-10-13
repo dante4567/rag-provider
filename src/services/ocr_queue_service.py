@@ -340,6 +340,7 @@ class OCRQueueService:
 # Test
 if __name__ == "__main__":
     import tempfile
+    logging.basicConfig(level=logging.INFO)
 
     # Create temp queue file
     temp_queue = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
@@ -350,51 +351,51 @@ if __name__ == "__main__":
         queue_file=temp_queue.name
     )
 
-    print("=" * 60)
-    print("OCR Quality Queue Service Test")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("OCR Quality Queue Service Test")
+    logger.info("=" * 60)
 
     # Test 1: Check if document should be re-OCRed
-    print("\n1. Should re-OCR tests:")
-    print(f"   Confidence 0.5 → {service.should_reocr(0.5)}")  # True
-    print(f"   Confidence 0.8 → {service.should_reocr(0.8)}")  # False
-    print(f"   Invoice 0.75 → {service.should_reocr(0.75, 'invoice')}")  # True (stricter)
+    logger.info("\n1. Should re-OCR tests:")
+    logger.info(f"   Confidence 0.5 → {service.should_reocr(0.5)}")  # True
+    logger.info(f"   Confidence 0.8 → {service.should_reocr(0.8)}")  # False
+    logger.info(f"   Invoice 0.75 → {service.should_reocr(0.75, 'invoice')}")  # True (stricter)
 
     # Test 2: Add documents to queue
-    print("\n2. Adding documents to queue:")
+    logger.info("\n2. Adding documents to queue:")
     entry1 = service.add_to_queue("doc1", "/path/to/doc1.pdf", 0.55)
     entry2 = service.add_to_queue("doc2", "/path/to/doc2.pdf", 0.42)
-    print(f"   Added {len(service.queue)} documents")
+    logger.info(f"   Added {len(service.queue)} documents")
 
     # Test 3: Get pending entries
-    print("\n3. Pending entries:")
+    logger.info("\n3. Pending entries:")
     pending = service.get_pending_entries()
     for entry in pending:
-        print(f"   - {entry.doc_id}: confidence={entry.original_confidence:.2f}")
+        logger.info(f"   - {entry.doc_id}: confidence={entry.original_confidence:.2f}")
 
     # Test 4: Process an entry
-    print("\n4. Processing entry:")
+    logger.info("\n4. Processing entry:")
     service.mark_processing("doc1")
     service.mark_completed("doc1", 0.92)
-    print(f"   Completed doc1: 0.55 → 0.92")
+    logger.info(f"   Completed doc1: 0.55 → 0.92")
 
     # Test 5: Fail an entry
-    print("\n5. Failing entry:")
+    logger.info("\n5. Failing entry:")
     service.mark_processing("doc2")
     service.mark_failed("doc2", "OCR engine error")
-    print(f"   Failed doc2 (attempt {service.queue['doc2'].attempts})")
+    logger.info(f"   Failed doc2 (attempt {service.queue['doc2'].attempts})")
 
     # Test 6: Statistics
-    print("\n6. Queue statistics:")
+    logger.info("\n6. Queue statistics:")
     stats = service.get_statistics()
-    print(f"   Total: {stats['total_entries']}")
-    print(f"   Completed: {stats['completed_count']}")
-    print(f"   Failed: {stats['failed_count']}")
-    print(f"   Avg improvement: {stats['average_improvement']:.2f}")
-    print(f"   Success rate: {stats['success_rate']:.1%}")
+    logger.info(f"   Total: {stats['total_entries']}")
+    logger.info(f"   Completed: {stats['completed_count']}")
+    logger.info(f"   Failed: {stats['failed_count']}")
+    logger.info(f"   Avg improvement: {stats['average_improvement']:.2f}")
+    logger.info(f"   Success rate: {stats['success_rate']:.1%}")
 
-    print("\n" + "=" * 60)
-    print("✅ All tests passed")
+    logger.info("\n" + "=" * 60)
+    logger.info("✅ All tests passed")
 
     # Cleanup
     Path(temp_queue.name).unlink()
