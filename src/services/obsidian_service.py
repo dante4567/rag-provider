@@ -145,6 +145,45 @@ class ObsidianService:
 
         return tags
 
+    def _format_people_for_frontmatter(self, people_objects: List[Dict[str, Any]]) -> List[str]:
+        """
+        Format people objects as simple strings for Dataview querying.
+        Format: "Name | Role | Email | Phone"
+        """
+        if not people_objects:
+            return []
+
+        formatted = []
+        for person in people_objects:
+            parts = [person.get('name', 'Unknown')]
+            if person.get('role'):
+                parts.append(person['role'])
+            if person.get('email'):
+                parts.append(person['email'])
+            if person.get('phone'):
+                parts.append(person['phone'])
+            formatted.append(' | '.join(parts))
+        return formatted
+
+    def _format_dates_for_frontmatter(self, dates_detailed: List[Dict[str, Any]]) -> List[str]:
+        """
+        Format date objects as simple strings for Dataview querying.
+        Format: "Date | Context"
+        """
+        if not dates_detailed:
+            return []
+
+        formatted = []
+        for date_info in dates_detailed:
+            date_str = date_info.get('date', '')
+            context = date_info.get('context', '')
+            if date_str:
+                if context:
+                    formatted.append(f"{date_str} | {context}")
+                else:
+                    formatted.append(date_str)
+        return formatted
+
     def build_frontmatter(
         self,
         id: str,
@@ -204,6 +243,10 @@ class ObsidianService:
             'organizations': [f"[[refs/orgs/{slugify(o)}|{o}]]" for o in orgs] if orgs else [],
             'dates': [f"[[refs/days/{d}]]" for d in dates] if dates else [],
             'numbers': numbers,
+
+            # === Detailed Entity Data (Dataview-queryable arrays) ===
+            'people_detailed': self._format_people_for_frontmatter(people_objects) if people_objects else [],
+            'dates_detailed': self._format_dates_for_frontmatter(entities_data.get('dates_detailed', [])),
 
             # === Quality Scores (for filtering/sorting) ===
             'quality_score': float(metadata.get('quality_score', 0.0)),
