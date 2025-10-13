@@ -236,12 +236,12 @@ class ObsidianService:
             # === Summary ===
             'summary': metadata.get('summary', ''),
 
-            # === Entities (Wiki-linked for Obsidian navigation) ===
-            'people': [f"[[refs/persons/{slugify(p)}|{p}]]" for p in people] if people else [],
-            'places': [f"[[refs/places/{slugify(p)}|{p}]]" for p in places] if places else [],
+            # === Entities (Plain text for easy Dataview queries) ===
+            'people': people if people else [],
+            'places': places if places else [],
             'topics': topics if topics else [],
-            'organizations': [f"[[refs/orgs/{slugify(o)}|{o}]]" for o in orgs] if orgs else [],
-            'dates': [f"[[refs/days/{d}]]" for d in dates] if dates else [],
+            'organizations': orgs if orgs else [],
+            'dates': dates if dates else [],
             'numbers': numbers,
 
             # === Detailed Entity Data (Dataview-queryable arrays) ===
@@ -279,12 +279,13 @@ class ObsidianService:
         # Remove empty/null values
         frontmatter = self._remove_empty(frontmatter)
 
-        # Convert to YAML
+        # Convert to YAML (width=1000 prevents line wrapping of long wiki-links)
         yaml_str = yaml.dump(
             frontmatter,
             default_flow_style=False,
             allow_unicode=True,
-            sort_keys=False
+            sort_keys=False,
+            width=1000
         )
 
         return f"---\n{yaml_str}---\n\n"
