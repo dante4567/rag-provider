@@ -25,6 +25,8 @@ from src.models.schemas import DocumentType
 from src.services.text_splitter import SimpleTextSplitter
 from src.services.ocr_service import OCRService
 from src.services.whatsapp_parser import WhatsAppParser
+from src.services.llm_chat_parser import LLMChatParser
+from src.services.email_threading_service import EmailThreadingService, EmailMessage
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +64,9 @@ class DocumentService:
             self.ocr_service = OCRService(languages=ocr_languages)
         else:
             self.ocr_service = None
+
+        # Initialize email threading service
+        self.email_threading = EmailThreadingService()
 
     async def process_upload(
         self,
@@ -199,7 +204,53 @@ class DocumentService:
 
             # Check for special text formats
             if WhatsAppParser.is_whatsapp_export(content):
-                return content, DocumentType.whatsapp, metadata
+                # Parse and thread WhatsApp messages
+                messages, summary, wa_metadata = WhatsAppParser.parse_whatsapp_export(content)
+
+                if messages:
+                    # Group into conversation threads (4-hour gaps)
+                    threads = WhatsAppParser.group_into_threads(messages, time_gap_hours=4)
+                    logger.info(f"WhatsApp: {len(messages)} messages → {len(threads)} threads")
+
+                    # Format as threaded conversation
+                    result = f"WhatsApp Export: {file_path.name}\n"
+                    result += f"{summary}\n\n"
+
+                    for thread_idx, thread in enumerate(threads, 1):
+                        result += WhatsAppParser.format_thread_as_text(thread, thread_idx)
+                        result += "\n"
+
+                    # Merge metadata
+                    metadata.update(wa_metadata)
+
+                    return result, DocumentType.whatsapp, metadata
+                else:
+                    # Fallback if parsing fails
+                    return content, DocumentType.whatsapp, metadata
+
+            elif LLMChatParser.is_llm_export(content):
+                # Parse LLM chat export (ChatGPT, Claude, etc.)
+                messages, summary, llm_metadata = LLMChatParser.parse_llm_export(content)
+
+                if messages:
+                    logger.info(f"LLM Chat: {len(messages)} messages from {llm_metadata.get('export_type', 'unknown')} export")
+
+                    # Format as markdown conversation
+                    conv_title = llm_metadata.get("conversation_title") or llm_metadata.get("conversation_titles", ["LLM Conversation"])[0]
+                    result = LLMChatParser.format_as_markdown(messages, conv_title)
+
+                    # Add summary header
+                    result = f"{summary}\n\n{'='*80}\n\n{result}"
+
+                    # Merge metadata
+                    metadata.update(llm_metadata)
+
+                    # Return as special document type
+                    return result, DocumentType.text, metadata
+                else:
+                    # Fallback if parsing fails
+                    return content, DocumentType.text, metadata
+
             elif file_extension in ['.py', '.js', '.java', '.cpp', '.c', '.cs', '.php', '.go', '.rs']:
                 return content, DocumentType.code, metadata
             else:
@@ -369,55 +420,106 @@ class DocumentService:
     async def _process_mbox(self, file_path: Path) -> str:
         """
         Process mbox archive file containing multiple emails
+        Groups emails into conversation threads for better context
 
         Args:
             file_path: Path to .mbox file
 
         Returns:
-            Concatenated text from all emails with separators
+            Text organized by conversation threads
         """
         try:
+            from datetime import datetime
+            import email.utils
+
             mbox = mailbox.mbox(str(file_path))
-            all_emails = []
+            email_messages = []
 
             logger.info(f"Processing mbox archive: {file_path.name}")
 
+            # Parse all emails into EmailMessage objects
             for idx, message in enumerate(mbox, 1):
                 try:
+                    # Extract message ID
+                    message_id = message.get('Message-ID', f"<generated-{idx}>")
+
                     # Extract headers
-                    email_text = f"\n{'='*80}\n"
-                    email_text += f"EMAIL {idx}\n"
-                    email_text += f"{'='*80}\n"
-                    email_text += f"From: {message.get('From', 'Unknown')}\n"
-                    email_text += f"To: {message.get('To', 'Unknown')}\n"
-                    email_text += f"Subject: {message.get('Subject', 'No Subject')}\n"
-                    email_text += f"Date: {message.get('Date', 'Unknown')}\n"
-                    email_text += f"{'-'*80}\n\n"
+                    subject = message.get('Subject', '(No Subject)')
+                    sender = message.get('From', 'Unknown')
+                    recipients = message.get_all('To', [])
+                    if isinstance(recipients, str):
+                        recipients = [recipients]
+
+                    # Parse date
+                    date_str = message.get('Date')
+                    try:
+                        date = email.utils.parsedate_to_datetime(date_str) if date_str else datetime.now()
+                    except Exception:
+                        date = datetime.now()
+
+                    # Extract In-Reply-To and References
+                    in_reply_to = message.get('In-Reply-To')
+                    references = message.get_all('References', [])
+                    if isinstance(references, str):
+                        references = [references]
 
                     # Extract body
+                    body = ""
                     if message.is_multipart():
                         for part in message.walk():
                             if part.get_content_type() == "text/plain":
                                 payload = part.get_payload(decode=True)
                                 if payload:
-                                    email_text += payload.decode('utf-8', errors='ignore')
+                                    body += payload.decode('utf-8', errors='ignore')
                     else:
                         payload = message.get_payload(decode=True)
                         if payload:
-                            email_text += payload.decode('utf-8', errors='ignore')
+                            body = payload.decode('utf-8', errors='ignore')
 
-                    all_emails.append(email_text)
+                    # Create EmailMessage object
+                    email_msg = EmailMessage(
+                        message_id=message_id,
+                        subject=subject,
+                        sender=sender,
+                        recipients=recipients,
+                        date=date,
+                        body=body,
+                        in_reply_to=in_reply_to,
+                        references=references
+                    )
+                    email_messages.append(email_msg)
 
                 except Exception as e:
-                    logger.warning(f"Failed to process email {idx} in mbox: {e}")
+                    logger.warning(f"Failed to parse email {idx} in mbox: {e}")
                     continue
 
-            logger.info(f"Extracted {len(all_emails)} emails from {file_path.name}")
+            logger.info(f"Parsed {len(email_messages)} emails from {file_path.name}")
 
-            # Concatenate all emails with clear separators
+            # Group into threads
+            threads = self.email_threading.build_threads(email_messages)
+            logger.info(f"Grouped into {len(threads)} conversation threads")
+
+            # Format output by thread
             result = f"MBOX Archive: {file_path.name}\n"
-            result += f"Total Emails: {len(all_emails)}\n\n"
-            result += "\n".join(all_emails)
+            result += f"Total Emails: {len(email_messages)}\n"
+            result += f"Conversation Threads: {len(threads)}\n\n"
+
+            for thread_idx, thread in enumerate(threads, 1):
+                result += f"\n{'='*80}\n"
+                result += f"THREAD {thread_idx}: {thread.subject}\n"
+                result += f"{'='*80}\n"
+                result += f"Messages: {thread.message_count}\n"
+                result += f"Participants: {', '.join(sorted(thread.participants))}\n"
+                result += f"Date Range: {thread.start_date.strftime('%Y-%m-%d')} to {thread.end_date.strftime('%Y-%m-%d')}\n"
+                result += f"{'-'*80}\n\n"
+
+                for msg_idx, msg in enumerate(thread.messages, 1):
+                    result += f"[Message {msg_idx}/{thread.message_count}]\n"
+                    result += f"From: {msg.sender}\n"
+                    result += f"To: {', '.join(msg.recipients)}\n"
+                    result += f"Date: {msg.date.strftime('%Y-%m-%d %H:%M')}\n"
+                    result += f"{'-'*40}\n"
+                    result += f"{msg.body}\n\n"
 
             return result
 

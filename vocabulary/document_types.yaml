@@ -28,6 +28,7 @@ communication:
   - communication/announcement       # Ankündigung
   - communication/newsletter         # Newsletter
   - communication/report             # Bericht
+  - communication/llm-chat           # ChatGPT/Claude conversation export
 
 # Administrative Forms
 form:
@@ -112,8 +113,8 @@ unknown:
 # Meta
 meta:
   version: 1.0
-  last_updated: 2025-10-13
-  total_types: 63
+  last_updated: 2025-10-14
+  total_types: 64
   auto_promote_threshold: 3  # Suggested types appearing 3+ times get auto-promoted
 
   # Paperless-ngx inspired naming conventions

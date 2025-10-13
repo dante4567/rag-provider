@@ -170,6 +170,84 @@ class WhatsAppParser:
         }
 
     @staticmethod
+    def group_into_threads(messages: List[Dict], time_gap_hours: int = 4) -> List[List[Dict]]:
+        """
+        Group messages into conversation threads based on time gaps
+
+        Args:
+            messages: List of parsed WhatsApp messages
+            time_gap_hours: Hours of silence to consider a new thread (default: 4)
+
+        Returns:
+            List of message threads (each thread is a list of messages)
+        """
+        if not messages:
+            return []
+
+        threads = []
+        current_thread = [messages[0]]
+
+        for i in range(1, len(messages)):
+            current_msg = messages[i]
+            previous_msg = messages[i-1]
+
+            # Calculate time gap in hours
+            time_gap = (current_msg["timestamp"] - previous_msg["timestamp"]).total_seconds() / 3600
+
+            # Start new thread if gap is too large
+            if time_gap > time_gap_hours:
+                threads.append(current_thread)
+                current_thread = [current_msg]
+                logger.debug(f"New WhatsApp thread started after {time_gap:.1f}h gap")
+            else:
+                current_thread.append(current_msg)
+
+        # Add the last thread
+        if current_thread:
+            threads.append(current_thread)
+
+        logger.info(f"Grouped {len(messages)} messages into {len(threads)} conversation threads")
+        return threads
+
+    @staticmethod
+    def format_thread_as_text(thread: List[Dict], thread_idx: int) -> str:
+        """
+        Format a conversation thread as readable text
+
+        Args:
+            thread: List of messages in the thread
+            thread_idx: Thread index number
+
+        Returns:
+            Formatted text representation
+        """
+        if not thread:
+            return ""
+
+        # Calculate thread metadata
+        participants = set(msg["sender"] for msg in thread)
+        start_time = thread[0]["timestamp"]
+        end_time = thread[-1]["timestamp"]
+        duration = (end_time - start_time).total_seconds() / 3600  # hours
+
+        # Build formatted output
+        result = f"\n{'='*80}\n"
+        result += f"CONVERSATION THREAD {thread_idx}\n"
+        result += f"{'='*80}\n"
+        result += f"Participants: {', '.join(sorted(participants))}\n"
+        result += f"Messages: {len(thread)}\n"
+        result += f"Time: {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}\n"
+        result += f"Duration: {duration:.1f} hours\n"
+        result += f"{'-'*80}\n\n"
+
+        # Add all messages
+        for msg in thread:
+            timestamp_str = msg["timestamp"].strftime('%Y-%m-%d %H:%M')
+            result += f"[{timestamp_str}] {msg['sender']}: {msg['message']}\n"
+
+        return result
+
+    @staticmethod
     def is_whatsapp_export(content: str) -> bool:
         """
         Check if content appears to be a WhatsApp export

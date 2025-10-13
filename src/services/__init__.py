@@ -7,6 +7,8 @@ from src.services.document_service import DocumentService
 from src.services.text_splitter import SimpleTextSplitter
 from src.services.ocr_service import OCRService
 from src.services.whatsapp_parser import WhatsAppParser
+from src.services.llm_chat_parser import LLMChatParser
+from src.services.email_threading_service import EmailThreadingService
 from src.services.llm_service import LLMService, CostTracker
 from src.services.vector_service import VectorService
 from src.services.search_cache_service import SearchResultCache, get_search_cache, clear_search_cache
@@ -16,6 +18,8 @@ __all__ = [
     "SimpleTextSplitter",
     "OCRService",
     "WhatsAppParser",
+    "LLMChatParser",
+    "EmailThreadingService",
     "LLMService",
     "CostTracker",
     "VectorService",
