@@ -46,6 +46,11 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-cov pytest-html
 
+    - name: Create data directories
+      run: |
+        sudo mkdir -p /data/calendar /data/contacts /data/input /data/output
+        sudo chmod -R 777 /data
+
     - name: Set environment variables
       run: |
         echo "CHROMA_HOST=localhost" >> $GITHUB_ENV
