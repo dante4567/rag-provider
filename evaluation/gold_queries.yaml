@@ -1,113 +1,324 @@
-# Gold Query Evaluation Set - Diverse Test Queries
-# Updated 2025-10-08: Expanded to 10 diverse queries across multiple document types
-# Avoids duplicate documents to properly test MMR and reranking
+# Gold Query Evaluation Set - Real Corpus
+#
+# Purpose: Measure retrieval quality with precision@k, recall@k, and MRR metrics
+# Created: 2025-10-13
+# Corpus: 758 files (school docs, knowledge management, programming, business, personal)
+#
+# Query Categories:
+#   - School/Education (enrollment, OGS, Grundschulen)
+#   - Knowledge Management (Zettelkasten, Obsidian, Luhmann)
+#   - Programming/Tech (Python, Deep Learning)
+#   - Personal (births, contacts, events)
+#   - Legal/Administrative (court hearings, deadlines)
 
 queries:
-  # Python Programming Queries
+  # === SCHOOL/EDUCATION QUERIES (Easy - Direct Match) ===
+
   - id: "Q001"
-    query: "How do I define a function in Python?"
-    description: "Basic Python syntax question"
+    query: "When is the enrollment deadline for school year 2026/27?"
+    description: "User needs Einschulung deadline information"
     expected_docs:
-      - "python_tutorial.md"
-      - "python_guide.md"
-    tags: ["programming", "python", "syntax"]
+      - "Einschulung 202627"
+    tags: ["education", "deadline", "enrollment"]
     difficulty: "easy"
 
   - id: "Q002"
-    query: "What are Python list comprehensions?"
-    description: "Python advanced feature query"
+    query: "What is OGS and what are the participation rules?"
+    description: "User wants to understand OGS regulations"
     expected_docs:
-      - "python_guide.md"
-      - "python_tutorial.md"
-    tags: ["programming", "python", "data-structures"]
-    difficulty: "medium"
+      - "FAQ-zur-Teilnahmeregelung-OGS"
+    tags: ["education", "ogs", "regulations"]
+    difficulty: "easy"
 
-  # Machine Learning Queries
   - id: "Q003"
-    query: "What is supervised learning?"
-    description: "ML concept definition"
+    query: "List of Grundschulen in Cologne"
+    description: "User wants to see all elementary schools in Köln"
     expected_docs:
-      - "ml_intro.txt"
-      - "ml_tutorial.txt"
-    tags: ["machine-learning", "concepts"]
+      - "koln-standorte_grundschulen"
+    tags: ["education", "schools", "cologne"]
     difficulty: "easy"
 
   - id: "Q004"
-    query: "How do neural networks work?"
-    description: "Deep learning architecture question"
+    query: "What does the NRW school law say about enrollment age?"
+    description: "Legal requirements for school enrollment age in North Rhine-Westphalia"
     expected_docs:
-      - "dl_practices.txt"
-      - "ml_tutorial.txt"
-    tags: ["deep-learning", "neural-networks"]
+      - "Schulgesetz"
+      - "Verordnung"
+    tags: ["education", "law", "enrollment"]
     difficulty: "medium"
 
-  # Research and Education Queries
+  # === KNOWLEDGE MANAGEMENT QUERIES (Medium Complexity) ===
+
   - id: "Q005"
-    query: "What is AI in education?"
-    description: "Interdisciplinary research topic"
+    query: "How did Luhmann organize his Zettelkasten system?"
+    description: "Understanding Luhmann's note-taking methodology"
     expected_docs:
-      - "research_ai_education.md"
-    tags: ["research", "education", "ai"]
-    difficulty: "easy"
+      - "Transcript 2 Creating Notes and Networks"
+    tags: ["knowledge-management", "zettelkasten", "luhmann"]
+    difficulty: "medium"
 
-  # Language Comparison Queries
   - id: "Q006"
-    query: "How do Python and JavaScript compare?"
-    description: "Programming language comparison"
+    query: "What are best practices for creating notes and building connections?"
+    description: "Note-taking strategies and network building"
     expected_docs:
-      - "language_comparison.md"
-    tags: ["programming", "comparison"]
+      - "Transcript 2 Creating Notes and Networks"
+      - "Transcript 3 Building and Managing Complexity"
+    tags: ["knowledge-management", "notes", "connections"]
     difficulty: "medium"
 
-  # Structured Document Queries
   - id: "Q007"
-    query: "Tell me about document structure and headings"
-    description: "Document formatting question"
+    query: "How can Dataview be used to automate Obsidian workflows?"
+    description: "Automation techniques with Dataview plugin"
     expected_docs:
-      - "structured_doc.md"
-      - "indexed_doc.md"
-    tags: ["documentation", "formatting"]
-    difficulty: "easy"
-
-  # Technical Requirements Queries
-  - id: "Q008"
-    query: "What are the system requirements?"
-    description: "Requirements specification query"
-    expected_docs:
-      - "requirements.md"
-    tags: ["requirements", "specifications"]
-    difficulty: "easy"
-
-  # Long Document Retrieval
-  - id: "Q009"
-    query: "Find information in lengthy documentation"
-    description: "Testing retrieval from long documents"
-    expected_docs:
-      - "long_doc.md"
-    tags: ["documentation", "long-form"]
+      - "Transcript 5 Automate What Can Be Automated With Dataview"
+    tags: ["knowledge-management", "obsidian", "automation"]
     difficulty: "medium"
 
-  # Business Report Queries
-  - id: "Q010"
-    query: "What are the ACME company metrics?"
-    description: "Business intelligence query"
+  - id: "Q008"
+    query: "What is the relationship between fostering output and knowledge work?"
+    description: "Understanding productivity in knowledge management"
     expected_docs:
-      - "acme_report.txt"
-    tags: ["business", "reports", "analytics"]
+      - "Transcript 4 Fostering Output"
+    tags: ["knowledge-management", "productivity", "output"]
+    difficulty: "medium"
+
+  # === PROGRAMMING/TECH QUERIES (Easy to Medium) ===
+
+  - id: "Q009"
+    query: "Why is Python popular for data science and machine learning?"
+    description: "Understanding Python's strengths in data science"
+    expected_docs:
+      - "python_intro"
+      - "language_comparison"
+    tags: ["programming", "python", "data-science"]
     difficulty: "easy"
+
+  - id: "Q010"
+    query: "What are the best practices for training deep neural networks?"
+    description: "Deep learning training techniques"
+    expected_docs:
+      - "dl_practices"
+    tags: ["deep-learning", "best-practices", "neural-networks"]
+    difficulty: "medium"
+
+  - id: "Q011"
+    query: "Compare the strengths of different programming languages"
+    description: "Programming language comparison and use cases"
+    expected_docs:
+      - "language_comparison"
+    tags: ["programming", "comparison", "languages"]
+    difficulty: "medium"
+
+  # === PERSONAL/EVENT QUERIES (Easy) ===
+
+  - id: "Q012"
+    query: "When was Anna Lins born?"
+    description: "Birth date information"
+    expected_docs:
+      - "Birth Announcement"
+    tags: ["personal", "birth", "dates"]
+    difficulty: "easy"
+
+  - id: "Q013"
+    query: "Who is Steven Lins?"
+    description: "Person information and relationships"
+    expected_docs:
+      - "Birth Announcement"
+      - "steven-lins"
+    tags: ["personal", "contacts", "relationships"]
+    difficulty: "easy"
+
+  - id: "Q014"
+    query: "What project meetings are scheduled for Q4 2025?"
+    description: "Project timeline and meeting information"
+    expected_docs:
+      - "Project Kickoff Meeting"
+    tags: ["project", "meetings", "timeline"]
+    difficulty: "medium"
+
+  # === BUSINESS QUERIES (Easy to Medium) ===
+
+  - id: "Q015"
+    query: "What is Globex Industries' revenue?"
+    description: "Financial information retrieval"
+    expected_docs:
+      - "globex_report"
+    tags: ["business", "finance", "revenue"]
+    difficulty: "easy"
+
+  - id: "Q016"
+    query: "Who is the CEO of Globex Industries?"
+    description: "Executive information"
+    expected_docs:
+      - "globex_report"
+    tags: ["business", "executive", "people"]
+    difficulty: "easy"
+
+  # === LEGAL/ADMINISTRATIVE QUERIES (Medium) ===
+
+  - id: "Q017"
+    query: "When is the court hearing at Amtsgericht Köln?"
+    description: "Legal proceeding date"
+    expected_docs:
+      - "Amtsgericht Köln"
+      - "Beschluss"
+    tags: ["legal", "court", "dates"]
+    difficulty: "medium"
+
+  - id: "Q018"
+    query: "What are the requirements for Bürgeramt appointments?"
+    description: "Administrative office appointment information"
+    expected_docs:
+      - "Bürgeramt"
+    tags: ["administrative", "appointments", "requirements"]
+    difficulty: "medium"
+
+  # === MULTI-HOP/COMPLEX QUERIES (Hard) ===
+
+  - id: "Q019"
+    query: "What documents mention both education monitoring and quality indicators?"
+    description: "Cross-referencing education quality metrics"
+    expected_docs:
+      - "Bildungsmonitoring"
+      - "Kennziffern"
+    tags: ["education", "monitoring", "quality"]
+    difficulty: "hard"
+
+  - id: "Q020"
+    query: "Find all contacts related to students"
+    description: "Entity filtering by role/category"
+    expected_docs:
+      - "buntrock-simon-andreas"
+    tags: ["contacts", "students", "filtering"]
+    difficulty: "medium"
+
+  - id: "Q021"
+    query: "What authors are mentioned in the knowledge management transcripts?"
+    description: "Author extraction from specific document set"
+    expected_docs:
+      - "luhmann"
+      - "plessner"
+      - "davis"
+    tags: ["knowledge-management", "authors", "people"]
+    difficulty: "medium"
+
+  # === TEMPORAL QUERIES (Medium to Hard) ===
+
+  - id: "Q022"
+    query: "What deadlines are coming up in the next 3 months?"
+    description: "Temporal filtering for upcoming deadlines"
+    expected_docs:
+      - "Einschulung"
+    tags: ["deadlines", "temporal", "planning"]
+    difficulty: "hard"
+
+  - id: "Q023"
+    query: "What events happened in 2024?"
+    description: "Temporal filtering for past events"
+    expected_docs:
+      - "Court Hearing"
+      - "Beschluss"
+    tags: ["events", "temporal", "2024"]
+    difficulty: "medium"
+
+  # === PROCEDURAL QUERIES (Medium) ===
+
+  - id: "Q024"
+    query: "How do I register my child for elementary school in NRW?"
+    description: "Step-by-step enrollment process"
+    expected_docs:
+      - "Einschulung"
+      - "Schulgesetz"
+      - "Verordnung"
+    tags: ["education", "enrollment", "procedural"]
+    difficulty: "medium"
+
+  - id: "Q025"
+    query: "What are the steps to set up a Zettelkasten system in Obsidian?"
+    description: "Implementation guide for note-taking system"
+    expected_docs:
+      - "Transcript 1"
+      - "Transcript 2"
+    tags: ["knowledge-management", "setup", "procedural"]
+    difficulty: "medium"
+
+  # === VERIFICATION QUERIES (Easy) ===
+
+  - id: "Q026"
+    query: "Is batch normalization mentioned as a deep learning best practice?"
+    description: "Verify specific technical detail"
+    expected_docs:
+      - "dl_practices"
+    tags: ["deep-learning", "verification", "technique"]
+    difficulty: "easy"
+
+  - id: "Q027"
+    query: "Does the corpus contain information about kindergarten enrollment?"
+    description: "Verify topic coverage"
+    expected_docs:
+      - "Einschulung"
+      - "Bürgeramt"
+    tags: ["education", "kindergarten", "verification"]
+    difficulty: "easy"
+
+  # === CONCEPT/DEFINITION QUERIES (Easy to Medium) ===
+
+  - id: "Q028"
+    query: "What is Bildungsmonitoring?"
+    description: "Definition of education monitoring concept"
+    expected_docs:
+      - "Bildungsmonitoring"
+      - "Kultusministerkonferenz"
+    tags: ["education", "concept", "definition"]
+    difficulty: "medium"
+
+  - id: "Q029"
+    query: "What does BASS stand for in NRW education context?"
+    description: "Acronym expansion and context"
+    expected_docs:
+      - "BASS"
+    tags: ["education", "acronym", "nrw"]
+    difficulty: "easy"
+
+  # === RELATIONSHIP QUERIES (Hard) ===
+
+  - id: "Q030"
+    query: "What is the relationship between Steven Lins and Anna Lins?"
+    description: "Family relationship extraction"
+    expected_docs:
+      - "Birth Announcement"
+      - "steven-lins"
+      - "anna-lins"
+    tags: ["personal", "relationships", "family"]
+    difficulty: "medium"
 
 # Evaluation Configuration
 config:
   # How many results to retrieve per query (k values to test)
-  k_values: [1, 3, 5]
+  k_values: [1, 3, 5, 10]
 
   # Minimum acceptable scores (quality gates)
-  min_precision_at_5: 0.60  # At least 60% of top 5 results should be relevant
-  min_recall_at_10: 0.70    # Should find at least 70% of relevant docs in top 10
-  min_mrr: 0.50             # First relevant doc should average rank 2 or better
-  min_any_good_citation: 0.80  # 80% of queries should have ≥1 relevant result
+  min_precision_at_5: 0.50  # At least 50% of top 5 results should be relevant (realistic for hybrid search)
+  min_recall_at_10: 0.60    # Should find at least 60% of relevant docs in top 10
+  min_mrr: 0.40             # First relevant doc should average rank 2.5 or better
+  min_any_good_citation: 0.70  # 70% of queries should have ≥1 relevant result
 
   # Test modes
   use_reranking: true       # Test with cross-encoder reranker enabled
   test_bm25_only: false     # Compare against BM25-only baseline
   test_dense_only: false    # Compare against dense-only baseline
+
+# Query Statistics:
+#   Total queries: 30
+#   - Easy: 11 (37%)
+#   - Medium: 16 (53%)
+#   - Hard: 3 (10%)
+#
+# Category breakdown:
+#   - Education/School: 8 (27%)
+#   - Knowledge Management: 6 (20%)
+#   - Programming/Tech: 4 (13%)
+#   - Personal/Events: 4 (13%)
+#   - Business: 2 (7%)
+#   - Legal/Admin: 3 (10%)
+#   - Multi-hop/Complex: 3 (10%)

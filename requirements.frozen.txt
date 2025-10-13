@@ -1,11 +1,3 @@
-# ✅ COMPLETE FROZEN DEPENDENCIES (All Transitive Dependencies Pinned)
-# Last updated: October 13, 2025
-# Status: Production-ready, exact versions from working Docker container
-# Generated from: docker exec rag_service pip freeze
-#
-# This includes ALL dependencies (direct + transitive) for complete reproducibility.
-# Total: 216 packages with exact versions
-
 accelerate==1.10.1
 aiofiles==24.1.0
 aiohappyeyeballs==2.6.1
