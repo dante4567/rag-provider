@@ -33,11 +33,15 @@ STILL_FAIL=0
 RETRY_LOG="retry_$(date +%Y%m%d_%H%M%S).txt"
 
 COUNTER=0
-for file in $FAILED_FILES; do
+# Use while loop with IFS to handle filenames with spaces
+while IFS= read -r file; do
     COUNTER=$((COUNTER + 1))
     echo -ne "\r[$COUNTER/$FAIL_COUNT] Retrying: ${file:0:50}..."
 
+    # Change to input directory
+    cd ../data/input || exit 1
     RESPONSE=$(curl -s -X POST http://localhost:8001/ingest/file -F "file=@$file" 2>&1)
+    cd - > /dev/null || exit 1
 
     if echo "$RESPONSE" | grep -q '"success":true'; then
         SUCCESS=$((SUCCESS + 1))
@@ -49,7 +53,7 @@ for file in $FAILED_FILES; do
     fi
 
     sleep 1
-done
+done <<< "$FAILED_FILES"
 
 echo ""
 echo ""
