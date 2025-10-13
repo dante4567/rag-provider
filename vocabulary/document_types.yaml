@@ -1,0 +1,131 @@
+# Controlled Document Type Vocabulary
+# Inspired by Paperless-ngx document management
+# Hierarchical structure: category/type
+# Only use document types from this list during enrichment
+
+# Legal Documents
+legal:
+  - legal/court-decision      # Gerichtsbeschluss, Urteil
+  - legal/court-order         # Gerichtliche Anordnung
+  - legal/court-motion        # Antrag
+  - legal/court-summons       # Vorladung
+  - legal/judgment            # Urteil
+  - legal/contract            # Vertrag
+  - legal/agreement           # Vereinbarung
+  - legal/power-of-attorney   # Vollmacht
+  - legal/notice              # Rechtliche Mitteilung
+  - legal/letter              # Anwaltsschreiben
+  - legal/filing              # Eingabe
+  - legal/law                 # Gesetzestext
+  - legal/regulation          # Verordnung
+
+# Communication
+communication:
+  - communication/email              # Email
+  - communication/letter             # Brief
+  - communication/memo               # Vermerk
+  - communication/meeting-notes      # Protokoll
+  - communication/announcement       # Ankündigung
+  - communication/newsletter         # Newsletter
+  - communication/report             # Bericht
+
+# Administrative Forms
+form:
+  - form/application          # Antrag
+  - form/registration         # Anmeldung
+  - form/questionnaire        # Fragebogen
+  - form/survey               # Umfrage
+  - form/consent              # Einwilligungserklärung
+  - form/declaration          # Erklärung
+
+# Certificates & Official Documents
+certificate:
+  - certificate/birth              # Geburtsurkunde
+  - certificate/marriage           # Heiratsurkunde
+  - certificate/education          # Bildungsnachweis
+  - certificate/employment         # Arbeitsnachweis
+  - certificate/vaccination        # Impfausweis
+  - certificate/residence          # Meldebescheinigung
+
+# Financial Documents
+financial:
+  - financial/invoice          # Rechnung
+  - financial/receipt          # Quittung
+  - financial/contract         # Finanzvertrag
+  - financial/statement        # Kontoauszug
+  - financial/tax-return       # Steuererklärung
+  - financial/tax-notice       # Steuerbescheid
+  - financial/payment-order    # Zahlungsaufforderung
+
+# Education & School
+education:
+  - education/enrollment       # Schulanmeldung
+  - education/report-card      # Zeugnis
+  - education/curriculum       # Lehrplan
+  - education/permission-slip  # Einverständniserklärung
+  - education/schedule         # Stundenplan
+  - education/letter           # Schulbrief
+  - education/certificate      # Schulbescheinigung
+
+# Healthcare
+healthcare:
+  - healthcare/prescription    # Rezept
+  - healthcare/diagnosis       # Diagnose
+  - healthcare/lab-results     # Laborbefund
+  - healthcare/treatment-plan  # Behandlungsplan
+  - healthcare/insurance-claim # Krankenkassenantrag
+  - healthcare/vaccination     # Impfnachweis
+  - healthcare/medical-report  # Arztbericht
+
+# Reference & Information
+reference:
+  - reference/manual           # Handbuch
+  - reference/guide            # Leitfaden
+  - reference/brochure         # Broschüre
+  - reference/article          # Artikel
+  - reference/report           # Bericht
+  - reference/whitepaper       # Whitepaper
+  - reference/specification    # Spezifikation
+
+# Business Documents
+business:
+  - business/contract          # Geschäftsvertrag
+  - business/proposal          # Angebot
+  - business/quote             # Kostenvoranschlag
+  - business/order             # Bestellung
+  - business/invoice           # Rechnung
+  - business/report            # Geschäftsbericht
+  - business/plan              # Geschäftsplan
+
+# Personal
+personal:
+  - personal/note              # Persönliche Notiz
+  - personal/diary             # Tagebuch
+  - personal/list              # Liste
+  - personal/todo              # Aufgabenliste
+  - personal/journal           # Journal
+
+# Fallback
+unknown:
+  - unknown/uncategorized      # Not yet classified
+
+# Meta
+meta:
+  version: 1.0
+  last_updated: 2025-10-13
+  total_types: 63
+  auto_promote_threshold: 3  # Suggested types appearing 3+ times get auto-promoted
+
+  # Paperless-ngx inspired naming conventions
+  naming_pattern: "{created}_{correspondent}_{doc_type}_{title}_{hash}"
+
+  # Common correspondents (can be extended per user)
+  common_correspondents:
+    - Amtsgericht
+    - Finanzamt
+    - Krankenkasse
+    - Schule
+    - Rechtsanwalt
+    - Arbeitgeber
+    - Bank
+    - Versicherung

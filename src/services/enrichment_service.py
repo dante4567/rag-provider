@@ -398,35 +398,22 @@ class EnrichmentService:
         if 'policy' in content_lower or 'richtlinie' in content_lower:
             return SemanticDocumentType.government_policy.value
 
-        # If no keyword match, use LLM for classification
-        prompt = f"""Classify this document into ONE semantic type.
+        # If no keyword match, use LLM for classification from controlled vocabulary
+        allowed_types = self.vocab_service.get_all_document_types()
+
+        # Format types list for LLM prompt
+        types_list = "\n".join([f"- {t}" for t in allowed_types])
+
+        prompt = f"""Classify this document into ONE semantic type from the controlled vocabulary below.
 
 Document title: {title}
 Filename: {filename}
 Content preview: {content[:800]}
 
-Choose ONLY ONE from these categories:
-- legal/court-decision (Gerichtsbeschluss, Urteil)
-- legal/law (Gesetz, SchulG, BASS)
-- legal/contract (Vertrag)
-- form/questionnaire (Fragebogen)
-- form/checklist (Checkliste, Zeitstrahl)
-- form/application (Anmeldung, Antrag)
-- education/transcript (Course transcript)
-- education/course-material (Lehrmaterial)
-- reference/brochure (Broschüre, marketing material)
-- reference/guide (Leitfaden, Handbuch)
-- reference/faq
-- reference/directory (Liste, Verzeichnis)
-- reference/report (Bericht, Empfehlungen)
-- communication/meeting-notes
-- financial/invoice
-- financial/receipt
-- government/regulation (Verordnung)
-- government/policy (Richtlinie)
-- unknown/uncategorized
+Choose ONLY ONE from these document types:
+{types_list}
 
-Return ONLY the category string, nothing else."""
+Return ONLY the document type string (e.g., "legal/court-decision"), nothing else."""
 
         try:
             response, _, _ = await self.llm_service.call_llm(
@@ -435,10 +422,17 @@ Return ONLY the category string, nothing else."""
                 temperature=0.0
             )
             doc_type = response.strip().lower()
-            # Validate it's one of our types
-            valid_types = [t.value for t in SemanticDocumentType]
-            if doc_type in valid_types:
+
+            # Validate against vocabulary
+            if self.vocab_service.is_valid_document_type(doc_type):
                 return doc_type
+
+            # Try fuzzy matching
+            suggested = self.vocab_service.suggest_document_type(doc_type)
+            if suggested != doc_type:
+                logger.info(f"Document type fuzzy matched: {doc_type} → {suggested}")
+                return suggested
+
         except Exception as e:
             logger.warning(f"LLM classification failed: {e}")
 

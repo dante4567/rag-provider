@@ -43,7 +43,8 @@ class VocabularyService:
             "topics": "topics.yaml",
             "projects": "projects.yaml",
             "places": "places.yaml",
-            "people": "people.yaml"
+            "people": "people.yaml",
+            "document_types": "document_types.yaml"
         }
 
         for name, filename in vocab_files.items():
@@ -105,6 +106,47 @@ class VocabularyService:
             return matches[0]
 
         return topic
+
+    # ===== DOCUMENT TYPES =====
+
+    def get_all_document_types(self) -> List[str]:
+        """Get flat list of all document types"""
+        doc_types_data = self.vocabularies.get("document_types", {})
+        all_types = []
+
+        for category, type_list in doc_types_data.items():
+            if category == "meta":
+                continue
+            if isinstance(type_list, list):
+                all_types.extend(type_list)
+
+        return sorted(all_types)
+
+    def get_document_types_by_category(self, category: str) -> List[str]:
+        """Get document types for a specific category"""
+        doc_types_data = self.vocabularies.get("document_types", {})
+        return doc_types_data.get(category, [])
+
+    def is_valid_document_type(self, doc_type: str) -> bool:
+        """Check if document type exists in vocabulary"""
+        return doc_type in self.get_all_document_types()
+
+    def suggest_document_type(self, doc_type: str) -> str:
+        """
+        Find closest matching document type from vocabulary
+
+        Returns: Best match or original doc_type if no good match
+        """
+        from difflib import get_close_matches
+
+        all_types = self.get_all_document_types()
+        matches = get_close_matches(doc_type, all_types, n=1, cutoff=0.6)
+
+        if matches:
+            logger.info(f"Document type suggestion: '{doc_type}' → '{matches[0]}'")
+            return matches[0]
+
+        return doc_type
 
     # ===== PROJECTS =====
 
