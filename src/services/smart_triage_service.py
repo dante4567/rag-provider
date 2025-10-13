@@ -12,12 +12,15 @@ Intelligent processing that:
 """
 
 import hashlib
+import logging
 import re
 from typing import Dict, List, Optional, Tuple, Set
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 from collections import defaultdict
 import Levenshtein  # For fuzzy string matching
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -187,7 +190,7 @@ class SmartTriageService:
                             duplicates.append((doc_id, similarity, "title_similarity"))
 
         except Exception as e:
-            print(f"[Triage] Duplicate search error: {e}")
+            logger.error(f"Duplicate search error: {e}")
 
         return duplicates[:5]  # Top 5 matches
 
