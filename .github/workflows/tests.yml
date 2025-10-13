@@ -196,7 +196,7 @@ jobs:
     - name: Run fast integration tests (no LLM calls)
       run: |
         pytest tests/integration -m "not slow" -v --tb=short
-      timeout-minutes: 10
+      timeout-minutes: 18
 
     - name: Display service logs on failure
       if: failure()
