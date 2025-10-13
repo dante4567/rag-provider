@@ -641,12 +641,11 @@ Return ONLY the category string, nothing else."""
             llm_data = llm_response.model_dump()
 
             # Debug: Log parsed data
-            logger.debug(f"
-[DEBUG] Converted to Dict:")
+            logger.debug("[DEBUG] Converted to Dict:")
             logger.debug(f"  - Topics: {llm_data.get('topics', [])}")
             logger.debug(f"  - People: {llm_data.get('entities', {}).get('people', [])}")
             logger.debug(f"  - Dates: {llm_data.get('entities', {}).get('dates', [])}")
-            logger.debug(f"  - Empty? {len(llm_data) == 0}\n")
+            logger.debug(f"  - Empty? {len(llm_data) == 0}")
 
             # Extract dates, numbers, and people using regex (in addition to LLM extraction)
             regex_dates = self.extract_dates_from_content(content)
