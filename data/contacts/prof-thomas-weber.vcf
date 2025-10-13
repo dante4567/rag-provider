@@ -2,9 +2,9 @@ BEGIN:VCARD
 VERSION:3.0
 FN:Prof. Thomas Weber
 N:Thomas Weber;Prof.;;;
-TITLE:discussant
-NOTE:Mentioned in: meeting minutes
-REV:20251008T232732Z
+TITLE:Technical Lead
+NOTE:Mentioned in: meeting minutes\\, Meeting Notes - 2025-11-25
+REV:20251013T211911Z
 PRODID:-//RAG Provider//Contact Service//EN
-CATEGORIES:RAG-Extracted,discussant
+CATEGORIES:RAG-Extracted,Technical Lead
 END:VCARD

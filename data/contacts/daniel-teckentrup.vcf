@@ -2,13 +2,10 @@ BEGIN:VCARD
 VERSION:3.0
 FN:Daniel Teckentrup
 N:Teckentrup;Daniel;;;
-TITLE:Hausmann
+TITLE:Developer
 ORG:Kiepenheuer & Witsch
-EMAIL;TYPE=INTERNET:mail@daniel-teckentrup.de
-TEL;TYPE=CELL:0170-7989520
-ADR;TYPE=WORK:;;Darmstädter Str. 13, 50678 Köln;;;;
-NOTE:Mentioned in: Amtsgericht Köln - 310 F 14125\, Persönliche Daten Name Geburtsname _________ ________________________________ Vor
-REV:20251008T195754Z
+NOTE:Mentioned in: Amtsgericht Köln - 310 F 14125\\\, Persönliche Daten Name Geburtsname _________ ________________________________ Vor\\, Meeting Notes - 2025-11-25
+REV:20251013T211911Z
 PRODID:-//RAG Provider//Contact Service//EN
-CATEGORIES:RAG-Extracted,Hausmann
+CATEGORIES:RAG-Extracted,Developer
 END:VCARD

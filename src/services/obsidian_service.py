@@ -202,11 +202,7 @@ class ObsidianService:
             'places': [f"[[refs/places/{slugify(p)}|{p}]]" for p in places] if places else [],
             'topics': topics if topics else [],
             'organizations': [f"[[refs/orgs/{slugify(o)}|{o}]]" for o in orgs] if orgs else [],
-
-            # === Detailed Entity Objects (structured data) ===
-            'people_detailed': people_objects if people_objects else [],
             'dates': [f"[[refs/days/{d}]]" for d in dates] if dates else [],
-            'dates_detailed': entities_data.get('dates_detailed', []),
             'numbers': numbers,
 
             # === Quality Scores (for filtering/sorting) ===
@@ -389,7 +385,9 @@ class ObsidianService:
         outcomes: List[str],
         next_actions: List[str],
         timeline: List[Dict[str, str]],
-        chunks: List[Dict[str, Any]] = None
+        chunks: List[Dict[str, Any]] = None,
+        people_detailed: List[Dict[str, Any]] = None,
+        dates_detailed: List[Dict[str, Any]] = None
     ) -> str:
         """
         Build structured body (helps both humans and RAG)
@@ -410,6 +408,49 @@ class ObsidianService:
         # Summary
         if summary:
             body_parts.append(f"> **Summary:** {summary}\n")
+
+        # People Details (Dataview-queryable format)
+        if people_detailed:
+            body_parts.append("## People")
+            body_parts.append("")
+            for person in people_detailed:
+                name = person.get('name', 'Unknown')
+                role = person.get('role')
+                email = person.get('email')
+                phone = person.get('phone')
+                organization = person.get('organization')
+                relationships = person.get('relationships', [])
+                aliases = person.get('aliases', [])
+
+                body_parts.append(f"### {name}")
+                if role:
+                    body_parts.append(f"Role:: {role}")
+                if email:
+                    body_parts.append(f"Email:: {email}")
+                if phone:
+                    body_parts.append(f"Phone:: {phone}")
+                if organization:
+                    body_parts.append(f"Organization:: {organization}")
+                if aliases:
+                    body_parts.append(f"Aliases:: {', '.join(aliases)}")
+                if relationships:
+                    rel_strs = [f"{r.get('type', '')}: {r.get('person', '')}" for r in relationships]
+                    body_parts.append(f"Relationships:: {'; '.join(rel_strs)}")
+                body_parts.append("")
+
+        # Date Details (Dataview-queryable format)
+        if dates_detailed:
+            body_parts.append("## Important Dates")
+            body_parts.append("")
+            for date_info in dates_detailed:
+                date_str = date_info.get('date', '')
+                context = date_info.get('context', '')
+                if date_str:
+                    if context:
+                        body_parts.append(f"- **{date_str}**: {context}")
+                    else:
+                        body_parts.append(f"- **{date_str}**")
+            body_parts.append("")
 
         # Source link section - link to original in attachments/
         # Extract original filename (remove upload_UUID_ prefix)
@@ -778,6 +819,9 @@ LIMIT 50
         next_actions = []  # TODO: Extract from metadata
         timeline = []   # TODO: Extract from metadata
 
+        # Get dates_detailed from metadata
+        dates_detailed = metadata.get('entities', {}).get('dates_detailed', [])
+
         body = self.build_body(
             content=content,
             summary=summary,
@@ -785,7 +829,9 @@ LIMIT 50
             key_facts=key_facts,
             outcomes=outcomes,
             next_actions=next_actions,
-            timeline=timeline
+            timeline=timeline,
+            people_detailed=people_objects,
+            dates_detailed=dates_detailed
         )
 
         # Build xref block

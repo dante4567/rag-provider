@@ -2,9 +2,11 @@ BEGIN:VCARD
 VERSION:3.0
 FN:Dr. Maria Schmidt
 N:Maria Schmidt;Dr.;;;
-TITLE:presenter
-NOTE:Mentioned in: meeting minutes
-REV:20251008T232732Z
+TITLE:Project Manager
+EMAIL;TYPE=INTERNET:schmidt@example.com
+TEL;TYPE=CELL:+49 221 123456
+NOTE:Mentioned in: meeting minutes\\, Meeting Notes - 2025-11-25
+REV:20251013T211911Z
 PRODID:-//RAG Provider//Contact Service//EN
-CATEGORIES:RAG-Extracted,presenter
+CATEGORIES:RAG-Extracted,Project Manager
 END:VCARD
