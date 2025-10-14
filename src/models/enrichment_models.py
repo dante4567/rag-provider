@@ -46,8 +46,8 @@ class Entities(BaseModel):
     )
     organizations: List[str] = Field(
         default_factory=list,
-        description="Organizations/companies mentioned (max 10)",
-        max_length=10
+        description="Organizations/companies mentioned (max 20)",
+        max_length=20  # Increased from 10 to handle complex documents
     )
     places: List[str] = Field(
         default_factory=list,
@@ -103,9 +103,9 @@ class EnrichmentResponse(BaseModel):
 
     topics: List[str] = Field(
         default_factory=list,
-        description="Topics from controlled vocabulary only (3-5 most specific)",
+        description="Topics from controlled vocabulary (8-15 tags covering broad and specific categories)",
         min_length=0,
-        max_length=5
+        max_length=15  # Increased from 5 to allow more granular tagging
     )
 
     suggested_topics: List[str] = Field(

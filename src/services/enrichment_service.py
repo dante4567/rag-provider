@@ -416,9 +416,10 @@ Choose ONLY ONE from these document types:
 Return ONLY the document type string (e.g., "legal/court-decision"), nothing else."""
 
         try:
+            # Use Claude Haiku for classification (upgraded from Groq for better accuracy)
             response, _, _ = await self.llm_service.call_llm(
                 prompt=prompt,
-                model_id="groq/llama-3.1-8b-instant",
+                model_id="anthropic/claude-3-haiku-20240307",
                 temperature=0.0
             )
             doc_type = response.strip().lower()
@@ -614,13 +615,14 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
         )
 
         try:
-            # Use Groq for enrichment with Instructor for type-safe structured output
+            # Use Claude Haiku for enrichment with Instructor for type-safe structured output
+            # Upgraded from Groq Llama 3.1 8B for better instruction-following and tag generation
             from src.models.enrichment_models import EnrichmentResponse
 
             llm_response, cost, model_used = await self.llm_service.call_llm_structured(
                 prompt=prompt,
                 response_model=EnrichmentResponse,
-                model_id="groq/llama-3.1-8b-instant",
+                model_id="anthropic/claude-3-haiku-20240307",
                 temperature=0.1
             )
 
