@@ -186,6 +186,30 @@ class ObsidianService:
                     formatted.append(date_str)
         return formatted
 
+    def _sanitize_yaml_string(self, value: str) -> str:
+        """
+        Sanitize string value for safe YAML embedding
+
+        Handles:
+        - Converts newlines to spaces (YAML multiline strings cause parsing issues)
+        - Removes or escapes problematic characters
+        - Trims excessive whitespace
+        """
+        if not value or not isinstance(value, str):
+            return value
+
+        # Replace newlines with spaces
+        cleaned = value.replace('\n', ' ').replace('\r', ' ')
+
+        # Collapse multiple spaces to single space
+        cleaned = ' '.join(cleaned.split())
+
+        # Limit length to prevent excessive frontmatter
+        if len(cleaned) > 500:
+            cleaned = cleaned[:497] + '...'
+
+        return cleaned
+
     def build_frontmatter(
         self,
         id: str,
@@ -236,7 +260,7 @@ class ObsidianService:
             'ingested_at': ingested_at.strftime('%Y-%m-%d'),
 
             # === Summary ===
-            'summary': metadata.get('summary', ''),
+            'summary': self._sanitize_yaml_string(metadata.get('summary', '')),
 
             # === Entities (Plain text for easy Dataview queries) ===
             'people': people if people else [],

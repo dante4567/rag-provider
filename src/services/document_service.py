@@ -186,7 +186,8 @@ class DocumentService:
                 return f"Image file: {file_path.name}", DocumentType.image, metadata
 
         elif file_extension in ['.eml', '.msg']:
-            text = await self._process_email(file_path)
+            text, email_metadata = await self._process_email(file_path)
+            metadata.update(email_metadata)
             return text, DocumentType.email, metadata
 
         elif file_extension == '.mbox':
@@ -387,35 +388,152 @@ class DocumentService:
             logger.error(f"Excel processing failed for {file_path}: {e}")
             return f"Failed to process Excel file: {file_path.name}"
 
-    async def _process_email(self, file_path: Path) -> str:
-        """Process email files (.eml, .msg)"""
+    async def _process_email(self, file_path: Path) -> Tuple[str, Dict]:
+        """
+        Process email files (.eml, .msg) with proper charset handling
+
+        Extracts:
+        - Email headers (From, To, Subject, Date)
+        - Email body (text/plain and text/html)
+        - Attachments (saved and referenced for separate processing)
+
+        Returns:
+            Tuple of (email text content, metadata dict with created_date)
+        """
         try:
+            import tempfile
+            import os
+            import email.utils
+            from datetime import date
+
             with open(file_path, 'rb') as f:
                 msg = email.message_from_bytes(f.read())
 
-            # Extract headers
-            text = f"From: {msg.get('From', 'Unknown')}\n"
-            text += f"To: {msg.get('To', 'Unknown')}\n"
-            text += f"Subject: {msg.get('Subject', 'No Subject')}\n"
+            # Parse email date for metadata
+            metadata = {}
+            date_str = msg.get('Date')
+            if date_str:
+                try:
+                    # email.utils.parsedate_to_datetime handles RFC 2822 date format
+                    email_datetime = email.utils.parsedate_to_datetime(date_str)
+                    # Convert to date string for metadata
+                    metadata['created_date'] = email_datetime.date().isoformat()
+                    logger.debug(f"Parsed email date: {date_str} → {metadata['created_date']}")
+                except Exception as e:
+                    logger.warning(f"Failed to parse email date '{date_str}': {e}")
+
+            # Extract headers (decode properly handles encoded words like =?iso-8859-1?Q?...?=)
+            text = f"From: {email.header.decode_header(msg.get('From', 'Unknown'))[0][0]}\n" if msg.get('From') else "From: Unknown\n"
+            text += f"To: {email.header.decode_header(msg.get('To', 'Unknown'))[0][0]}\n" if msg.get('To') else "To: Unknown\n"
+
+            # Subject often has encoded words
+            if msg.get('Subject'):
+                decoded_subject = email.header.decode_header(msg.get('Subject'))
+                subject_parts = []
+                for part, charset in decoded_subject:
+                    if isinstance(part, bytes):
+                        subject_parts.append(part.decode(charset or 'utf-8', errors='replace'))
+                    else:
+                        subject_parts.append(part)
+                text += f"Subject: {''.join(subject_parts)}\n"
+            else:
+                text += "Subject: No Subject\n"
+
             text += f"Date: {msg.get('Date', 'Unknown')}\n\n"
 
-            # Extract body
+            # Track attachments
+            attachments = []
+            attachment_dir = Path(tempfile.gettempdir()) / "email_attachments" / file_path.stem
+            attachment_dir.mkdir(parents=True, exist_ok=True)
+
+            # Extract body and attachments
             if msg.is_multipart():
                 for part in msg.walk():
-                    if part.get_content_type() == "text/plain":
+                    content_type = part.get_content_type()
+                    content_disposition = str(part.get("Content-Disposition", ""))
+
+                    # Extract text body
+                    if content_type == "text/plain" and "attachment" not in content_disposition:
                         payload = part.get_payload(decode=True)
                         if payload:
-                            text += payload.decode('utf-8', errors='ignore')
+                            charset = part.get_content_charset() or 'utf-8'
+                            try:
+                                text += payload.decode(charset, errors='replace')
+                            except (LookupError, UnicodeDecodeError):
+                                for fallback_charset in ['utf-8', 'iso-8859-1', 'windows-1252']:
+                                    try:
+                                        text += payload.decode(fallback_charset, errors='replace')
+                                        break
+                                    except:
+                                        continue
+
+                    # Extract HTML body as fallback (convert to text)
+                    elif content_type == "text/html" and "attachment" not in content_disposition:
+                        payload = part.get_payload(decode=True)
+                        if payload and not text.strip():  # Only if no plain text
+                            charset = part.get_content_charset() or 'utf-8'
+                            try:
+                                html_content = payload.decode(charset, errors='replace')
+                                # Simple HTML to text conversion
+                                soup = BeautifulSoup(html_content, 'html.parser')
+                                text += soup.get_text(separator='\n', strip=True)
+                            except:
+                                pass
+
+                    # Save attachments
+                    elif "attachment" in content_disposition or part.get_filename():
+                        filename = part.get_filename()
+                        if filename:
+                            # Decode filename if encoded
+                            if isinstance(filename, str):
+                                decoded_filename = email.header.decode_header(filename)
+                                filename_parts = []
+                                for fname_part, fcharset in decoded_filename:
+                                    if isinstance(fname_part, bytes):
+                                        filename_parts.append(fname_part.decode(fcharset or 'utf-8', errors='replace'))
+                                    else:
+                                        filename_parts.append(fname_part)
+                                filename = ''.join(filename_parts)
+
+                            # Save attachment
+                            attachment_path = attachment_dir / filename
+                            payload = part.get_payload(decode=True)
+                            if payload:
+                                with open(attachment_path, 'wb') as att_file:
+                                    att_file.write(payload)
+                                attachments.append(str(attachment_path))
+                                logger.info(f"📎 Saved email attachment: {filename} ({len(payload)} bytes)")
             else:
                 payload = msg.get_payload(decode=True)
                 if payload:
-                    text += payload.decode('utf-8', errors='ignore')
+                    charset = msg.get_content_charset() or 'utf-8'
+                    try:
+                        text += payload.decode(charset, errors='replace')
+                    except (LookupError, UnicodeDecodeError):
+                        for fallback_charset in ['utf-8', 'iso-8859-1', 'windows-1252']:
+                            try:
+                                text += payload.decode(fallback_charset, errors='replace')
+                                break
+                            except:
+                                continue
 
-            return text
+            # Add attachment references to email text
+            if attachments:
+                text += "\n\n--- Attachments ---\n"
+                for att_path in attachments:
+                    text += f"📎 {Path(att_path).name} (saved at: {att_path})\n"
+
+                # Store attachment paths in metadata for batch processing
+                # This is accessible via self._email_attachments if needed
+                if not hasattr(self, '_email_attachments'):
+                    self._email_attachments = []
+                self._email_attachments.extend(attachments)
+
+            return text, metadata
 
         except Exception as e:
             logger.error(f"Email processing failed for {file_path}: {e}")
-            return f"Failed to process email: {file_path.name}"
+            return f"Failed to process email: {file_path.name}", {}
 
     async def _process_mbox(self, file_path: Path) -> str:
         """

@@ -278,7 +278,9 @@ class DailyNoteService:
                     frontmatter = yaml.safe_load(parts[1])
                     for doc in frontmatter.get('documents', []):
                         if doc.get('type') == 'llm_chat':
-                            llm_chats.append(doc)
+                            # Load actual document to get summary
+                            doc_with_summary = self._load_document_summary(doc)
+                            llm_chats.append(doc_with_summary)
 
         # Generate LLM summary if we have chats and LLM service
         summary = ""
@@ -385,6 +387,45 @@ class DailyNoteService:
         self._write_note(monthly_path, frontmatter, body)
         logger.info(f"Generated monthly note: {monthly_path}")
 
+    def _load_document_summary(self, doc: Dict) -> Dict:
+        """
+        Load full document and extract summary from frontmatter
+
+        Args:
+            doc: Document dict with filename
+
+        Returns:
+            Document dict with 'summary' field added
+        """
+        try:
+            # Construct path to document (in parent directory of refs/)
+            doc_filename = doc.get('filename', '')
+            if not doc_filename:
+                return doc
+
+            # Try to find the document
+            doc_path = self.refs_dir.parent / f"{doc_filename}.md"
+
+            if not doc_path.exists():
+                logger.warning(f"Document not found: {doc_path}")
+                return doc
+
+            # Read and parse frontmatter
+            content = doc_path.read_text(encoding='utf-8')
+            if content.startswith('---'):
+                parts = content.split('---', 2)
+                if len(parts) >= 3:
+                    try:
+                        frontmatter = yaml.safe_load(parts[1])
+                        doc['summary'] = frontmatter.get('summary', '')
+                    except Exception as e:
+                        logger.warning(f"Failed to parse frontmatter for {doc_filename}: {e}")
+
+        except Exception as e:
+            logger.warning(f"Failed to load document summary for {doc.get('filename')}: {e}")
+
+        return doc
+
     async def _generate_weekly_summary(
         self,
         llm_chats: List[Dict],
@@ -393,20 +434,28 @@ class DailyNoteService:
         """
         Generate LLM summary of "what was on my mind" this week
 
-        Uses LLM chat titles to infer themes and preoccupations
+        Uses LLM chat summaries to infer themes and preoccupations
         """
         if not llm_chats or not self.llm_service:
             return ""
 
-        # Build prompt
-        chat_titles = [chat['title'] for chat in llm_chats]
+        # Build prompt with summaries if available, fallback to titles
+        chat_info = []
+        for chat in llm_chats:
+            title = chat.get('title', 'Untitled')
+            summary = chat.get('summary', '')
 
-        prompt = f"""Based on these LLM conversation titles from the week of {week_start.strftime('%B %d, %Y')}, write a brief 2-3 sentence summary of what themes and topics were on this person's mind.
+            if summary:
+                chat_info.append(f"**{title}**: {summary}")
+            else:
+                chat_info.append(f"- {title}")
 
-Conversation titles:
-{chr(10).join(f'- {title}' for title in chat_titles)}
+        prompt = f"""Based on these LLM conversations from the week of {week_start.strftime('%B %d, %Y')}, write a brief 2-3 sentence summary of what themes and topics were on this person's mind.
 
-Write in first person ("I was thinking about..."). Be specific and insightful. Focus on patterns and themes, not individual conversations."""
+Conversations:
+{chr(10).join(chat_info)}
+
+Write in first person ("I was thinking about..."). Be specific and insightful. Focus on patterns and themes across conversations, not individual ones."""
 
         try:
             # Use Groq for summaries - fast, cheap, and actually works
