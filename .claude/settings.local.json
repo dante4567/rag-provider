@@ -54,7 +54,11 @@
       "Bash(pip show:*)",
       "Bash(gh release view:*)",
       "Bash(gh release create:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(git stash show:*)",
+      "Bash(git stash:*)",
+      "Bash(for f in tests/unit/test_*.py)",
+      "Bash(paste:*)"
     ],
     "deny": [],
     "ask": []
