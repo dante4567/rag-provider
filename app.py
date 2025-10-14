@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timedelta
 from enum import Enum
+from contextlib import asynccontextmanager
 import chromadb
 from pathlib import Path
 import hashlib
@@ -108,7 +109,7 @@ from src.models.schemas import (
 )
 
 # Import route modules
-from src.routes import health, ingest, search, stats, chat, admin, email_threading, evaluation, monitoring, daily_notes
+from src.routes import health, ingest, search, stats, chat, admin, email_threading, evaluation, monitoring
 
 # Simple text splitter to replace langchain dependency
 
@@ -324,11 +325,47 @@ async def verify_token(request: Request, credentials: HTTPAuthorizationCredentia
 
     return True
 
+# Lifespan context manager for startup/shutdown events
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for startup/shutdown events.
+    Replaces deprecated @app.on_event decorators.
+    """
+    # Startup: Pre-load models and initialize services
+    logger.info("🚀 Starting up RAG service...")
+
+    # Pre-load reranking model to avoid blocking first search
+    try:
+        from src.services.reranking_service import get_reranking_service
+        logger.info("📥 Pre-loading reranking model (mixedbread-ai/mxbai-rerank-large-v2, ~3GB)...")
+        reranking_service = get_reranking_service()
+        # Force model load
+        reranking_service._ensure_model_loaded()
+        logger.info("✅ Reranking model pre-loaded successfully")
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to pre-load reranking model: {e}")
+        logger.warning("   Model will be loaded on first search (may cause delay)")
+
+    yield  # Application runs
+
+    # Shutdown: Cleanup resources
+    logger.info("🛑 Shutting down RAG service...")
+    if ENABLE_FILE_WATCH and 'file_observer' in globals():
+        file_observer.stop()
+        file_observer.join()
+        logger.info("✅ File watcher stopped")
+
+    if 'executor' in globals():
+        executor.shutdown(wait=True)
+        logger.info("✅ Thread pool executor shutdown")
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Enhanced RAG Service",
     version="2.0.1",
-    description="Secure cross-platform RAG service with OCR, WhatsApp processing, and Obsidian optimization"
+    description="Secure cross-platform RAG service with OCR, WhatsApp processing, and Obsidian optimization",
+    lifespan=lifespan
 )
 
 # Secure CORS configuration
@@ -352,7 +389,6 @@ app.include_router(admin.router)
 app.include_router(email_threading.router)
 app.include_router(evaluation.router)
 app.include_router(monitoring.router)
-app.include_router(daily_notes.router)
 
 # Logging middleware - tracks all requests with timing
 @app.middleware("http")
@@ -701,32 +737,6 @@ try:
 
 except ImportError as e:
     logger.warning(f"Enhanced RAG features not available: {e}")
-
-@app.on_event("startup")
-async def startup_event():
-    """Pre-load models and initialize services on startup"""
-    logger.info("🚀 Starting up RAG service...")
-
-    # Pre-load reranking model to avoid blocking first search
-    try:
-        from src.services.reranking_service import get_reranking_service
-        logger.info("📥 Pre-loading reranking model (mixedbread-ai/mxbai-rerank-large-v2, ~3GB)...")
-        reranking_service = get_reranking_service()
-        # Force model load with dummy query
-        reranking_service._ensure_model_loaded()
-        logger.info("✅ Reranking model pre-loaded successfully")
-    except Exception as e:
-        logger.warning(f"⚠️ Failed to pre-load reranking model: {e}")
-        logger.warning("   Model will be loaded on first search (may cause delay)")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    if ENABLE_FILE_WATCH and file_observer:
-        file_observer.stop()
-        file_observer.join()
-
-    executor.shutdown(wait=True)
 
 if __name__ == "__main__":
     import uvicorn
