@@ -42,6 +42,7 @@ try:
     from src.services.vocabulary_service import VocabularyService
     from src.services.chunking_service import ChunkingService
     from src.services.obsidian_service import ObsidianService
+    from src.services.daily_note_service import DailyNoteService
     from src.services.tag_taxonomy_service import TagTaxonomyService
     from src.services.smart_triage_service import SmartTriageService
     from src.services.quality_scoring_service import QualityScoringService
@@ -372,11 +373,18 @@ class RAGService:
                 overlap=50          # Token overlap between chunks
             )
 
-            # Initialize Obsidian export service (formerly V3 - RAG-first)
+            # Initialize daily note service for automatic journal generation
             obsidian_output_dir = os.getenv("OBSIDIAN_VAULT_PATH", "./obsidian_vault")
+            self.daily_note_service = DailyNoteService(
+                refs_dir=f"{obsidian_output_dir}/refs",
+                llm_service=self.llm_service
+            )
+
+            # Initialize Obsidian export service (formerly V3 - RAG-first)
             self.obsidian_service = ObsidianService(
                 output_dir=obsidian_output_dir,
-                refs_dir=f"{obsidian_output_dir}/refs"
+                refs_dir=f"{obsidian_output_dir}/refs",
+                daily_note_service=self.daily_note_service
             )
 
             # Initialize contact/calendar export services (opt-in via ENABLE_VCF_ICS=true)
@@ -883,12 +891,20 @@ class RAGService:
             if generate_obsidian:
                 try:
                     logger.info(f"📝 Exporting to Obsidian vault (RAG-first format)...")
+
+                    # Use document's actual created_at date, not ingestion time
+                    # This is critical for daily notes to show documents on correct dates
+                    doc_created_at = datetime.now()
+                    if created_date:
+                        # Convert date to datetime (midnight)
+                        doc_created_at = datetime.combine(created_date, datetime.min.time())
+
                     file_path = self.obsidian_service.export_document(
                         title=title,
                         content=content,
                         metadata=enriched_metadata,
                         document_type=document_type,
-                        created_at=datetime.now(),
+                        created_at=doc_created_at,
                         source=filename or "rag_pipeline"
                     )
                     obsidian_path = str(file_path)

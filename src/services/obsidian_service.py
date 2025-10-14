@@ -40,10 +40,12 @@ class ObsidianService:
     def __init__(
         self,
         output_dir: str = "./obsidian_vault",
-        refs_dir: str = "./obsidian_vault/refs"
+        refs_dir: str = "./obsidian_vault/refs",
+        daily_note_service = None
     ):
         self.output_dir = Path(output_dir)
         self.refs_dir = Path(refs_dir)
+        self.daily_note_service = daily_note_service
 
         # Create directory structure
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -482,7 +484,7 @@ class ObsidianService:
                     body_parts.append(f"Relationships:: {'; '.join(rel_strs)}")
                 body_parts.append("")
 
-        # Date Details (Dataview-queryable format)
+        # Date Details (Dataview-queryable format with wiki-links)
         if dates_detailed:
             body_parts.append("## Important Dates")
             body_parts.append("")
@@ -490,10 +492,11 @@ class ObsidianService:
                 date_str = date_info.get('date', '')
                 context = date_info.get('context', '')
                 if date_str:
+                    # Link dates as daily notes for Obsidian timeline navigation
                     if context:
-                        body_parts.append(f"- **{date_str}**: {context}")
+                        body_parts.append(f"- [[{date_str}]]: {context}")
                     else:
-                        body_parts.append(f"- **{date_str}**")
+                        body_parts.append(f"- [[{date_str}]]")
             body_parts.append("")
 
         # Source link section - link to original in attachments/
@@ -947,6 +950,20 @@ LIMIT 50
                 extra_links['Calendar Event'] = f"../../../data/calendar/{ical_filename}"
 
             self.create_entity_stub('day', date_str, extra_links=extra_links)
+
+        # Add document to daily note (for document's creation date)
+        if self.daily_note_service:
+            try:
+                doc_type_str = str(document_type).replace('DocumentType.', '')
+                self.daily_note_service.add_document_to_daily_note(
+                    doc_date=created_at,
+                    doc_title=title,
+                    doc_type=doc_type_str,
+                    doc_id=doc_id,
+                    doc_filename=filename.replace('.md', '')  # Remove .md for wiki-links
+                )
+            except Exception as e:
+                logger.error(f"Failed to add document to daily note: {e}")
 
         return file_path
 

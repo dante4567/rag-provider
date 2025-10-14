@@ -108,7 +108,7 @@ from src.models.schemas import (
 )
 
 # Import route modules
-from src.routes import health, ingest, search, stats, chat, admin, email_threading, evaluation, monitoring
+from src.routes import health, ingest, search, stats, chat, admin, email_threading, evaluation, monitoring, daily_notes
 
 # Simple text splitter to replace langchain dependency
 
@@ -352,6 +352,7 @@ app.include_router(admin.router)
 app.include_router(email_threading.router)
 app.include_router(evaluation.router)
 app.include_router(monitoring.router)
+app.include_router(daily_notes.router)
 
 # Logging middleware - tracks all requests with timing
 @app.middleware("http")
