@@ -702,6 +702,23 @@ try:
 except ImportError as e:
     logger.warning(f"Enhanced RAG features not available: {e}")
 
+@app.on_event("startup")
+async def startup_event():
+    """Pre-load models and initialize services on startup"""
+    logger.info("🚀 Starting up RAG service...")
+
+    # Pre-load reranking model to avoid blocking first search
+    try:
+        from src.services.reranking_service import get_reranking_service
+        logger.info("📥 Pre-loading reranking model (mixedbread-ai/mxbai-rerank-large-v2, ~3GB)...")
+        reranking_service = get_reranking_service()
+        # Force model load with dummy query
+        reranking_service._ensure_model_loaded()
+        logger.info("✅ Reranking model pre-loaded successfully")
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to pre-load reranking model: {e}")
+        logger.warning("   Model will be loaded on first search (may cause delay)")
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
