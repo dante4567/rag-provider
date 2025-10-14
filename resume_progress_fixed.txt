@@ -1,0 +1,422 @@
+🔄 Resuming email ingestion from #127
+📝 Logging to: resume_20251014_210248.log
+
+[128/     518] Ingesting: 20220531-Vatertagaktion am 2.6.22-73001.eml... ❌ FAILED
+[129/     518] Ingesting: 20220601-Informationen aus der Kita-73003.eml... ❌ FAILED
+[130/     518] Ingesting: 20220607-Betreuung heute-73005.eml... ❌ FAILED
+[131/     518] Ingesting: 20220608-Safe the date 09.07.-73006.eml... ❌ FAILED
+[132/     518] Ingesting: 20220610-Betreuung heute-73009.eml... ❌ FAILED
+[133/     518] Ingesting: 20220613-Personalbesetzung heute-73013.eml... ❌ FAILED
+[134/     518] Ingesting: 20220614-Personalbesetzung am Mittwoch _ Notbetreuung am Fr-73016.eml... ❌ FAILED
+[135/     518] Ingesting: 20220614-Personalbesetzung-73015.eml... ❌ FAILED
+[136/     518] Ingesting: 20220615-Kita schließt um 16_30 Uhr-73017.eml... ❌ FAILED
+[137/     518] Ingesting: 20220621-Einladung Sommerfest-73025.eml... ❌ FAILED
+[138/     518] Ingesting: 20220622-Urlaub Leitung-73031.eml... ❌ FAILED
+[139/     518] Ingesting: 20220704-Elternkommunikation-73040.eml... ❌ FAILED
+[140/     518] Ingesting: 20220706-Erinnerung Sommerfest-73044.eml... ❌ FAILED
+[141/     518] Ingesting: 20220707-WG_ Abstimmung_ Welchen täglichen Betreuungsbedarf-73049.eml... ❌ FAILED
+[142/     518] Ingesting: 20220712-Personelle Veränderung in Blau-70544.eml... ❌ FAILED
+[143/     518] Ingesting: 20220719-Lost & Found-73052.eml... ❌ FAILED
+[144/     518] Ingesting: 20220720-Abschiedsbriefe-73053.eml... ❌ FAILED
+[145/     518] Ingesting: 20220720-Öffnungszeit ab dem 08.08.-73054.eml... ❌ FAILED
+[146/     518] Ingesting: 20220810-Kitajahr 2022_22 Herzliches Willkommen-70545.eml... ❌ FAILED
+[147/     518] Ingesting: 20220823-Elternkommunikation-73083.eml... ❌ FAILED
+[148/     518] Ingesting: 20220906-Liebe Eltern ,-70546.eml... ❌ FAILED
+[149/     518] Ingesting: 20220908-Einladung zum Picknick der Grünen Gruppe-73090.eml... ❌ FAILED
+[150/     518] Ingesting: 20220909-Information - Gutschrift anteiliger Beitrag Förder-70547.eml... ❌ FAILED
+[151/     518] Ingesting: 20220912-Einladung zum Elternabend-70548.eml... ❌ FAILED
+[152/     518] Ingesting: 20220920-Abschied-73098.eml... ❌ FAILED
+[153/     518] Ingesting: 20220920-Personalmangel-70549.eml... ❌ FAILED
+[154/     518] Ingesting: 20220920-Personalsituation-309.eml... ❌ FAILED
+[155/     518] Ingesting: 20220926-Personalmangel-70550.eml... ❌ FAILED
+[156/     518] Ingesting: 20220929-Durchhalten-70552.eml... ❌ FAILED
+[157/     518] Ingesting: 20220929-Erneut muss ich Sie leider darum bitten, Ihre Kind-70551.eml... ❌ FAILED
+[158/     518] Ingesting: 20221007-Anlassbezogener Elternabend-70553.eml... ❌ FAILED
+[159/     518] Ingesting: 20221008-Re_Villa Luna Köln Neustadt-Süd - Bedarfsplanung K-28.eml... ❌ FAILED
+[160/     518] Ingesting: 20221008-Re_Villa Luna Köln Neustadt-Süd - Bedarfsplanung K-906.eml... ❌ FAILED
+[161/     518] Ingesting: 20221012-Ergänzende Informationen und Protokoll-70554.eml... ❌ FAILED
+[162/     518] Ingesting: 20221017-Test E-Mail-73118.eml... ❌ FAILED
+[163/     518] Ingesting: 20221018-Aw_ Test E-Mail-73119.eml... ❌ FAILED
+[164/     518] Ingesting: 20221027-Liebe Eltern.-70555.eml... ❌ FAILED
+[165/     518] Ingesting: 20221028-St.Martin-70556.eml... ❌ FAILED
+[166/     518] Ingesting: 20221109-Villa Luna Köln Neustadt-Süd - Elterninformation _-70557.eml... ❌ FAILED
+[167/     518] Ingesting: 20221124-Personalnot-70558.eml... ❌ FAILED
+[168/     518] Ingesting: 20221128-Personalnot-70559.eml... ❌ FAILED
+[169/     518] Ingesting: 20221201-Villa Luna Köln Neustadt Süd - Elterninformation_ -70560.eml... ❌ FAILED
+[170/     518] Ingesting: 20221208-Einschränkungen-70561.eml... ❌ FAILED
+[171/     518] Ingesting: 20221216-Zuwachs im Leitungsteam ab 01.01.2023-70562.eml... ❌ FAILED
+[172/     518] Ingesting: 20221219-AW_ yellow group yearly calendar-73161.eml... ❌ FAILED
+[173/     518] Ingesting: 20221219-yellow group yearly calendar-310.eml... ❌ FAILED
+[174/     518] Ingesting: 20221220-Jahresplanung 2023-311.eml... ❌ FAILED
+[175/     518] Ingesting: 20221220-Jahresplanung 2023-312.eml... ❌ FAILED
+[176/     518] Ingesting: 20230104-Einladung Südstadtzug Karneval 21.02.2023-52716.eml... ❌ FAILED
+
+📊 Progress: 176/     518 | Success: 0 | Failed: 49
+
+[177/     518] Ingesting: 20230116-Südstadtzug-52811.eml... ❌ FAILED
+[178/     518] Ingesting: 20230124-Krankheitsfälle-70563.eml... ❌ FAILED
+[179/     518] Ingesting: 20230126-Schreiben vom Ministerium-70564.eml... ❌ FAILED
+[180/     518] Ingesting: 20230127-Ringelrötelfall-70567.eml... ❌ FAILED
+[181/     518] Ingesting: 20230127-Ringelröteln-70565.eml... ❌ FAILED
+[182/     518] Ingesting: 20230127-Ringelröteln-70566.eml... ❌ FAILED
+[183/     518] Ingesting: 20230130-Zwischenbericht vom Bonner Wall-70568.eml... ❌ FAILED
+[184/     518] Ingesting: 20230131-Erste Schritte zur Nachhaltigkeit-52945.eml... ❌ FAILED
+[185/     518] Ingesting: 20230202-Villa Luna Köln Neustadt Süd - Elterninformation_ -70569.eml... ❌ FAILED
+[186/     518] Ingesting: 20230206-eingeschränkte Betreuungszeiten-70570.eml... ❌ FAILED
+[187/     518] Ingesting: 20230213-Corona-70571.eml... ❌ FAILED
+[188/     518] Ingesting: 20230213-Südstadtzug-70572.eml... ❌ FAILED
+[189/     518] Ingesting: 20230215-Informationen zum Karneval-70573.eml... ❌ FAILED
+[190/     518] Ingesting: 20230220-Südstadtzug-70574.eml... ❌ FAILED
+[191/     518] Ingesting: 20230227-Elternbeiratssitzung-60045.eml... ❌ FAILED
+[192/     518] Ingesting: 20230301-hoher Krankheitsstand-70575.eml... ❌ FAILED
+[193/     518] Ingesting: 20230301-hoher Krankheitsstand-70576.eml... ❌ FAILED
+[194/     518] Ingesting: 20230302-Einladung zur Elternbeiratssitzung-60070.eml... ❌ FAILED
+[195/     518] Ingesting: 20230313-hoher Krankheitsstand-70577.eml... ❌ FAILED
+[196/     518] Ingesting: 20230314-Betreuungssituation-70578.eml... ❌ FAILED
+[197/     518] Ingesting: 20230320-grüne und gelbe Gruppe geschlossen-70579.eml... ❌ FAILED
+[198/     518] Ingesting: 20230321-grün_gelb-70580.eml... ❌ FAILED
+[199/     518] Ingesting: 20230328-Neuigkeiten und Informationen im Überblick-70581.eml... ❌ FAILED
+[200/     518] Ingesting: 20230406-Personelle Veränderung im Leitungsbüro-70582.eml... ❌ FAILED
+[201/     518] Ingesting: 20230412-Renovierungsarbeiten-70583.eml... ❌ FAILED
+[202/     518] Ingesting: 20230419-aktuelle Termine-70584.eml... ❌ FAILED
+[203/     518] Ingesting: 20230508-aktuelles-70585.eml... ❌ FAILED
+[204/     518] Ingesting: 20230510-Sommerfest 2023-70586.eml... ❌ FAILED
+[205/     518] Ingesting: 20230515-Sommerfest 2023-70587.eml... ❌ FAILED
+[206/     518] Ingesting: 20230601-Informationen im Überblick-70588.eml... ❌ FAILED
+[207/     518] Ingesting: 20230621-Ringelröteln-70589.eml... ❌ FAILED
+[208/     518] Ingesting: 20230622-Unwetterwarnung-70590.eml... ❌ FAILED
+[209/     518] Ingesting: 20230628-Scharlach-61118.eml... ❌ FAILED
+[210/     518] Ingesting: 20230703-Abschiedsfeier Voschulkinder_Farewell party presch-61178.eml... ❌ FAILED
+[211/     518] Ingesting: 20230705-Beginn der Teilöffnung-70591.eml... ❌ FAILED
+[212/     518] Ingesting: 20230707-Fliegerbombe-61218.eml... ❌ FAILED
+[213/     518] Ingesting: 20230811-Personalzuwachs im Leitungsbüro _ Increase in staf-70592.eml... ❌ FAILED
+[214/     518] Ingesting: 20230814-Elternbefragung _ parental survey 2023 Villa Luna -70593.eml... ❌ FAILED
+[215/     518] Ingesting: 20230815-Neuigkeiten und Informationen im Überblick-70594.eml... ❌ FAILED
+[216/     518] Ingesting: 20230822-Villa Luna Köln Neustadt-Süd - Abfrage Geschwister-70595.eml... ❌ FAILED
+[217/     518] Ingesting: 20230901-Astronauten Wochenrückblick-61766.eml... ❌ FAILED
+[218/     518] Ingesting: 20230907-Elternbefragung-70596.eml... ❌ FAILED
+[219/     518] Ingesting: 20230911-Gruppengestaltung, Elternabend-61878.eml... ❌ FAILED
+[220/     518] Ingesting: 20230913-Aller guten dinge....-9090.eml... ❌ FAILED
+[221/     518] Ingesting: 20230913-Fwd_ Video grüne Gruppe ElternAbend-9087.eml... ❌ FAILED
+[222/     518] Ingesting: 20230913-Fwd_ Video grüne Gruppe ElternAbend-9089.eml... ❌ FAILED
+[223/     518] Ingesting: 20230913-Re_Video grüne Gruppe ElternAbend-9088.eml... ❌ FAILED
+[224/     518] Ingesting: 20230913-Video grüne Gruppe ElternAbend-9387.eml... ❌ FAILED
+[225/     518] Ingesting: 20230914-AW_ Aller guten dinge....-73356.eml... ❌ FAILED
+[226/     518] Ingesting: 20230926-Krankheitswelle-70597.eml... ❌ FAILED
+
+📊 Progress: 226/     518 | Success: 0 | Failed: 99
+
+[227/     518] Ingesting: 20230927-Bring- und Abholphase-62024.eml... ❌ FAILED
+[228/     518] Ingesting: 20230928-Villa Luna Köln Neustadt-Süd - Planung Kita-Jahr 2-70598.eml... ❌ FAILED
+[229/     518] Ingesting: 20231005-Personalengpass Villa Luna K1-70599.eml... ❌ FAILED
+[230/     518] Ingesting: 20231005-Weitere Informationen_ Personalengpass Villa Luna -70600.eml... ❌ FAILED
+[231/     518] Ingesting: 20231012-Do und Fr Betreuung bis 16.30 Uhr-70601.eml... ❌ FAILED
+[232/     518] Ingesting: 20231024-hoher Krankheitsstand-70602.eml... ❌ FAILED
+[233/     518] Ingesting: 20231025-Ausblick auf den restlichen Verlauf der Woche-70604.eml... ❌ FAILED
+[234/     518] Ingesting: 20231025-Villa Luna Köln Neustadt Süd- Elterninformation_ P-70603.eml... ❌ FAILED
+[235/     518] Ingesting: 20231026-Einladung St.Martin _ St.Martin Lieder-62395.eml... ❌ FAILED
+[236/     518] Ingesting: 20231027-Weitere Informationen_ Personalengpass Villa Luna -70605.eml... ❌ FAILED
+[237/     518] Ingesting: 20231030-Jubiläumsfeier verschoben-70606.eml... ❌ FAILED
+[238/     518] Ingesting: 20231108-Hinzugefügte Information zum Verkleidungstag (Zeke-73398.eml... ❌ FAILED
+[239/     518] Ingesting: 20231108-Verkleidungsfeier, Spielzeugtag-73397.eml... ❌ FAILED
+[240/     518] Ingesting: 20231116-Karneval 2024-62685.eml... ❌ FAILED
+[241/     518] Ingesting: 20231204-Personalengpass Villa Luna K1-70607.eml... ❌ FAILED
+[242/     518] Ingesting: 20231207-Freitag, 8.12.23-70608.eml... ❌ FAILED
+[243/     518] Ingesting: 20231213-Weihnachtsfeier-63062.eml... ❌ FAILED
+[244/     518] Ingesting: 20231215-weitere  Krankmeldungen-70609.eml... ❌ FAILED
+[245/     518] Ingesting: 20231221-Öffnungszeiten am Freitag, 22.12.2023, bis 17 Uhr-70610.eml... ❌ FAILED
+[246/     518] Ingesting: 20240105-Südstadtzug 2024-63344.eml... ❌ FAILED
+[247/     518] Ingesting: 20240108-Personelles-70611.eml... ❌ FAILED
+[248/     518] Ingesting: 20240110-Gruppenschließung ab 14_30 Astronauten und Regenbo-70612.eml... ❌ FAILED
+[249/     518] Ingesting: 20240111-Villa Luna Köln Neustadt Süd- Trägerinformation Ne-70613.eml... ❌ FAILED
+[250/     518] Ingesting: 20240112-Fehlende Rückmeldung wg Teilnahme Südstadtzug-63431.eml... ❌ FAILED
+[251/     518] Ingesting: 20240117-Ankündigung Beitragsanpassung Villa Luna Köln - Fö-70614.eml... ❌ FAILED
+[252/     518] Ingesting: 20240123-Personalengpass-63563.eml... ❌ FAILED
+[253/     518] Ingesting: 20240125-Kostüme für den Südstadtzug-70615.eml... ❌ FAILED
+[254/     518] Ingesting: 20240126-PS_ Verkleidungsparty-73489.eml... ❌ FAILED
+[255/     518] Ingesting: 20240201-Karneval-73496.eml... ❌ FAILED
+[256/     518] Ingesting: 20240201-Vorbereitunegn zum SÜdstadtzug diesen Montag 05.02-70616.eml... ❌ FAILED
+[257/     518] Ingesting: 20240202-Neues Mitglied-73498.eml... ❌ FAILED
+[258/     518] Ingesting: 20240205-Karnevalsbuffet-63739.eml... ❌ FAILED
+[259/     518] Ingesting: 20240207-Aktuelle Informationen _ Information Update-70618.eml... ❌ FAILED
+[260/     518] Ingesting: 20240207-Finale Informationen zum Südstadtzug __ Final info-70617.eml... ❌ FAILED
+[261/     518] Ingesting: 20240215-Erste Hilfe Kurs für Kinder-70619.eml... ❌ FAILED
+[262/     518] Ingesting: 20240220-Elterninformationsschreiben _Kita Bündnis NRW__Par-70620.eml... ❌ FAILED
+[263/     518] Ingesting: 20240223-Personalengpass Villa Luna K1-70621.eml... ❌ FAILED
+[264/     518] Ingesting: 20240228-1. Hilfe Kurs Teil 2-70622.eml... ❌ FAILED
+[265/     518] Ingesting: 20240301-Seeds and gardening equipment for our roof terrass-70623.eml... ❌ FAILED
+[266/     518] Ingesting: 20240301-WG_ Teilweise Schließung der Astronautengruppe & k-64142.eml... ❌ FAILED
+[267/     518] Ingesting: 20240307-hoher Krankheitsstand der Mitarbeitenden-70624.eml... ❌ FAILED
+[268/     518] Ingesting: 20240307-Unklarheiten-70625.eml... ❌ FAILED
+[269/     518] Ingesting: 20240308-Informationsschreiben Förderverein Villa Luna-70626.eml... ❌ FAILED
+[270/     518] Ingesting: 20240319-Villa Luna Köln Neustadt Süd - Informationsschreib-70627.eml... ❌ FAILED
+[271/     518] Ingesting: 20240321-Update-70628.eml... ❌ FAILED
+[272/     518] Ingesting: 20240403-Termine für unsere Tierpark-Ausflüge-70630.eml... ❌ FAILED
+[273/     518] Ingesting: 20240417-Neuer Praktikant-73557.eml... ❌ FAILED
+[274/     518] Ingesting: 20240422-Betreuungszeiten unserer Einrichtung für deise Woc-70632.eml... ❌ FAILED
+[275/     518] Ingesting: 20240422-Gruppenschießung wegen Personalmangel-70631.eml... ❌ FAILED
+[276/     518] Ingesting: 20240423-Theaterbesuch Ü3 findet statt-70633.eml... ❌ FAILED
+
+📊 Progress: 276/     518 | Success: 0 | Failed: 149
+
+[277/     518] Ingesting: 20240424-Ausflug Tierpark findet nicht statt-70634.eml... ❌ FAILED
+[278/     518] Ingesting: 20240424-Betreuung auf Sparflamme-70635.eml... ❌ FAILED
+[279/     518] Ingesting: 20240425-Information_ Kita Bündnis NRW Aktion - Rettet unse-70637.eml... ❌ FAILED
+[280/     518] Ingesting: 20240425-Kita schließt am Freitag 26.04. bereits um 16_30-70636.eml... ❌ FAILED
+[281/     518] Ingesting: 20240429-Protokoll Elternabend 2024-64956.eml... ❌ FAILED
+[282/     518] Ingesting: 20240506-Absage Ausflug in den Tierpark am Mittwoch-70638.eml... ❌ FAILED
+[283/     518] Ingesting: 20240507-Ausflug Kölner Zoo_ Trip Cologne Zoo-73565.eml... ❌ FAILED
+[284/     518] Ingesting: 20240508-Eingeschränkte Betreuungszeiten heute, Mittwoch 08-70639.eml... ❌ FAILED
+[285/     518] Ingesting: 20240508-Schließung der U3 um 15_30-70640.eml... ❌ FAILED
+[286/     518] Ingesting: 20240524-Personal decke knapp - Kita schließt heute um 17_0-70641.eml... ❌ FAILED
+[287/     518] Ingesting: 20240605-Informationen-397.eml... ❌ FAILED
+[288/     518] Ingesting: 20240605-Lindenthaler Tierpark-398.eml... ❌ FAILED
+[289/     518] Ingesting: 20240617-Sommerfest 2024-399.eml... ❌ FAILED
+[290/     518] Ingesting: 20240619-Personalengpass Mittwoch 19.06.2024-400.eml... ❌ FAILED
+[291/     518] Ingesting: 20240620-Freitag. 21.06.24 Betreuung bis 16.30-401.eml... ❌ FAILED
+[292/     518] Ingesting: 20240626-Update Bonner Wall-402.eml... ❌ FAILED
+[293/     518] Ingesting: 20240702-U 3 Gruppen schließen heute um 15 Uhr-403.eml... ❌ FAILED
+[294/     518] Ingesting: 20240703-Anhaltender Personalengpass & weitere Krankmeldung-53.eml... ❌ FAILED
+[295/     518] Ingesting: 20240711-Kitajahresende-404.eml... ❌ FAILED
+[296/     518] Ingesting: 20240716-U 3 Gruppen schließen heute um 15 Uhr-406.eml... ❌ FAILED
+[297/     518] Ingesting: 20240814-Information Ausflüge !!-409.eml... ❌ FAILED
+[298/     518] Ingesting: 20240827-Personelle Veränderungen-412.eml... ❌ FAILED
+[299/     518] Ingesting: 20240830-aktuelle Informationen-413.eml... ❌ FAILED
+[300/     518] Ingesting: 20240912-aktualisierte Jahresplanung 2024-360.eml... ❌ FAILED
+[301/     518] Ingesting: 20240912-aktualisierte Jahresplanung 2024-419.eml... ❌ FAILED
+[302/     518] Ingesting: 20240912-Jetzt auch mit Anhang-420.eml... ❌ FAILED
+[303/     518] Ingesting: 20240912-Politiker im Praktikum-416.eml... ❌ FAILED
+[304/     518] Ingesting: 20240912-versuch 2 mit Anhang-630.eml... ❌ FAILED
+[305/     518] Ingesting: 20240918-Betreuung im Nachmittagsbereich-650.eml... ❌ FAILED
+[306/     518] Ingesting: 20240919-Ausflug 3- Jährige_ Excursion 3- year- olds-359.eml... ❌ FAILED
+[307/     518] Ingesting: 20240919-Informationen zum Sand am Bonner Wall-357.eml... ❌ FAILED
+[308/     518] Ingesting: 20240920-ich bin dann mal weg-763.eml... ❌ FAILED
+[309/     518] Ingesting: 20240926-Hoher Personalmangel_ Ü3-Bereich muss am Freitag, -370.eml... ❌ FAILED
+[310/     518] Ingesting: 20240926-Liederliste-374.eml... ❌ FAILED
+[311/     518] Ingesting: 20240926-Personalengpass in der Ü3 am Nachmittag-373.eml... ❌ FAILED
+[312/     518] Ingesting: 20240930-Gekürzte Öffnungszeiten_ Astronauten-Gruppe-810.eml... ❌ FAILED
+[313/     518] Ingesting: 20240930-Vorbereitung Laternen Basteln-874.eml... ❌ FAILED
+[314/     518] Ingesting: 20241001-2.10.24 - Ü3-Gruppen werden vor 9 Uhr und ab 15_30-813.eml... ❌ FAILED
+[315/     518] Ingesting: 20241002-Kastanien-Tauschaktion-379.eml... ❌ FAILED
+[316/     518] Ingesting: 20241007-2.10.24 - Ü3-Gruppen werden vor 9 Uhr und ab 15_30-829.eml... ❌ FAILED
+[317/     518] Ingesting: 20241007-Korrekrtur_ Regenbogen-Gruppe muss morgen (8.10.24-830.eml... ❌ FAILED
+[318/     518] Ingesting: 20241007-Personalengpass Villa Luna K1 07.10.2024-863.eml... ❌ FAILED
+[319/     518] Ingesting: 20241008-09.10 - 11.10 - eingeschränkte Betreuung + kein La-833.eml... ❌ FAILED
+[320/     518] Ingesting: 20241008-09.10 - 11.10_ kein LC, Ü3-Notbetreuung + U3 ab 14-834.eml... ❌ FAILED
+[321/     518] Ingesting: 20241008-Zusätzlicher Personalengpass Dienstag 08.10.2024-871.eml... ❌ FAILED
+[322/     518] Ingesting: 20241009-10.10 + 11.10_ Kita öffnet erst um 8 + U3 Notbetre-839.eml... ❌ FAILED
+[323/     518] Ingesting: 20241009-Südstadtzug 2025-384.eml... ❌ FAILED
+[324/     518] Ingesting: 20241009-Weiterer Personalausfall - U3 Gruppen müssen leide-835.eml... ❌ FAILED
+[325/     518] Ingesting: 20241010-Notgruppe - Wetterfeste Kleidung_Wechselsachen-387.eml... ❌ FAILED
+[326/     518] Ingesting: 20241011-14.10 + 15.10 Kita ist von 8 bis 16.30 auf; U3 + Ü-848.eml... ❌ FAILED
+
+📊 Progress: 326/     518 | Success: 0 | Failed: 199
+
+[327/     518] Ingesting: 20241011-Notbetreuung Anmeldungen-849.eml... ❌ FAILED
+[328/     518] Ingesting: 20241011-Villa Luna Köln Neustadt-Süd - Planung des Kitajah-847.eml... ❌ FAILED
+[329/     518] Ingesting: 20241015-Ausflug 18.10_ Trip 18.10-424.eml... ❌ FAILED
+[330/     518] Ingesting: 20241015-Notbetreuung (U+Ü) bis zum einschl. 18.10 (Anmeldu-917.eml... ❌ FAILED
+[331/     518] Ingesting: 20241015-Notbetreuung U3 - weitere Abmeldungen sind nötig; -426.eml... ❌ FAILED
+[332/     518] Ingesting: 20241015-Zu viele Notbetreuung-Anmeldungen - bitte nach Mög-425.eml... ❌ FAILED
+[333/     518] Ingesting: 20241016-Laternen _ Lanterns-429.eml... ❌ FAILED
+[334/     518] Ingesting: 20241018-ab 21.10 - voraussichtlich wieder Normalbetrieb-436.eml... ❌ FAILED
+[335/     518] Ingesting: 20241018-Kopfläuse_ head lice -435.eml... ❌ FAILED
+[336/     518] Ingesting: 20241022-23.10 - 25.10 Kita schließt um 17 Uhr + Einschränk-437.eml... ❌ FAILED
+[337/     518] Ingesting: 20241022-Eingeschränkte Betreuungszeiten heute, Dienstag 22-935.eml... ❌ FAILED
+[338/     518] Ingesting: 20241022-Eingeschränkte Betreuungszeiten heute, Dienstag 22-936.eml... ❌ FAILED
+[339/     518] Ingesting: 20241023-24.10 + 25.10 - weitere Einschränkungen. Öffnungsz-943.eml... ❌ FAILED
+[340/     518] Ingesting: 20241023-Astronauten_ die Aufteilung der Notgruppen-440.eml... ❌ FAILED
+[341/     518] Ingesting: 20241023-Eingeschränkte Betreuungszeiten heute, Mittwoch 23-439.eml... ❌ FAILED
+[342/     518] Ingesting: 20241023-Halloween-942.eml... ❌ FAILED
+[343/     518] Ingesting: 20241023-Haribo-Kastanien_Eichel-Tauschaktion-941.eml... ❌ FAILED
+[344/     518] Ingesting: 20241025-Haribo-Tauschaktion-450.eml... ❌ FAILED
+[345/     518] Ingesting: 20241025-Normalbetrieb ab 28.10 _ Urlaub-452.eml... ❌ FAILED
+[346/     518] Ingesting: 20241029-Sankt Martin Informationen_ Saint Martin Informati-70726.eml... ❌ FAILED
+[347/     518] Ingesting: 20241030-Karnevalsvorbereitungen Südstadtzug 2025-462.eml... ❌ FAILED
+[348/     518] Ingesting: 20241105-Re_Wenn beginnt morgen Umgang-473.eml... ❌ FAILED
+[349/     518] Ingesting: 20241105-Ü3 Notbetreuung 06.11 + 07.11-472.eml... ❌ FAILED
+[350/     518] Ingesting: 20241105-Wenn beginnt morgen Umgang-9576.eml... ❌ FAILED
+[351/     518] Ingesting: 20241107-08.11 - Ü3 Notbetreuung + St Martin-1014.eml... ❌ FAILED
+[352/     518] Ingesting: 20241107-Sankt Martin Lieder_ Songs-1015.eml... ❌ FAILED
+[353/     518] Ingesting: 20241108-Karneval 2025 _ Carnival 2025-484.eml... ❌ FAILED
+[354/     518] Ingesting: 20241108-Notbetreuung U3 + Ü3  Montag 11.11.24-1024.eml... ❌ FAILED
+[355/     518] Ingesting: 20241111-Betreuungssituation bis zum 15.11.2024-492.eml... ❌ FAILED
+[356/     518] Ingesting: 20241111-Informationen und Maßnahmen zur Verbesserung der S-1035.eml... ❌ FAILED
+[357/     518] Ingesting: 20241111-Schließung der gesamten Einrichtung-488.eml... ❌ FAILED
+[358/     518] Ingesting: 20241113-Einladung zur Mitgliederversammlung Förderverein V-498.eml... ❌ FAILED
+[359/     518] Ingesting: 20241115-ab 18.11 - voraussichtlich wieder Normalbetrieb-506.eml... ❌ FAILED
+[360/     518] Ingesting: 20241115-Stellungnahme der Geschäftsführung-1055.eml... ❌ FAILED
+[361/     518] Ingesting: 20241115-Stellungnahme Fr. Giedziella _ Elternrat-505.eml... ❌ FAILED
+[362/     518] Ingesting: 20241115-Update zur Personalsituation und weitere Maßnahmen-504.eml... ❌ FAILED
+[363/     518] Ingesting: 20241118-Fundkiste_ lost and found box-1063.eml... ❌ FAILED
+[364/     518] Ingesting: 20241119-Theaterbesuch _Wut im Bauch_ 21.November-73752.eml... ❌ FAILED
+[365/     518] Ingesting: 20241120-21.11 verkürzte Öffnungszeiten_ Kita ist nur von 8-1072.eml... ❌ FAILED
+[366/     518] Ingesting: 20241120-Heizungsausfall in der Kita-1069.eml... ❌ FAILED
+[367/     518] Ingesting: 20241120-Theaterbesuch abgesagt-73753.eml... ❌ FAILED
+[368/     518] Ingesting: 20241121-22.11 - eingeschränkte Betreuung_ Gruppe B ist dra-1078.eml... ❌ FAILED
+[369/     518] Ingesting: 20241121-Karneval 2025 _ Carnival 2025-1077.eml... ❌ FAILED
+[370/     518] Ingesting: 20241121-Nikolaustag, St. Nicholas Day-1075.eml... ❌ FAILED
+[371/     518] Ingesting: 20241122-22.11. - die Öffnungszeiten müssen weiter eingesch-1081.eml... ❌ FAILED
+[372/     518] Ingesting: 20241122-25.11 - Stand jetzt - Normalbetrieb wieder möglich-1085.eml... ❌ FAILED
+[373/     518] Ingesting: 20241122-Betreff_ Einladung zur Elternvollversammlung und B-1084.eml... ❌ FAILED
+[374/     518] Ingesting: 20241126-27.11 - 29.11_ gekürzte Öffnungszeiten (8 bis 16 U-1091.eml... ❌ FAILED
+[375/     518] Ingesting: 20241128-Ergebnisbedarfsabfrage & Wechsel der Zuständigkeit-1095.eml... ❌ FAILED
+[376/     518] Ingesting: 20241128-U3 + Ü3_ Bedarfsabfrage für Abend 3.12. + Infos-1094.eml... ❌ FAILED
+
+📊 Progress: 376/     518 | Success: 0 | Failed: 249
+
+[377/     518] Ingesting: 20241202-Satzung Förderverein Villa Luna e.V-1099.eml... ❌ FAILED
+[378/     518] Ingesting: 20241204-Jahresplanung 2025-1102.eml... ❌ FAILED
+[379/     518] Ingesting: 20241204-Jahresplanung 2025-1103.eml... ❌ FAILED
+[380/     518] Ingesting: 20241206-Ergebnis Elternvollversammlung _ Result of the par-1109.eml... ❌ FAILED
+[381/     518] Ingesting: 20241206-Infos zur kommenden Woche + Personaländerung-1110.eml... ❌ FAILED
+[382/     518] Ingesting: 20241209-Notbetreuung 10.12.24-509.eml... ❌ FAILED
+[383/     518] Ingesting: 20241210-reguläre Betreuung 11.12.24 _ Astronauten, Regenbo-511.eml... ❌ FAILED
+[384/     518] Ingesting: 20241210-Weihnachtsmarkt, Christmas market-512.eml... ❌ FAILED
+[385/     518] Ingesting: 20241211-12.12.24 - Ü3-Notbetreuung_ A-Gruppn sind dran-1121.eml... ❌ FAILED
+[386/     518] Ingesting: 20241211-Informationen zur Rückerstattung zu viel gezahlter-514.eml... ❌ FAILED
+[387/     518] Ingesting: 20241212-U+Ü_ 13.12 Notbetreuung (Gruppen B) + Ü-Weihnachts-1122.eml... ❌ FAILED
+[388/     518] Ingesting: 20241213-Ab 16.12 wieder Normalbetrieb (Stand jetzt)-520.eml... ❌ FAILED
+[389/     518] Ingesting: 20241216-17.12 U+Ü Notbetreuung, Gruppe A dran-524.eml... ❌ FAILED
+[390/     518] Ingesting: 20241216-Villa Luna - Lastschrifteinzüge - Beitrag Januar 2-1132.eml... ❌ FAILED
+[391/     518] Ingesting: 20241216-Villa Luna Bonner Wall -  Direct debit collections-1133.eml... ❌ FAILED
+[392/     518] Ingesting: 20241217-18.12 Ü3 wieder regulär betreut, U3 in der Notbetr-1139.eml... ❌ FAILED
+[393/     518] Ingesting: 20241217-Brief vom Elternbeirat-527.eml... ❌ FAILED
+[394/     518] Ingesting: 20241219-Fotos Weihnachtskugeln 2024-529.eml... ❌ FAILED
+[395/     518] Ingesting: 20241219-Wichtige Informationen und Ausblick für das neue J-1143.eml... ❌ FAILED
+[396/     518] Ingesting: 20241220-Weihnachtsgrüße + Infos für 2025-532.eml... ❌ FAILED
+[397/     518] Ingesting: 20250102-New year update-73819.eml... ❌ FAILED
+[398/     518] Ingesting: 20250110-Informationen Südstadtzug 2025-1190.eml... ❌ FAILED
+[399/     518] Ingesting: 20250110-Infos zum Fototermin am 15.01.25-557.eml... ❌ FAILED
+[400/     518] Ingesting: 20250115-Telefon und Geburtstag-9594.eml... ❌ FAILED
+[401/     518] Ingesting: 20250116-Capes Karneval Wiederverwendung-574.eml... ❌ FAILED
+[402/     518] Ingesting: 20250116-Erinnerung_ am 17.01 bleibt Kita geschlossen (Konz-575.eml... ❌ FAILED
+[403/     518] Ingesting: 20250116-Informationen zum Kostümbasteln am Samstag, den 25-1221.eml... ❌ FAILED
+[404/     518] Ingesting: 20250121-Neues Thema-73857.eml... ❌ FAILED
+[405/     518] Ingesting: 20250122-Abwesenheitsnotiz _ Öffnungszeiten _ am 04.03 gesc-1231.eml... ❌ FAILED
+[406/     518] Ingesting: 20250123-Preschool-73862.eml... ❌ FAILED
+[407/     518] Ingesting: 20250127-Kostüme Südstadtzug 2025-584.eml... ❌ FAILED
+[408/     518] Ingesting: 20250130-31.01.25_ Ü-Bereich komplett geschlossen-588.eml... ❌ FAILED
+[409/     518] Ingesting: 20250203-Betreuungssituation 03.02.2025-595.eml... ❌ FAILED
+[410/     518] Ingesting: 20250203-Betreuungssituation 04.02.2025-597.eml... ❌ FAILED
+[411/     518] Ingesting: 20250203-Ü schließt heute um 14 Uhr, U bitte nach Möglichke-593.eml... ❌ FAILED
+[412/     518] Ingesting: 20250207-Betreuungssituation 07.02.2025-1274.eml... ❌ FAILED
+[413/     518] Ingesting: 20250212-Follow-up aktuelle Situation _ current situation-603.eml... ❌ FAILED
+[414/     518] Ingesting: 20250212-Formulare Lastschriftmandate-1345.eml... ❌ FAILED
+[415/     518] Ingesting: 20250213-Konzeptionstag am 14.02 (Kita bleibt geschlossen) -607.eml... ❌ FAILED
+[416/     518] Ingesting: 20250214-Teamtag 14.02 _ neue Garderobe Astronauten + Regen-609.eml... ❌ FAILED
+[417/     518] Ingesting: 20250219-Südstadtzug Informationen-1296.eml... ❌ FAILED
+[418/     518] Ingesting: 20250220-K1 - Villa Luna - Beitragsaussetzung Förderverein -1034.eml... ❌ FAILED
+[419/     518] Ingesting: 20250220-K1 - Villa Luna - Suspension of contributions Förd-1332.eml... ❌ FAILED
+[420/     518] Ingesting: 20250220-Personalinfo _ Asma Ouakel Einrichtungswechsel-1075.eml... ❌ FAILED
+[421/     518] Ingesting: 20250220-Personalinfo _ Asma Ouakel Einrichtungswechsel-1076.eml... ❌ FAILED
+[422/     518] Ingesting: 20250221-Astronauten Gruppe schließt heute um 14 Uhr-1093.eml... ❌ FAILED
+[423/     518] Ingesting: 20250224-Einsatzende Olga Logunova-1541.eml... ❌ FAILED
+[424/     518] Ingesting: 20250225-Kamelle-1164.eml... ❌ FAILED
+[425/     518] Ingesting: 20250226-AW_ Re[2]_ Formulare Lastschriftmandate-1194.eml... ❌ FAILED
+[426/     518] Ingesting: 20250226-Morgen feiern wir Karneval-1612.eml... ❌ FAILED
+
+📊 Progress: 426/     518 | Success: 0 | Failed: 299
+
+[427/     518] Ingesting: 20250226-Morgen Karneval-1199.eml... ❌ FAILED
+[428/     518] Ingesting: 20250226-Re_Formulare Lastschriftmandate-1182.eml... ❌ FAILED
+[429/     518] Ingesting: 20250226-Re_Formulare Lastschriftmandate-9775.eml... ❌ FAILED
+[430/     518] Ingesting: 20250226-Re_Formulare Lastschriftmandate-9776.eml... ❌ FAILED
+[431/     518] Ingesting: 20250227-Informationen Aufstellung Südstadtzug-1222.eml... ❌ FAILED
+[432/     518] Ingesting: 20250305-Karneval Bilder-1799.eml... ❌ FAILED
+[433/     518] Ingesting: 20250306-Ausflug Theater morgen 07.03.25_ Theatre trip tomo-1857.eml... ❌ FAILED
+[434/     518] Ingesting: 20250306-Wir haben uns vertan_ We made a mistake-1859.eml... ❌ FAILED
+[435/     518] Ingesting: 20250312-Entwicklungsgespräch Termin-2052.eml... ❌ FAILED
+[436/     518] Ingesting: 20250312-Erinnerung Theater_ Reminder Theater-2050.eml... ❌ FAILED
+[437/     518] Ingesting: 20250312-Pola EWG-2063.eml... ❌ FAILED
+[438/     518] Ingesting: 20250314-Keine Nüsse No Nuts-2120.eml... ❌ FAILED
+[439/     518] Ingesting: 20250315-Kalenderwoche 11-2144.eml... ❌ FAILED
+[440/     518] Ingesting: 20250318-Einladung zur Elternvollversammlung am 25.03.2025 -2208.eml... ❌ FAILED
+[441/     518] Ingesting: 20250319-Holi fest morgen-2237.eml... ❌ FAILED
+[442/     518] Ingesting: 20250320-NOTBETREUUNG VILLA LUNA BONNER WALL GRUPPE A-2279.eml... ❌ FAILED
+[443/     518] Ingesting: 20250321-INFOS-2301.eml... ❌ FAILED
+[444/     518] Ingesting: 20250324-Elterinfo --_ Sonneschutz-2362.eml... ❌ FAILED
+[445/     518] Ingesting: 20250326-Fundstück-2410.eml... ❌ FAILED
+[446/     518] Ingesting: 20250326-Notgruppen Listen AKTUELL 04_2025-2420.eml... ❌ FAILED
+[447/     518] Ingesting: 20250327-INFOS-1390.eml... ❌ FAILED
+[448/     518] Ingesting: 20250328-Kunstmappe_Art folder-1415.eml... ❌ FAILED
+[449/     518] Ingesting: 20250328-Regeln in der Garderobe_ Rules in the wardrobe-2491.eml... ❌ FAILED
+[450/     518] Ingesting: 20250402-Nachbericht zur Elternvollversammlung & Anpassung -2625.eml... ❌ FAILED
+[451/     518] Ingesting: 20250403-Notbetreuung Gruppe B-2666.eml... ❌ FAILED
+[452/     518] Ingesting: 20250404-K1 - Villa Luna - Information zur Berechnung des F-1550.eml... ❌ FAILED
+[453/     518] Ingesting: 20250405-INFO-1570.eml... ❌ FAILED
+[454/     518] Ingesting: 20250423-Notbetreuung 25.05.2025-1858.eml... ❌ FAILED
+[455/     518] Ingesting: 20250425-INFOS-3295.eml... ❌ FAILED
+[456/     518] Ingesting: 20250428-Neues Projekt _ New project-3348.eml... ❌ FAILED
+[457/     518] Ingesting: 20250429-Badesachen_ Swimwear-1955.eml... ❌ FAILED
+[458/     518] Ingesting: 20250430-Kennenlernen unserer neuen Einrichtungsleitung-1968.eml... ❌ FAILED
+[459/     518] Ingesting: 20250505-Elternabend Ü & U Gruppen-3579.eml... ❌ FAILED
+[460/     518] Ingesting: 20250505-Team Mediation-3581.eml... ❌ FAILED
+[461/     518] Ingesting: 20250507-Notbetreuung Regenbogen und Astronauten-2112.eml... ❌ FAILED
+[462/     518] Ingesting: 20250513-Info Trägerfinanzierung-2218.eml... ❌ FAILED
+[463/     518] Ingesting: 20250513-Protokoll-3815.eml... ❌ FAILED
+[464/     518] Ingesting: 20250513-Vielen Dank für das Protokoll-3828.eml... ❌ FAILED
+[465/     518] Ingesting: 20250526-Notbetreuung Morgen und Übermorgen-4190.eml... ❌ FAILED
+[466/     518] Ingesting: 20250526-Notbetreuung Villa Luna am 27.06 und 28.06-4189.eml... ❌ FAILED
+[467/     518] Ingesting: 20250602-Notbetreuung 03.06 und 04.06-4399.eml... ❌ FAILED
+[468/     518] Ingesting: 20250604-Notbetreuung 05. und 06. Juni-4452.eml... ❌ FAILED
+[469/     518] Ingesting: 20250605-Aaron Kirlar-4508.eml... ❌ FAILED
+[470/     518] Ingesting: 20250605-Abschied-4488.eml... ❌ FAILED
+[471/     518] Ingesting: 20250605-Sommerfest und der Rausschmiss der Vorschulkinder-4494.eml... ❌ FAILED
+[472/     518] Ingesting: 20250610-Danke! Thank you!-4641.eml... ❌ FAILED
+[473/     518] Ingesting: 20250610-UV- Kleidung  UV clothing-4648.eml... ❌ FAILED
+[474/     518] Ingesting: 20250616-Nachtrag Sommerfest FREITAG den 27. Juni von 15_30-4822.eml... ❌ FAILED
+[475/     518] Ingesting: 20250616-Sommerfest Vorschulrausschmiss 27.06.25 von 15_30 -4820.eml... ❌ FAILED
+[476/     518] Ingesting: 20250620-Elterninformation - Förderverein Villa Luna - Bonn-4968.eml... ❌ FAILED
+
+📊 Progress: 476/     518 | Success: 0 | Failed: 349
+
+[477/     518] Ingesting: 20250620-Krankenstand 20.06.25-4955.eml... ❌ FAILED
+[478/     518] Ingesting: 20250620-Sommerfest am 27.Juni Villa Luna-4969.eml... ❌ FAILED
+[479/     518] Ingesting: 20250623-Ayaans Goodbye-5066.eml... ❌ FAILED
+[480/     518] Ingesting: 20250625-AW_ Ayaans Goodbye-5145.eml... ❌ FAILED
+[481/     518] Ingesting: 20250625-Notbetreuung 26.06.25-5138.eml... ❌ FAILED
+[482/     518] Ingesting: 20250625-Waldwochen vom 30.06.-11.07.25-5141.eml... ❌ FAILED
+[483/     518] Ingesting: 20250627-Erinnerung_ Alle Kinder werden heute um 14_00 Uhr -5208.eml... ❌ FAILED
+[484/     518] Ingesting: 20250702-Hitze in der Kita-5345.eml... ❌ FAILED
+[485/     518] Ingesting: 20250703-Personalveränderungen in unserer Einrichtung-5391.eml... ❌ FAILED
+[486/     518] Ingesting: 20250703-Waldtag morgen 04.07.2025-5390.eml... ❌ FAILED
+[487/     518] Ingesting: 20250704-Dringende Bitte an alle Eltern-5417.eml... ❌ FAILED
+[488/     518] Ingesting: 20250707-Abschiedsfeier Lexi & Cathy-5470.eml... ❌ FAILED
+[489/     518] Ingesting: 20250709-Notbetreuung 10.07.25-5528.eml... ❌ FAILED
+[490/     518] Ingesting: 20250711-Abwesenheitsnotiz Annika Moosbrucker heute-5593.eml... ❌ FAILED
+[491/     518] Ingesting: 20250715-Sommerferien_ Summer holidays-5707.eml... ❌ FAILED
+[492/     518] Ingesting: 20250717-Personalsituation heute und Freitag Villa Luna-5760.eml... ❌ FAILED
+[493/     518] Ingesting: 20250718-Sommerpause – mit einem herzlichen Dankeschön-5793.eml... ❌ FAILED
+[494/     518] Ingesting: 20250807-Elternkommunikation Kita Neustrukturierung Köln Sü-6353.eml... ❌ FAILED
+[495/     518] Ingesting: 20250814-Herzlich Wilkommen Ines-6562.eml... ❌ FAILED
+[496/     518] Ingesting: 20250819-Vorschule 25_26-6720.eml... ❌ FAILED
+[497/     518] Ingesting: 20250828-Abwesenheitsnotiz Annika Moosbrucker-6990.eml... ❌ FAILED
+[498/     518] Ingesting: 20250828-Neuer Mitarbeiter ab 01.09.2025-6975.eml... ❌ FAILED
+[499/     518] Ingesting: 20250904-CORONAFÄLLE IN DER VILLA LUNA-7190.eml... ❌ FAILED
+[500/     518] Ingesting: 20250904-Mitteilung des Jugendamts für Eltern - Kitajahr 20-7201.eml... ❌ FAILED
+[501/     518] Ingesting: 20250905-Notbetreuung 05.09.2025-7225.eml... ❌ FAILED
+[502/     518] Ingesting: 20250905-Notbetreuung 05.09.25-7224.eml... ❌ FAILED
+[503/     518] Ingesting: 20250905-Vielen Dank & aktuelle Listen für die Notbetreuung-7236.eml... ❌ FAILED
+[504/     518] Ingesting: 20250911-Nachtrag-7396.eml... ❌ FAILED
+[505/     518] Ingesting: 20250911-Neue Infos Villa Luna Bonnerwall-7387.eml... ❌ FAILED
+[506/     518] Ingesting: 20250912-Eine Bitte an alle Eltern-7424.eml... ❌ FAILED
+[507/     518] Ingesting: 20250918-Weltkindertagfeier 19.09-7583.eml... ❌ FAILED
+[508/     518] Ingesting: 20250929-Abwesenheit am 30.09. und 01.10.2025 – Vertretung -7911.eml... ❌ FAILED
+[509/     518] Ingesting: 20250929-Veränderungen Astronauten-7910.eml... ❌ FAILED
+[510/     518] Ingesting: 20250930-Heute bitte früher abholen-7934.eml... ❌ FAILED
+[511/     518] Ingesting: 20250930-Waldausflug morgen 1.10.-7940.eml... ❌ FAILED
+[512/     518] Ingesting: 20251002-Rückblick auf unsere Schließwoche & wichtige Neuer-8010.eml... ❌ FAILED
+[513/     518] Ingesting: 20251006-Wichtige Mitteilung_ Heute Abholung aller Kinder b-8106.eml... ❌ FAILED
+[514/     518] Ingesting: 20251009-Einige Bitten...-8203.eml... ❌ FAILED
+[515/     518] Ingesting: 20251009-Krankheitswelle im Team – Bitte um Unterstützung a-8216.eml... ❌ FAILED
+[516/     518] Ingesting: 20251013-HEUTE Notbetreuung-8324.eml... ❌ FAILED
+[517/     518] Ingesting: 20251013-WG_ Wichtige Infos für morgen -8332.eml... ❌ FAILED
+[518/     518] Ingesting: 20251013-Wichtige Infos für morgen -8331.eml... ❌ FAILED
+[519/     518] Ingesting: 20251014-Personalausfall K1-8353.eml... ❌ FAILED
+
+✅ Resume complete!
+   Processed: 392
+   Success: 0
+   Failed: 392
+   Log: resume_20251014_210248.log

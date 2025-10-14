@@ -746,15 +746,22 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
         all_topics = self.vocab.get_all_topics() if self.vocab else []
         all_places = self.vocab.get_all_places() if self.vocab else []
 
-        # Truncate content
-        content_sample = content[:3000]
-        if len(content) > 3000:
+        # Truncate content (increased from 3000 to 8000 for better entity extraction)
+        content_sample = content[:8000]
+        if len(content) > 8000:
             content_sample += "\n\n[...content truncated...]"
 
-        # Build comprehensive topic list with examples
-        topic_examples = all_topics[:30] if all_topics else []
+        # Show ALL topics to LLM (no truncation - let LLM see full vocabulary)
+        topic_examples = all_topics if all_topics else []
 
         prompt = f"""Extract metadata from this document using CONTROLLED VOCABULARIES.
+
+⚠️⚠️⚠️ CRITICAL RULES ⚠️⚠️⚠️
+1. Extract ONLY from the document content below - NOT from these instructions
+2. If an entity type has zero matches in the document, return empty array []
+3. DO NOT copy entities from previous documents or examples
+4. DO NOT hallucinate or invent information
+5. USE ONLY the controlled vocabulary provided
 
 **Filename**: {filename}
 **Type**: {document_type}
@@ -767,27 +774,36 @@ IMPORTANT: Use ONLY the provided controlled vocabulary. Do not invent new tags.
 
 Extract the following (return as JSON):
 
-1. **summary**: 2-3 sentence summary of main content
+1. **title**: Generate a clear, descriptive title (10-80 characters)
+   - Review the extracted title: "{extracted_title}"
+   - If it's good and descriptive, use it
+   - If it's generic/poor (e.g., "Here are the key points", "Untitled", filename), create a better one from content
+   - Format examples: "Q3 Launch: AI Integration Plan", "Legal Motion: Custody Modification", "ChatGPT: RAG Architecture Discussion"
+   - Be specific and informative, not generic
 
-2. **topics**: Array of topics from this CONTROLLED list:
+2. **summary**: 2-3 sentence summary of main content
+
+3. **topics**: Array of topics from this CONTROLLED list:
    {json.dumps(topic_examples)}
 
    CLASSIFICATION GUIDE (with examples):
-   - Court documents, legal decisions, custody cases → "legal/court/decision", "legal/family", "legal/custody"
-   - School enrollment, registration, OGS → "education/school/enrollment", "education/school/ogs"
-   - Invoices, financial reports → "business/accounting", "business/finance"
-   - Technical documentation, APIs → "technology/documentation", "technology/api"
-   - Meeting notes, agendas → "meeting/notes", "meeting/agenda"
-   - Privacy policies, data protection → "education/privacy", "education/data-protection"
+   - AI/ML/LLM discussions → "technology/ai", "technology/machine-learning", "technology/llm", "technology/nlp"
+   - RAG/embeddings/vector DBs → "technology/rag", "technology/embeddings", "technology/database"
+   - Court documents, legal → "legal/court/decision", "legal/family", "legal/custody"
+   - School enrollment → "education/school/enrollment", "education/school/ogs"
+   - Financial → "business/accounting", "business/finance"
+   - Technical docs/APIs → "technology/documentation", "technology/api"
+   - Meetings → "meeting/notes", "meeting/agenda"
+   - Privacy/data → "education/privacy", "education/data-protection"
 
    Only use topics from the controlled list above. Generate 8-15 relevant topics per document.
-   Prefer specific topics (e.g., "legal/court/decision") over generic ones (e.g., "communication/announcement").
-   Include both broad and specific tags to enable flexible searching (e.g., "education/childcare", "education/school/enrollment", "business/hr").
+   Prefer specific topics (e.g., "technology/machine-learning") over generic ones (e.g., "technology/software").
+   Include both broad and specific tags to enable flexible searching (e.g., "technology/ai", "technology/llm", "technology/rag").
 
-3. **suggested_topics**: Array of NEW topics you think should be added to vocabulary
+4. **suggested_topics**: Array of NEW topics you think should be added to vocabulary
    (These will be reviewed by user, not used directly)
 
-4. **entities**: Extract ONLY entities that are EXPLICITLY mentioned in the text:
+5. **entities**: Extract ONLY entities that are EXPLICITLY mentioned in the text:
    - organizations: Company/organization names that EXPLICITLY APPEAR in the document text above
    - people: Extract people as STRUCTURED OBJECTS ONLY if they are EXPLICITLY named in the document above.
 
@@ -817,21 +833,28 @@ Extract the following (return as JSON):
    - numbers: Significant numbers that APPEAR in the document (case numbers, amounts, percentages)
      ⚠️ NOT phone/bank numbers (those belong in people/organization objects) ⚠️
 
+   - technologies: Technologies/tools/platforms EXPLICITLY MENTIONED in the document
+     Examples: Python, JavaScript, ChromaDB, PostgreSQL, Docker, Kubernetes, AWS, OpenAI, Claude, GPT-4,
+               RAG, embeddings, transformers, LLM, machine learning, neural networks, React, FastAPI, etc.
+     ⚠️ ONLY extract technologies that are ACTUALLY MENTIONED in the document above ⚠️
+     ⚠️ If no technologies mentioned, return empty array [] ⚠️
+
    ⚠️⚠️⚠️ FINAL WARNING ⚠️⚠️⚠️
    Extract ONLY from the document content shown above.
    Do NOT invent, hallucinate, or copy entities from instruction examples.
    If an entity type has no matches in the document, return an empty array [].
 
-5. **places**: Places from content that match this list:
+6. **places**: Places from content that match this list:
    {json.dumps(all_places[:15] if all_places else [])}
    Only use exact matches found in the text.
 
-6. **quality_indicators**: Assess these (0-1 scores):
+7. **quality_indicators**: Assess these (0-1 scores):
    - ocr_quality: How clean is the text? (1.0 = perfect, 0.5 = some issues, 0.0 = gibberish)
    - content_completeness: Is content complete? (1.0 = complete, 0.5 = partial, 0.0 = fragment)
 
 Return ONLY this JSON structure (no markdown, no explanations):
 {{
+  "title": "Clear Descriptive Title (10-80 chars)",
   "summary": "Brief summary of the actual document content",
   "topics": ["topic1", "topic2"],
   "suggested_topics": ["new_topic_if_needed"],
@@ -848,7 +871,8 @@ Return ONLY this JSON structure (no markdown, no explanations):
     "dates": [
       {{"date": "YYYY-MM-DD", "type": "deadline", "description": "ONLY_IF_MENTIONED"}}
     ],
-    "numbers": ["ONLY_NUMBERS_FROM_DOCUMENT"]
+    "numbers": ["ONLY_NUMBERS_FROM_DOCUMENT"],
+    "technologies": ["ONLY_TECH_FROM_DOCUMENT"]
   }},
   "places": ["ONLY_PLACES_FROM_DOCUMENT"],
   "quality_indicators": {{

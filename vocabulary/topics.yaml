@@ -110,6 +110,18 @@ technology:
   - technology/devops
   - technology/testing
   - technology/deployment
+  - technology/ai
+  - technology/machine-learning
+  - technology/deep-learning
+  - technology/nlp
+  - technology/llm
+  - technology/embeddings
+  - technology/rag
+  - technology/neural-networks
+  - technology/computer-vision
+  - technology/transformers
+  - technology/data-science
+  - technology/analytics
 
 engineering:
   - engineering/design
@@ -163,7 +175,7 @@ healthcare:
 
 # Meta
 meta:
-  version: 2.1
-  last_updated: 2025-10-08
+  version: 2.2
+  last_updated: 2025-10-14
   auto_promote_threshold: 5  # Suggested tags appearing 5+ times get auto-promoted
-  total_topics: 138  # Updated count after legal/education expansion
+  total_topics: 150  # Updated count after AI/ML/RAG expansion (+12 tech categories)

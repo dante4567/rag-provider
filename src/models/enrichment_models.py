@@ -63,6 +63,11 @@ class Entities(BaseModel):
         default_factory=list,
         description="Important numbers/amounts mentioned"
     )
+    technologies: List[str] = Field(
+        default_factory=list,
+        description="Technologies/tools/platforms mentioned (e.g., Python, ChromaDB, OpenAI, RAG, embeddings) (max 20)",
+        max_length=20
+    )
 
 
 class QualityIndicators(BaseModel):
@@ -94,6 +99,12 @@ class EnrichmentResponse(BaseModel):
     This model enforces the controlled vocabulary constraints
     and provides automatic validation via Pydantic.
     """
+
+    title: str = Field(
+        description="Clear, descriptive title for the document (10-80 characters)",
+        min_length=10,
+        max_length=80
+    )
 
     summary: str = Field(
         description="2-3 sentence summary of the document content",

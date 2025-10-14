@@ -1,0 +1,135 @@
+🔄 Starting email re-ingestion from /Users/danielteckentrup/Documents/villa-luna
+📝 Logging to: reingest_20251014_204205.log
+
+[1/     518] Ingesting: 20210122-AW_ Wunschkonzerte-72326.eml... ✅ 2021-01-22__email__herzliche-grusse-katrin-kruger-elternser__07e7.md
+[2/     518] Ingesting: 20210122-AW_ Wunschkonzerte-72327.eml... ✅ 2021-01-22__email__herzliche-grusse-katrin-kruger-elternser__90e2.md
+[3/     518] Ingesting: 20210122-Fwd_ Villa Luna Köln – neue Kita in Köln-Raderthal-72329.eml... ✅ 2021-01-22__email__oktober-2020-um-115254-mez-an-krueger-vi__ebe7.md
+[4/     518] Ingesting: 20210122-Wunschkonzerte-9675.eml... ✅ 2021-01-22__email__20210122-wunschkonzerte-9675__1b3c.md
+[5/     518] Ingesting: 20210125-Villa Luna Köln-Bonner Wall - Betreuungsvertrag fü-742.eml... ✅ 2021-01-25__email__bitte-planen-sie-eine-2-4-wochige-eingew__ffb6.md
+[6/     518] Ingesting: 20210303-Köln- Anmeldung Little Bird-40820.eml... ✅ 2021-03-03__email__bitte-melden-sie-sich-im-lb-portal-an__2647.md
+[7/     518] Ingesting: 20210812-Lollitest negativ-72585.eml... ✅ 2021-08-12__email__amtsgericht-aachen-022180__a16a.md
+[8/     518] Ingesting: 20210813-Codesystem _ Tor-72589.eml... ✅ 2021-08-13__email__bei-weiteren-problemen-gibt-mir-gerne-be__f8ea.md
+[9/     518] Ingesting: 20210813-Feuerwehrzufahrt frei lassen-72588.eml... ✅ 2021-08-13__email__amtsgericht-aachen-022180__4e8f.md
+[10/     518] Ingesting: 20210816-Beschluss Stadt Köln _ Aufenthalt in der Kita-72594.eml... ✅ 2021-08-16__email__der-test-muss-sooft-erneuert-werden-wie__a931.md
+[11/     518] Ingesting: 20210817-Lollitests negativ-72596.eml... ✅ 2021-08-17__email__amtsgericht-aachen-022180__a090.md
+[12/     518] Ingesting: 20210819-Lollitests negativ-72601.eml... ✅ 2021-08-19__email__amtsgericht-aachen-022180__73dd.md
+[13/     518] Ingesting: 20210820-Personal Grüne Gruppe-72606.eml... ✅ 2021-08-20__email__wir-freuen-uns-sehr-darauf-sie-schon-bal__f8a2.md
+[14/     518] Ingesting: 20210824-Tests negativ-72611.eml... ✅ 2021-08-24__email__amtsgericht-aachen-022180__7a94.md
+[15/     518] Ingesting: 20210826-Lollitests alle negativ-72613.eml... ✅ 2021-08-26__email__amtsgericht-aachen-022180__461c.md
+[16/     518] Ingesting: 20210827-Neue Coronabetreuungsverordnung für NRW-72616.eml... ✅ 2021-08-27__email__amtsgericht-aachen-022180__d32c.md
+[17/     518] Ingesting: 20210831-Einladung Elternabend_ Invitation parents night-72620.eml... ✅ 2021-08-31__email__yours-the-green-group-attachments-einlad__864e.md
+[18/     518] Ingesting: 20210831-Lollitest _ Lena Urlaub-72619.eml... ✅ 2021-08-31__email__wahrend-meiner-abwesenheit-ist-naturlich__6a58.md
+[19/     518] Ingesting: 20210901-Information Elternvertreter-72622.eml... ✅ 2021-09-01__email__amtsgericht-aachen-022180__1948.md
+[20/     518] Ingesting: 20210901-Information Elternvertreter-72623.eml... ✅ 2021-09-01__email__amtsgericht-aachen-022180__58a2.md
+[21/     518] Ingesting: 20210902-Abwesenheit Lena-72627.eml... ✅ 2021-09-02__email__amtsgericht-aachen-022180__6ea7.md
+[22/     518] Ingesting: 20210902-Vorstellung gruppenübergreifende Angebote-72625.eml... ✅ 2021-09-02__email__wir-sind-nun-seit-juli-freudig-in-der-pl__ffe8.md
+[23/     518] Ingesting: 20210909-WG_ Positiver Befund-72641.eml... ✅ 2021-09-09__email__20210909-wg-positiver-befund-72641__4230.md
+[24/     518] Ingesting: 20210910-WG_ Quarantäne beendet-72642.eml... ✅ 2021-09-10__email__nur-die-positiv-getestete-person-indexfa__1c7c.md
+[25/     518] Ingesting: 20210913-Gruppenmischung-72649.eml... ✅ 2021-09-13__email__wir-werden-die-beiden-gruppen-draussen-i__141f.md
+[26/     518] Ingesting: 20210914-Testergebnis Lolli-Test negativ-72653.eml... ✅ null
+[27/     518] Ingesting: 20210915-aktuelle Corona-Situation-72657.eml... ✅ 2021-09-15__email__derzeit-haben-wir-drei-personen-die-posi__4e3c.md
+[28/     518] Ingesting: 20210915-Neue Regelungen in der Kindertagesbetreuung zur Qu-72656.eml... ✅ 2021-09-15__email__lest-diese-gerne-grundlich-durch-damit-i__4c80.md
+[29/     518] Ingesting: 20210915-Personalausfall Grüne Gruppe-72655.eml... ✅ 2021-09-15__email__ich-bedanke-mich-im-voraus-kommt-gut-dur__e8f7.md
+[30/     518] Ingesting: 20210916-Test negativ-72658.eml... ✅ 2021-09-16__email__amtsgericht-aachen-022180__7bb6.md
+[31/     518] Ingesting: 20210927-Zähneputzen in der Kita _ brushing teeth in kinder-72670.eml... ✅ 2021-09-27__email__eure-kinder-werden-hierbei-eng-begleitet__8fcd.md
+[32/     518] Ingesting: 20211006-Einladung zum Laternen basteln _-)-72678.eml... ✅ 2021-10-06__email__wenn-ihr-dabei-seid-gebt-uns-doch-gerne__7fce.md
+[33/     518] Ingesting: 20211006-Villa Luna Köln Neustadt-Süd - Bedarfsplanung Kita-70530.eml... ✅ 2021-10-06__email__20211006-villa-luna-koln-neustadt-sud-be__5f1e.md
+[34/     518] Ingesting: 20211008-Music with CJ-72682.eml... ✅ 2021-10-08__email__20211008-music-with-cj-72682__4afe.md
+[35/     518] Ingesting: 20211018-Absage Laternen basteln-72695.eml... ✅ 2021-10-18__email__ich-habe-mir-uberlegt-die-laternen-gemei__5ff5.md
+[36/     518] Ingesting: 20211018-Personalengpass - staff shortage-72694.eml... ✅ 2021-10-18__email__die-grune-und-gelbe-gruppe-wurden-sowohl__3d44.md
+[37/     518] Ingesting: 20211018-Villa Luna Köln Neustadt-Süd - Elterninformation _-70531.eml... ✅ 2021-10-18__email__daruber-hinaus-mochten-wir-sie-auf-grund__76c7.md
+[38/     518] Ingesting: 20211021-weiterer Personalausfall-72700.eml... ✅ 2021-10-21__email__zum-leidwesen-aller-beteiligten-ist-die__d075.md
+[39/     518] Ingesting: 20211022-Dankeschön -72701.eml... ✅ 2021-10-22__email__danke-fur-eure-unterstutzung-und-die-fru__417e.md
+[40/     518] Ingesting: 20211025-Heutige Personalbesetzung-72703.eml... ✅ 2021-10-25__email__ich-bin-wieder-am-bonner-wall-vor-ort-un__9e9c.md
+[41/     518] Ingesting: 20211026-Einladung Laternenumzug-72706.eml... ✅ 2021-10-26__email__amtsgericht-aachen-022180__1460.md
+[42/     518] Ingesting: 20211027-Jahresplanung 2022-72709.eml... ✅ 2021-10-27__email__amtsgericht-aachen-022180__7ba2.md
+[43/     518] Ingesting: 20211028-02.11.-72711.eml... ✅ 2021-10-28__email__amtsgericht-aachen-022180__4466.md
+[44/     518] Ingesting: 20211103-Abschied Behnaz-72721.eml... ✅ 2021-11-03__email__wir-bedauern-ihre-entscheidung-und-wunsc__b365.md
+[45/     518] Ingesting: 20211104-Elternkommunikation-72725.eml... ✅ 2021-11-04__email__amtsgericht-aachen-022180__42af.md
+[46/     518] Ingesting: 20211104-Erinnerung St. Martinsfest 05.11.-72724.eml... ✅ 2021-11-04__email__from-b-elterninfo-kxf6ln-1-to-mail-danie__4af0.md
+[47/     518] Ingesting: 20211118-Nikolaus Frühstück-72758.eml... ❌ FAILED
+[48/     518] Ingesting: 20211118-Schreiben vom Träger-72757.eml... ❌ FAILED
+[49/     518] Ingesting: 20211122-Leitungsbüro -72760.eml... ❌ FAILED
+[50/     518] Ingesting: 20211122-Thanksgiving Feier-72762.eml... ❌ FAILED
+
+📊 Progress: 50/     518 | Success: 46 | Failed: 4
+
+[51/     518] Ingesting: 20211124-Villa Luna Trägerinformation zum Thema _Kranke Kin-70532.eml... ✅ 2021-11-24__email__date-wed-24-nov-2021-142820-0100-liebe-v__4815.md
+[52/     518] Ingesting: 20211124-Villa Luna Trägerinformation zum Thema _Luftfilter-70533.eml... ✅ 2021-11-24__email__herzliche-grusse-und-bleiben-sie-gesund__be87.md
+[53/     518] Ingesting: 20211126-heutiger Personalausfall-72771.eml... ❌ FAILED
+[54/     518] Ingesting: 20211201-Abschied-72777.eml... ✅ 2021-12-01__email__ihre-weggange-bedauern-wir-sehr-und-wuns__3667.md
+[55/     518] Ingesting: 20211202-Verkürzte Öffnungszeit ab dem 06.12.21-72779.eml... ✅ 2021-12-02__email__20211202-verkurzte-offnungszeit-ab-dem-0__3e0d.md
+[56/     518] Ingesting: 20211203-Villa Luna Trägerinformation _Aktuelle Hinweise zu-70534.eml... ✅ 2021-12-03__email__herzliche-grusse-und-bleiben-sie-gesund__6d6b.md
+[57/     518] Ingesting: 20211206-Urlaub Vimalas Borsch-72782.eml... ✅ 2021-12-06__email__wahrend-meiner-abwesenheit-werden-meine__c48e.md
+[58/     518] Ingesting: 20211217-Lollitests- und Quarantäneregelungen für die letzt-72794.eml... ✅ 2021-12-17__email__20211217-lollitests-und-quarantaneregelu__676b.md
+[59/     518] Ingesting: 20211220-Personalausfall Grüne Gruppe-72795.eml... ✅ 2021-12-20__email__20211220-personalausfall-grune-gruppe-72__801a.md
+[60/     518] Ingesting: 20211221-weiterer Personalausfall-72797.eml... ✅ 2021-12-21__email__heute-wurde-uns-eine-fruhe-abholung-demn__9dac.md
+[61/     518] Ingesting: 20211222-Elternkommunikation Villa Luna-70535.eml... ✅ 2021-12-22__email__20211222-elternkommunikation-villa-luna__308b.md
+[62/     518] Ingesting: 20220119-News aus der Kita-72816.eml... ✅ 2022-01-19__email__wie-ihr-vielleicht-schon-gesehen-habt-hi__47d8.md
+[63/     518] Ingesting: 20220124-positiver Pooltest in der Roten Gruppe-72824.eml... ✅ 2022-01-24__email__hier-ist-mindestens-eine-person-positiv__142c.md
+[64/     518] Ingesting: 20220125-Betreuungszeit heute-72825.eml... ✅ 2022-01-25__email__20220125-betreuungszeit-heute-72825__82ad.md
+[65/     518] Ingesting: 20220126-Gruppenmischung ab 16_30-72827.eml... ✅ 2022-01-26__email__amtsgericht-aachen-022180__5e0d.md
+[66/     518] Ingesting: 20220126-Infos der Stadt Köln-72829.eml... ✅ 2022-01-26__email__amtsgericht-aachen-022180__3418.md
+[67/     518] Ingesting: 20220127-Gruppenmischung heute und morgen-72834.eml... ✅ 2022-01-27__email__amtsgericht-aachen-022180__2209.md
+[68/     518] Ingesting: 20220127-positive Pooltestung Rote Gruppe-72830.eml... ✅ 2022-01-27__email__diese-person-ist-seit-dienstag-in-isolie__8cd4.md
+[69/     518] Ingesting: 20220128-Aktuelles Schreiben der Stadt Köln vom 27.01.22-72835.eml... ✅ 2022-01-28__email__als-anlage-leite-ich-euch-eine-uberarbei__1857.md
+[70/     518] Ingesting: 20220131-Ministerschreiben-72837.eml... ✅ 2022-01-31__email__20220131-ministerschreiben-72837__a59c.md
+[71/     518] Ingesting: 20220201-Gruppenmischung 16_30-72838.eml... ✅ 2022-02-01__email__amtsgericht-aachen-022180__430a.md
+[72/     518] Ingesting: 20220201-Villa Luna - Jahresbescheinigungen 2021 _ 2021 ann-70536.eml... ✅ 2022-02-01__email__herzliche-grusse-dear-parents-the-2021-a__ac97.md
+[73/     518] Ingesting: 20220202-Elternkommunikation präventiver Kinderschutz-70537.eml... ✅ 2022-02-02__email__20220202-elternkommunikation-praventiver__a6c5.md
+[74/     518] Ingesting: 20220203-Einladung zum Elternabend am 9.2.22-72842.eml... ❌ FAILED
+[75/     518] Ingesting: 20220207-Gruppenmischung am Dienstag-72850.eml... ❌ FAILED
+[76/     518] Ingesting: 20220207-Lolli-Testung-72851.eml... ✅ 2022-02-07__email__20220207-lolli-testung-72851__4233.md
+[77/     518] Ingesting: 20220208-Blaue Gruppe - positiv-72852.eml... ✅ 2022-02-08__email__hier-ist-mindestens-eine-person-positiv__018b.md
+[78/     518] Ingesting: 20220208-Gruppenmischung-72854.eml... ✅ 2022-02-08__email__ab-1600-uhr-werden-alle-gruppen-zusammen__8fa3.md
+[79/     518] Ingesting: 20220209-Elternabend digital-72858.eml... ✅ 2022-02-09__email__amtsgericht-aachen-022180__86ed.md
+[80/     518] Ingesting: 20220210-Rote Gruppe - positiv-72859.eml... ✅ 2022-02-10__email__20220210-rote-gruppe-positiv-72859__bb52.md
+[81/     518] Ingesting: 20220211-Gruppenmischung-72860.eml... ✅ 2022-02-11__email__ab-16-uhr-werden-dann-alle-gruppen-zusam__5efa.md
+[82/     518] Ingesting: 20220221-interne Personaländerung-72876.eml... ✅ 2022-02-21__email__auf-wunsch-von-lena-hoffmann-wechselt-si__9b71.md
+[83/     518] Ingesting: 20220221-Updates Stadt Köln Corona Testung-72878.eml... ✅ 2022-02-21__email__selbstverstandlich-soll-es-nicht-zu-bena__950c.md
+[84/     518] Ingesting: 20220222-Ministerschreiben-72880.eml... ✅ 2022-02-22__email__amtsgericht-aachen-022180__d0fe.md
+[85/     518] Ingesting: 20220223-Gruppenzusammenlegung-72882.eml... ✅ 2022-02-23__email__amtsgericht-aachen-022180__50b7.md
+[86/     518] Ingesting: 20220303-Personalbesetzung am Freitag-72893.eml... ✅ 2022-03-03__email__derzeit-haben-wir-mehrere-corona-positiv__1028.md
+[87/     518] Ingesting: 20220306-Gruppenbesetzung-72895.eml... ✅ 2022-03-06__email__des-weiteren-haben-wir-noch-zwei-weitere__11c8.md
+[88/     518] Ingesting: 20220307-Elternkommunikation-43488.eml... ✅ 2022-03-07__email__am-nachmittag-ab-14-uhr-werden-wir-wiede__6a85.md
+[89/     518] Ingesting: 20220307-Gruppenmischung-72896.eml... ✅ 2022-03-07__email__die-rote-und-blaue-gruppe-ist-jedoch-ab__0724.md
+[90/     518] Ingesting: 20220307-positive Pools-72898.eml... ✅ 2022-03-07__email__einzeltestung-der-roten-gruppe-von-0800__b180.md
+[91/     518] Ingesting: 20220310-Aktuelle Situation-43522.eml... ✅ 2022-03-10__email__die-aktuelle-situation-mussen-wir-nun-so__2006.md
+[92/     518] Ingesting: 20220310-Gruppenmischung-43514.eml... ✅ 2022-03-10__email__heute-und-morgen-findet-ausserdem-bis-93__fa7e.md
+[93/     518] Ingesting: 20220310-Villa Luna hilft Menschen aus der Ukraine - Villa -70538.eml... ✅ 2022-03-10__email__20220310-villa-luna-hilft-menschen-aus-d__e16f.md
+[94/     518] Ingesting: 20220311-Gruppenmischungen-43530.eml... ✅ 2022-03-11__email__die-u3-gruppen-sind-teilweise-zusammenge__b136.md
+[95/     518] Ingesting: 20220312-Überblick Coronafälle-72905.eml... ✅ 2022-03-12__email__am-mittwoch-09-03-und-donnerstag-10-03-w__8336.md
+[96/     518] Ingesting: 20220314-Aktuelle Situation-43556.eml... ✅ 2022-03-14__email__wenn-ihr-die-moglichkeit-habt-euere-kind__d39e.md
+[97/     518] Ingesting: 20220314-Aufteilung Grüne Gruppe-43560.eml... ✅ 2022-03-14__email__die-alteren-kinder-werden-zu-den-grossen__15f7.md
+[98/     518] Ingesting: 20220315-Testsituation Mittwoch 16.03.22-43566.eml... ✅ 2022-03-15__email__20220315-testsituation-mittwoch-16-03-22__624d.md
+[99/     518] Ingesting: 20220316-17.03. Kita geschlossen-72909.eml... ✅ 2022-03-16__email__from-b-kita-kxf6ln-to-mail-daniel-tecken__86fa.md
+[100/     518] Ingesting: 20220316-Einzeltestung Do und Fr-72910.eml... ✅ 2022-03-16__email__20220316-einzeltestung-do-und-fr-72910__95fd.md
+
+📊 Progress: 100/     518 | Success: 93 | Failed: 7
+
+[101/     518] Ingesting: 20220316-Einzeltestung Do und Fr-72911.eml... ✅ 2022-03-16__email__20220316-einzeltestung-do-und-fr-72911__447d.md
+[102/     518] Ingesting: 20220316-positive Einzeltests-72908.eml... ✅ 2022-03-16__email__amtsgericht-aachen-022180__efda.md
+[103/     518] Ingesting: 20220318-Positive Einzeltestung-72912.eml... ✅ 2022-03-18__email__amtsgericht-aachen-022180__2649.md
+[104/     518] Ingesting: 20220321-Gelbe Gruppe - positiv-72915.eml... ✅ 2022-03-21__email__danach-gehen-die-kinder-in-hausliche-iso__f05a.md
+[105/     518] Ingesting: 20220322-Ablauf nach einem positiven Pool-72916.eml... ✅ 2022-03-22__email__die-kinder-konnen-am-nachsten-morgen-ein__7653.md
+[106/     518] Ingesting: 20220324-Stellungnahme zu Schließung-72921.eml... ✅ 2022-03-24__email__20220324-stellungnahme-zu-schliessung-72__ba62.md
+[107/     518] Ingesting: 20220330-LeseWelten-72925.eml... ✅ 2022-03-30__email__starten-wir-mit-dem-projekt-lesewelten-d__844d.md
+[108/     518] Ingesting: 20220330-Personal Grüne Gruppe-72926.eml... ✅ 2022-03-30__email__amtsgericht-aachen-022180__a8b3.md
+[109/     518] Ingesting: 20220404-Villa Luna Köln Neustadt-Süd - Elterninformation _-70539.eml... ✅ 2022-04-04__email__20220404-villa-luna-koln-neustadt-sud-el__8f61.md
+[110/     518] Ingesting: 20220404-Villa Luna Köln Neustadt-Süd - Elterninformation _-70540.eml... ❌ FAILED
+[111/     518] Ingesting: 20220405-eingeschränkte Öffnungszeit-72932.eml... ❌ FAILED
+[112/     518] Ingesting: 20220407-Konzeptionstag-72934.eml... ❌ FAILED
+[113/     518] Ingesting: 20220407-Organisatorisches-72933.eml... ❌ FAILED
+[114/     518] Ingesting: 20220414-Villa Luna Köln Neustadt-Süd - Elterninformation _-70541.eml... ❌ FAILED
+[115/     518] Ingesting: 20220421-Rote Gruppe - positiv-72948.eml... ❌ FAILED
+[116/     518] Ingesting: 20220425-Elternbrief Kinderschutz Nr.2-70542.eml... ❌ FAILED
+[117/     518] Ingesting: 20220428-Ende Pooltestung-72954.eml... ❌ FAILED
+[118/     518] Ingesting: 20220504-Betreuung ab 14_00 Uhr-72961.eml... ❌ FAILED
+[119/     518] Ingesting: 20220506-Re_Wochenbericht KW16-8939.eml... ❌ FAILED
+[120/     518] Ingesting: 20220516-WG_ Konzeptionstag-72986.eml... ❌ FAILED
+❌ FAILED
+❌ FAILED
+❌ FAILED
+❌ FAILED
+❌ FAILED
+❌ FAILED

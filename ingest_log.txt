@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/danielteckentrup/Documents/my-git/rag-provider/ingest_all.py", line 3, in <module>
+    import requests
+ModuleNotFoundError: No module named 'requests'

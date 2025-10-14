@@ -1,0 +1,876 @@
+/Users/danielteckentrup/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+📧 Found 518 Villa Luna emails to ingest
+
+📧 Ingesting: 20210122-AW_ Wunschkonzerte-72326.eml... ✅ 17ddb69e
+📧 Ingesting: 20210122-AW_ Wunschkonzerte-72327.eml... ✅ 066b5d86
+📧 Ingesting: 20210122-Fwd_ Villa Luna Köln – neue Kita in Köln-Raderthal-72329.eml... ✅ 7201c3ce
+📧 Ingesting: 20210122-Wunschkonzerte-9675.eml... ✅ 99aa68aa
+📧 Ingesting: 20210125-Villa Luna Köln-Bonner Wall - Betreuungsvertrag fü-742.eml... ✅ 120cb9c4
+📧 Ingesting: 20210303-Köln- Anmeldung Little Bird-40820.eml... ✅ cea3c6da
+📧 Ingesting: 20210812-Lollitest negativ-72585.eml... ❌ HTTP 429
+📧 Ingesting: 20210813-Codesystem _ Tor-72589.eml... ✅ b6718413
+📧 Ingesting: 20210813-Feuerwehrzufahrt frei lassen-72588.eml... ❌ HTTP 429
+📧 Ingesting: 20210816-Beschluss Stadt Köln _ Aufenthalt in der Kita-72594.eml... ✅ 1311f5a7
+📧 Ingesting: 20210817-Lollitests negativ-72596.eml... ❌ HTTP 429
+📧 Ingesting: 20210819-Lollitests negativ-72601.eml... ❌ HTTP 429
+📧 Ingesting: 20210820-Personal Grüne Gruppe-72606.eml... ❌ HTTP 429
+📧 Ingesting: 20210824-Tests negativ-72611.eml... ❌ HTTP 429
+📧 Ingesting: 20210826-Lollitests alle negativ-72613.eml... ✅ 43066d94
+📧 Ingesting: 20210827-Neue Coronabetreuungsverordnung für NRW-72616.eml... ❌ HTTP 429
+📧 Ingesting: 20210831-Einladung Elternabend_ Invitation parents night-72620.eml... ✅ 664a8d14
+📧 Ingesting: 20210831-Lollitest _ Lena Urlaub-72619.eml... ❌ HTTP 429
+📧 Ingesting: 20210901-Information Elternvertreter-72622.eml... ❌ HTTP 429
+📧 Ingesting: 20210901-Information Elternvertreter-72623.eml... ❌ HTTP 429
+📧 Ingesting: 20210902-Abwesenheit Lena-72627.eml... ❌ HTTP 429
+📧 Ingesting: 20210902-Vorstellung gruppenübergreifende Angebote-72625.eml... ❌ HTTP 429
+📧 Ingesting: 20210909-WG_ Positiver Befund-72641.eml... ❌ HTTP 429
+📧 Ingesting: 20210910-WG_ Quarantäne beendet-72642.eml... ❌ HTTP 429
+📧 Ingesting: 20210913-Gruppenmischung-72649.eml... ❌ HTTP 429
+📧 Ingesting: 20210914-Testergebnis Lolli-Test negativ-72653.eml... ❌ HTTP 429
+📧 Ingesting: 20210915-Neue Regelungen in der Kindertagesbetreuung zur Qu-72656.eml... ❌ HTTP 429
+📧 Ingesting: 20210915-Personalausfall Grüne Gruppe-72655.eml... ✅ 2cda1f6e
+📧 Ingesting: 20210915-aktuelle Corona-Situation-72657.eml... ❌ Error: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+📧 Ingesting: 20210916-Test negativ-72658.eml... ❌ Error: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+📧 Ingesting: 20210927-Zähneputzen in der Kita _ brushing teeth in kinder-72670.eml... ❌ Error: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+📧 Ingesting: 20211006-Einladung zum Laternen basteln _-)-72678.eml... ✅ 8c4f9871
+📧 Ingesting: 20211006-Villa Luna Köln Neustadt-Süd - Bedarfsplanung Kita-70530.eml... ✅ 2372c6d1
+📧 Ingesting: 20211008-Music with CJ-72682.eml... ✅ 0fe8c083
+📧 Ingesting: 20211018-Absage Laternen basteln-72695.eml... ✅ bbaaa261
+📧 Ingesting: 20211018-Personalengpass - staff shortage-72694.eml... ✅ 2bd53130
+📧 Ingesting: 20211018-Villa Luna Köln Neustadt-Süd - Elterninformation _-70531.eml... ✅ d13e4068
+📧 Ingesting: 20211021-weiterer Personalausfall-72700.eml... ✅ 495ec49a
+📧 Ingesting: 20211022-Dankeschön -72701.eml... ✅ 88d81fba
+📧 Ingesting: 20211025-Heutige Personalbesetzung-72703.eml... ❌ HTTP 429
+📧 Ingesting: 20211026-Einladung Laternenumzug-72706.eml... ✅ d28dbe0e
+📧 Ingesting: 20211027-Jahresplanung 2022-72709.eml... ✅ b2d628e3
+📧 Ingesting: 20211028-02.11.-72711.eml... ❌ HTTP 429
+📧 Ingesting: 20211103-Abschied Behnaz-72721.eml... ❌ HTTP 429
+📧 Ingesting: 20211104-Elternkommunikation-72725.eml... ❌ HTTP 429
+📧 Ingesting: 20211104-Erinnerung St. Martinsfest 05.11.-72724.eml... ❌ HTTP 429
+📧 Ingesting: 20211118-Nikolaus Frühstück-72758.eml... ❌ HTTP 429
+📧 Ingesting: 20211118-Schreiben vom Träger-72757.eml... ❌ HTTP 429
+📧 Ingesting: 20211122-Leitungsbüro -72760.eml... ❌ HTTP 429
+📧 Ingesting: 20211122-Thanksgiving Feier-72762.eml... ✅ bc511b4a
+📧 Ingesting: 20211124-Villa Luna Trägerinformation zum Thema _Kranke Kin-70532.eml... ❌ HTTP 429
+📧 Ingesting: 20211124-Villa Luna Trägerinformation zum Thema _Luftfilter-70533.eml... ✅ 48037d5e
+📧 Ingesting: 20211126-heutiger Personalausfall-72771.eml... ❌ HTTP 429
+📧 Ingesting: 20211201-Abschied-72777.eml... ❌ HTTP 429
+📧 Ingesting: 20211202-Verkürzte Öffnungszeit ab dem 06.12.21-72779.eml... ❌ HTTP 429
+📧 Ingesting: 20211203-Villa Luna Trägerinformation _Aktuelle Hinweise zu-70534.eml... ❌ HTTP 429
+📧 Ingesting: 20211206-Urlaub Vimalas Borsch-72782.eml... ❌ HTTP 429
+📧 Ingesting: 20211217-Lollitests- und Quarantäneregelungen für die letzt-72794.eml... ❌ HTTP 429
+📧 Ingesting: 20211220-Personalausfall Grüne Gruppe-72795.eml... ❌ HTTP 429
+📧 Ingesting: 20211221-weiterer Personalausfall-72797.eml... ✅ eab5ab3c
+📧 Ingesting: 20211222-Elternkommunikation Villa Luna-70535.eml... ❌ HTTP 429
+📧 Ingesting: 20220119-News aus der Kita-72816.eml... ✅ e25377d9
+📧 Ingesting: 20220124-positiver Pooltest in der Roten Gruppe-72824.eml... ❌ HTTP 429
+📧 Ingesting: 20220125-Betreuungszeit heute-72825.eml... ✅ ee36ebe0
+📧 Ingesting: 20220126-Gruppenmischung ab 16_30-72827.eml... ❌ HTTP 429
+📧 Ingesting: 20220126-Infos der Stadt Köln-72829.eml... ❌ HTTP 429
+📧 Ingesting: 20220127-Gruppenmischung heute und morgen-72834.eml... ❌ HTTP 429
+📧 Ingesting: 20220127-positive Pooltestung Rote Gruppe-72830.eml... ✅ f198bc98
+📧 Ingesting: 20220128-Aktuelles Schreiben der Stadt Köln vom 27.01.22-72835.eml... ❌ HTTP 429
+📧 Ingesting: 20220131-Ministerschreiben-72837.eml... ✅ 04a96649
+📧 Ingesting: 20220201-Gruppenmischung 16_30-72838.eml... ❌ HTTP 429
+📧 Ingesting: 20220201-Villa Luna - Jahresbescheinigungen 2021 _ 2021 ann-70536.eml... ❌ HTTP 429
+📧 Ingesting: 20220202-Elternkommunikation präventiver Kinderschutz-70537.eml... ✅ d902fcd8
+📧 Ingesting: 20220203-Einladung zum Elternabend am 9.2.22-72842.eml... ❌ HTTP 429
+📧 Ingesting: 20220207-Gruppenmischung am Dienstag-72850.eml... ❌ HTTP 429
+📧 Ingesting: 20220207-Lolli-Testung-72851.eml... ✅ 5d6aa09d
+📧 Ingesting: 20220208-Blaue Gruppe - positiv-72852.eml... ❌ HTTP 429
+📧 Ingesting: 20220208-Gruppenmischung-72854.eml... ❌ HTTP 429
+📧 Ingesting: 20220209-Elternabend digital-72858.eml... ❌ HTTP 429
+📧 Ingesting: 20220210-Rote Gruppe - positiv-72859.eml... ❌ HTTP 429
+📧 Ingesting: 20220211-Gruppenmischung-72860.eml... ❌ HTTP 429
+📧 Ingesting: 20220221-Updates Stadt Köln Corona Testung-72878.eml... ✅ de9783ff
+📧 Ingesting: 20220221-interne Personaländerung-72876.eml... ❌ HTTP 429
+📧 Ingesting: 20220222-Ministerschreiben-72880.eml... ❌ HTTP 429
+📧 Ingesting: 20220223-Gruppenzusammenlegung-72882.eml... ✅ 1f14cab3
+📧 Ingesting: 20220303-Personalbesetzung am Freitag-72893.eml... ✅ a023e9c3
+📧 Ingesting: 20220306-Gruppenbesetzung-72895.eml... ✅ afb4c4e7
+📧 Ingesting: 20220307-Elternkommunikation-43488.eml... ✅ d2ccc909
+📧 Ingesting: 20220307-Gruppenmischung-72896.eml... ✅ 02755e57
+📧 Ingesting: 20220307-positive Pools-72898.eml... ❌ HTTP 429
+📧 Ingesting: 20220310-Aktuelle Situation-43522.eml... ✅ c0b210c2
+📧 Ingesting: 20220310-Gruppenmischung-43514.eml... ✅ 44a2ad9e
+📧 Ingesting: 20220310-Villa Luna hilft Menschen aus der Ukraine - Villa -70538.eml... ❌ HTTP 429
+📧 Ingesting: 20220311-Gruppenmischungen-43530.eml... ❌ Error: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+📧 Ingesting: 20220312-Überblick Coronafälle-72905.eml... ❌ Error: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+📧 Ingesting: 20220314-Aktuelle Situation-43556.eml... ❌ Error: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+📧 Ingesting: 20220314-Aufteilung Grüne Gruppe-43560.eml... ❌ Error: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+📧 Ingesting: 20220315-Testsituation Mittwoch 16.03.22-43566.eml... ✅ 81edd5b3
+📧 Ingesting: 20220316-17.03. Kita geschlossen-72909.eml... ✅ 385e754c
+📧 Ingesting: 20220316-Einzeltestung Do und Fr-72910.eml... ✅ 248c4703
+📧 Ingesting: 20220316-Einzeltestung Do und Fr-72911.eml... ✅ cbdc6a6f
+📧 Ingesting: 20220316-positive Einzeltests-72908.eml... ❌ HTTP 429
+📧 Ingesting: 20220318-Positive Einzeltestung-72912.eml... ✅ 13a49c5b
+📧 Ingesting: 20220321-Gelbe Gruppe - positiv-72915.eml... ❌ HTTP 429
+📧 Ingesting: 20220322-Ablauf nach einem positiven Pool-72916.eml... ❌ HTTP 429
+📧 Ingesting: 20220324-Stellungnahme zu Schließung-72921.eml... ✅ d889e6b9
+📧 Ingesting: 20220330-LeseWelten-72925.eml... ✅ d67dbb70
+📧 Ingesting: 20220330-Personal Grüne Gruppe-72926.eml... ❌ HTTP 429
+📧 Ingesting: 20220404-Villa Luna Köln Neustadt-Süd - Elterninformation _-70539.eml... ❌ HTTP 429
+📧 Ingesting: 20220404-Villa Luna Köln Neustadt-Süd - Elterninformation _-70540.eml... ❌ HTTP 429
+📧 Ingesting: 20220405-eingeschränkte Öffnungszeit-72932.eml... ❌ HTTP 429
+📧 Ingesting: 20220407-Konzeptionstag-72934.eml... ❌ HTTP 429
+📧 Ingesting: 20220407-Organisatorisches-72933.eml... ✅ a9113b4a
+📧 Ingesting: 20220414-Villa Luna Köln Neustadt-Süd - Elterninformation _-70541.eml... ✅ 88fabf39
+📧 Ingesting: 20220421-Rote Gruppe - positiv-72948.eml... ✅ 29aeeba5
+📧 Ingesting: 20220425-Elternbrief Kinderschutz Nr.2-70542.eml... ✅ 3b4616ca
+📧 Ingesting: 20220428-Ende Pooltestung-72954.eml... ✅ 47a50236
+📧 Ingesting: 20220504-Betreuung ab 14_00 Uhr-72961.eml... ❌ HTTP 429
+📧 Ingesting: 20220506-Re_Wochenbericht KW16-8939.eml... ❌ HTTP 429
+📧 Ingesting: 20220516-WG_ Konzeptionstag-72986.eml... ❌ HTTP 429
+📧 Ingesting: 20220520-Personalbesetzung heute-72989.eml... ❌ HTTP 429
+📧 Ingesting: 20220524-Vatertagsaktion-72991.eml... ❌ HTTP 429
+📧 Ingesting: 20220525-Re_Vatertagsaktion Einladung-8946.eml... ❌ HTTP 429
+📧 Ingesting: 20220525-Vatertagsaktion Einladung-308.eml... ❌ HTTP 429
+📧 Ingesting: 20220525-Vatertagsaktion Einladung-72995.eml... ❌ HTTP 429
+📧 Ingesting: 20220530-Doppeleinzug Verpflegungskosten 06_2022-70543.eml... ❌ HTTP 429
+📧 Ingesting: 20220531-Vatertagaktion am 2.6.22-73001.eml... ✅ 657d65da
+📧 Ingesting: 20220601-Informationen aus der Kita-73003.eml... ✅ 67814b6d
+📧 Ingesting: 20220607-Betreuung heute-73005.eml... ✅ e83adaca
+📧 Ingesting: 20220608-Safe the date 09.07.-73006.eml... ✅ 38c0e558
+📧 Ingesting: 20220610-Betreuung heute-73009.eml... ❌ HTTP 429
+📧 Ingesting: 20220613-Personalbesetzung heute-73013.eml... ✅ 496e9f83
+📧 Ingesting: 20220614-Personalbesetzung am Mittwoch _ Notbetreuung am Fr-73016.eml... ✅ 3f00cb64
+📧 Ingesting: 20220614-Personalbesetzung-73015.eml... ✅ 3ad3784c
+📧 Ingesting: 20220615-Kita schließt um 16_30 Uhr-73017.eml... ✅ 758adc86
+📧 Ingesting: 20220621-Einladung Sommerfest-73025.eml... ❌ HTTP 429
+📧 Ingesting: 20220622-Urlaub Leitung-73031.eml... ✅ 7c693671
+📧 Ingesting: 20220704-Elternkommunikation-73040.eml... ❌ HTTP 429
+📧 Ingesting: 20220706-Erinnerung Sommerfest-73044.eml... ✅ 004f2856
+📧 Ingesting: 20220707-WG_ Abstimmung_ Welchen täglichen Betreuungsbedarf-73049.eml... ✅ 291cbfdc
+📧 Ingesting: 20220712-Personelle Veränderung in Blau-70544.eml... ✅ fcfa4d4e
+📧 Ingesting: 20220719-Lost & Found-73052.eml... ✅ 8deee8af
+📧 Ingesting: 20220720-Abschiedsbriefe-73053.eml... ✅ 7011e141
+📧 Ingesting: 20220720-Öffnungszeit ab dem 08.08.-73054.eml... ✅ 6a711f76
+📧 Ingesting: 20220810-Kitajahr 2022_22 Herzliches Willkommen-70545.eml... ✅ e0b01cdd
+📧 Ingesting: 20220823-Elternkommunikation-73083.eml... ✅ 87cbcdfc
+📧 Ingesting: 20220906-Liebe Eltern ,-70546.eml... ✅ 5fe10ae6
+📧 Ingesting: 20220908-Einladung zum Picknick der Grünen Gruppe-73090.eml... ✅ 55c78813
+📧 Ingesting: 20220909-Information - Gutschrift anteiliger Beitrag Förder-70547.eml... ✅ c2ff7361
+📧 Ingesting: 20220912-Einladung zum Elternabend-70548.eml... ✅ c5f2b9db
+📧 Ingesting: 20220920-Abschied-73098.eml... ✅ 3677c12a
+📧 Ingesting: 20220920-Personalmangel-70549.eml... ✅ 2b73faa4
+📧 Ingesting: 20220920-Personalsituation-309.eml... ✅ ce7101b3
+📧 Ingesting: 20220926-Personalmangel-70550.eml... ✅ 3a92cc12
+📧 Ingesting: 20220929-Durchhalten-70552.eml... ✅ 41ef5e97
+📧 Ingesting: 20220929-Erneut muss ich Sie leider darum bitten, Ihre Kind-70551.eml... ✅ 7048832b
+📧 Ingesting: 20221007-Anlassbezogener Elternabend-70553.eml... ✅ 92f0739e
+📧 Ingesting: 20221008-Re_Villa Luna Köln Neustadt-Süd - Bedarfsplanung K-28.eml... ✅ 981058a2
+📧 Ingesting: 20221008-Re_Villa Luna Köln Neustadt-Süd - Bedarfsplanung K-906.eml... ❌ HTTP 429
+📧 Ingesting: 20221012-Ergänzende Informationen und Protokoll-70554.eml... ✅ 6122202d
+📧 Ingesting: 20221017-Test E-Mail-73118.eml... ❌ HTTP 429
+📧 Ingesting: 20221018-Aw_ Test E-Mail-73119.eml... ✅ 5e9bca24
+📧 Ingesting: 20221027-Liebe Eltern.-70555.eml... ✅ 1f5bab66
+📧 Ingesting: 20221028-St.Martin-70556.eml... ✅ 2ea4acff
+📧 Ingesting: 20221109-Villa Luna Köln Neustadt-Süd - Elterninformation _-70557.eml... ✅ 29d7b9b6
+📧 Ingesting: 20221124-Personalnot-70558.eml... ✅ 42725dc6
+📧 Ingesting: 20221128-Personalnot-70559.eml... ✅ f7615c6e
+📧 Ingesting: 20221201-Villa Luna Köln Neustadt Süd - Elterninformation_ -70560.eml... ✅ 56b787b5
+📧 Ingesting: 20221208-Einschränkungen-70561.eml... ✅ e1b7061c
+📧 Ingesting: 20221216-Zuwachs im Leitungsteam ab 01.01.2023-70562.eml... ✅ 858eb1de
+📧 Ingesting: 20221219-AW_ yellow group yearly calendar-73161.eml... ✅ 0b160af7
+📧 Ingesting: 20221219-yellow group yearly calendar-310.eml... ✅ 6f05b803
+📧 Ingesting: 20221220-Jahresplanung 2023-311.eml... ✅ 84f91934
+📧 Ingesting: 20221220-Jahresplanung 2023-312.eml... ✅ 0e531e61
+📧 Ingesting: 20230104-Einladung Südstadtzug Karneval 21.02.2023-52716.eml... ✅ 59326d58
+📧 Ingesting: 20230116-Südstadtzug-52811.eml... ✅ c4503bd3
+📧 Ingesting: 20230124-Krankheitsfälle-70563.eml... ✅ 6ad23297
+📧 Ingesting: 20230126-Schreiben vom Ministerium-70564.eml... ✅ 50f23a88
+📧 Ingesting: 20230127-Ringelrötelfall-70567.eml... ✅ 882b8cfc
+📧 Ingesting: 20230127-Ringelröteln-70565.eml... ✅ fc5be012
+📧 Ingesting: 20230127-Ringelröteln-70566.eml... ✅ 9237cc6e
+📧 Ingesting: 20230130-Zwischenbericht vom Bonner Wall-70568.eml... ✅ ace93813
+📧 Ingesting: 20230131-Erste Schritte zur Nachhaltigkeit-52945.eml... ✅ b16a60f5
+📧 Ingesting: 20230202-Villa Luna Köln Neustadt Süd - Elterninformation_ -70569.eml... ✅ 7eb3969f
+📧 Ingesting: 20230206-eingeschränkte Betreuungszeiten-70570.eml... ✅ 057b9e15
+📧 Ingesting: 20230213-Corona-70571.eml... ❌ HTTP 429
+📧 Ingesting: 20230213-Südstadtzug-70572.eml... ✅ 5f2b66e6
+📧 Ingesting: 20230215-Informationen zum Karneval-70573.eml... ✅ 3689a245
+📧 Ingesting: 20230220-Südstadtzug-70574.eml... ❌ HTTP 429
+📧 Ingesting: 20230227-Elternbeiratssitzung-60045.eml... ✅ d6b55b1b
+📧 Ingesting: 20230301-hoher Krankheitsstand-70575.eml... ✅ ae022d7f
+📧 Ingesting: 20230301-hoher Krankheitsstand-70576.eml... ❌ HTTP 429
+📧 Ingesting: 20230302-Einladung zur Elternbeiratssitzung-60070.eml... ❌ HTTP 429
+📧 Ingesting: 20230313-hoher Krankheitsstand-70577.eml... ❌ HTTP 429
+📧 Ingesting: 20230314-Betreuungssituation-70578.eml... ❌ HTTP 429
+📧 Ingesting: 20230320-grüne und gelbe Gruppe geschlossen-70579.eml... ✅ ff93eb10
+📧 Ingesting: 20230321-grün_gelb-70580.eml... ❌ HTTP 429
+📧 Ingesting: 20230328-Neuigkeiten und Informationen im Überblick-70581.eml... ✅ e1772cb6
+📧 Ingesting: 20230406-Personelle Veränderung im Leitungsbüro-70582.eml... ✅ f3e85721
+📧 Ingesting: 20230412-Renovierungsarbeiten-70583.eml... ❌ HTTP 429
+📧 Ingesting: 20230419-aktuelle Termine-70584.eml... ❌ HTTP 429
+📧 Ingesting: 20230508-aktuelles-70585.eml... ❌ HTTP 429
+📧 Ingesting: 20230510-Sommerfest 2023-70586.eml... ✅ dfe4cf05
+📧 Ingesting: 20230515-Sommerfest 2023-70587.eml... ❌ HTTP 429
+📧 Ingesting: 20230601-Informationen im Überblick-70588.eml... ❌ HTTP 429
+📧 Ingesting: 20230621-Ringelröteln-70589.eml... ❌ HTTP 429
+📧 Ingesting: 20230622-Unwetterwarnung-70590.eml... ✅ ffda080c
+📧 Ingesting: 20230628-Scharlach-61118.eml... ❌ HTTP 429
+📧 Ingesting: 20230703-Abschiedsfeier Voschulkinder_Farewell party presch-61178.eml... ❌ HTTP 429
+📧 Ingesting: 20230705-Beginn der Teilöffnung-70591.eml... ❌ HTTP 429
+📧 Ingesting: 20230707-Fliegerbombe-61218.eml... ✅ d12b2622
+📧 Ingesting: 20230811-Personalzuwachs im Leitungsbüro _ Increase in staf-70592.eml... ✅ 3b131683
+📧 Ingesting: 20230814-Elternbefragung _ parental survey 2023 Villa Luna -70593.eml... ❌ HTTP 429
+📧 Ingesting: 20230815-Neuigkeiten und Informationen im Überblick-70594.eml... ❌ HTTP 429
+📧 Ingesting: 20230822-Villa Luna Köln Neustadt-Süd - Abfrage Geschwister-70595.eml... ❌ HTTP 429
+📧 Ingesting: 20230901-Astronauten Wochenrückblick-61766.eml... ❌ HTTP 429
+📧 Ingesting: 20230907-Elternbefragung-70596.eml... ✅ b2470552
+📧 Ingesting: 20230911-Gruppengestaltung, Elternabend-61878.eml... ✅ 29fd004f
+📧 Ingesting: 20230913-Aller guten dinge....-9090.eml... ❌ HTTP 429
+📧 Ingesting: 20230913-Fwd_ Video grüne Gruppe ElternAbend-9087.eml... ❌ HTTP 429
+📧 Ingesting: 20230913-Fwd_ Video grüne Gruppe ElternAbend-9089.eml... ❌ HTTP 429
+📧 Ingesting: 20230913-Re_Video grüne Gruppe ElternAbend-9088.eml... ✅ d31bc81c
+📧 Ingesting: 20230913-Video grüne Gruppe ElternAbend-9387.eml... ❌ HTTP 429
+📧 Ingesting: 20230914-AW_ Aller guten dinge....-73356.eml... ❌ HTTP 429
+📧 Ingesting: 20230926-Krankheitswelle-70597.eml... ❌ HTTP 429
+📧 Ingesting: 20230927-Bring- und Abholphase-62024.eml... ✅ 443f4b88
+📧 Ingesting: 20230928-Villa Luna Köln Neustadt-Süd - Planung Kita-Jahr 2-70598.eml... ✅ 6a434d70
+📧 Ingesting: 20231005-Personalengpass Villa Luna K1-70599.eml... ✅ 41622914
+📧 Ingesting: 20231005-Weitere Informationen_ Personalengpass Villa Luna -70600.eml... ❌ HTTP 429
+📧 Ingesting: 20231012-Do und Fr Betreuung bis 16.30 Uhr-70601.eml... ✅ e7d1237f
+📧 Ingesting: 20231024-hoher Krankheitsstand-70602.eml... ❌ HTTP 429
+📧 Ingesting: 20231025-Ausblick auf den restlichen Verlauf der Woche-70604.eml... ✅ 7dd3263a
+📧 Ingesting: 20231025-Villa Luna Köln Neustadt Süd- Elterninformation_ P-70603.eml... ❌ HTTP 429
+📧 Ingesting: 20231026-Einladung St.Martin _ St.Martin Lieder-62395.eml... ❌ HTTP 429
+📧 Ingesting: 20231027-Weitere Informationen_ Personalengpass Villa Luna -70605.eml... ❌ HTTP 429
+📧 Ingesting: 20231030-Jubiläumsfeier verschoben-70606.eml... ✅ 74eb1408
+📧 Ingesting: 20231108-Hinzugefügte Information zum Verkleidungstag (Zeke-73398.eml... ✅ b0356f4a
+📧 Ingesting: 20231108-Verkleidungsfeier, Spielzeugtag-73397.eml... ✅ f0b5a7b0
+📧 Ingesting: 20231116-Karneval 2024-62685.eml... ❌ HTTP 429
+📧 Ingesting: 20231204-Personalengpass Villa Luna K1-70607.eml... ✅ a4c2f849
+📧 Ingesting: 20231207-Freitag, 8.12.23-70608.eml... ❌ HTTP 429
+📧 Ingesting: 20231213-Weihnachtsfeier-63062.eml... ❌ HTTP 429
+📧 Ingesting: 20231215-weitere  Krankmeldungen-70609.eml... ✅ 42300dbe
+📧 Ingesting: 20231221-Öffnungszeiten am Freitag, 22.12.2023, bis 17 Uhr-70610.eml... ✅ fb08bb9f
+📧 Ingesting: 20240105-Südstadtzug 2024-63344.eml... ❌ HTTP 429
+📧 Ingesting: 20240108-Personelles-70611.eml... ❌ HTTP 429
+📧 Ingesting: 20240110-Gruppenschließung ab 14_30 Astronauten und Regenbo-70612.eml... ✅ 6a7200cf
+📧 Ingesting: 20240111-Villa Luna Köln Neustadt Süd- Trägerinformation Ne-70613.eml... ❌ HTTP 429
+📧 Ingesting: 20240112-Fehlende Rückmeldung wg Teilnahme Südstadtzug-63431.eml... ❌ HTTP 429
+📧 Ingesting: 20240117-Ankündigung Beitragsanpassung Villa Luna Köln - Fö-70614.eml... ❌ HTTP 429
+📧 Ingesting: 20240123-Personalengpass-63563.eml... ✅ ec79c480
+📧 Ingesting: 20240125-Kostüme für den Südstadtzug-70615.eml... ✅ 54cee51b
+📧 Ingesting: 20240126-PS_ Verkleidungsparty-73489.eml... ❌ HTTP 429
+📧 Ingesting: 20240201-Karneval-73496.eml... ✅ 2420b267
+📧 Ingesting: 20240201-Vorbereitunegn zum SÜdstadtzug diesen Montag 05.02-70616.eml... ✅ 47024a47
+📧 Ingesting: 20240202-Neues Mitglied-73498.eml... ✅ a9b521c1
+📧 Ingesting: 20240205-Karnevalsbuffet-63739.eml... ✅ 91f4afa5
+📧 Ingesting: 20240207-Aktuelle Informationen _ Information Update-70618.eml... ✅ 1e31f78d
+📧 Ingesting: 20240207-Finale Informationen zum Südstadtzug __ Final info-70617.eml... ✅ bc904212
+📧 Ingesting: 20240215-Erste Hilfe Kurs für Kinder-70619.eml... ❌ HTTP 429
+📧 Ingesting: 20240220-Elterninformationsschreiben _Kita Bündnis NRW__Par-70620.eml... ✅ 9d1c358b
+📧 Ingesting: 20240223-Personalengpass Villa Luna K1-70621.eml... ✅ eb80d995
+📧 Ingesting: 20240228-1. Hilfe Kurs Teil 2-70622.eml... ❌ HTTP 429
+📧 Ingesting: 20240301-Seeds and gardening equipment for our roof terrass-70623.eml... ✅ 3f4224a9
+📧 Ingesting: 20240301-WG_ Teilweise Schließung der Astronautengruppe & k-64142.eml... ❌ HTTP 429
+📧 Ingesting: 20240307-Unklarheiten-70625.eml... ✅ 8175ac3e
+📧 Ingesting: 20240307-hoher Krankheitsstand der Mitarbeitenden-70624.eml... ✅ 5f20553c
+📧 Ingesting: 20240308-Informationsschreiben Förderverein Villa Luna-70626.eml... ✅ 722a3777
+📧 Ingesting: 20240319-Villa Luna Köln Neustadt Süd - Informationsschreib-70627.eml... ✅ eb688a66
+📧 Ingesting: 20240321-Update-70628.eml... ✅ cab1374a
+📧 Ingesting: 20240403-Termine für unsere Tierpark-Ausflüge-70630.eml... ✅ b2b84ad6
+📧 Ingesting: 20240417-Neuer Praktikant-73557.eml... ✅ e72f8a34
+📧 Ingesting: 20240422-Betreuungszeiten unserer Einrichtung für deise Woc-70632.eml... ❌ HTTP 429
+📧 Ingesting: 20240422-Gruppenschießung wegen Personalmangel-70631.eml... ✅ 87a3ee85
+📧 Ingesting: 20240423-Theaterbesuch Ü3 findet statt-70633.eml... ✅ c63aa8d0
+📧 Ingesting: 20240424-Ausflug Tierpark findet nicht statt-70634.eml... ✅ 57fd029e
+📧 Ingesting: 20240424-Betreuung auf Sparflamme-70635.eml... ✅ 59d38cc8
+📧 Ingesting: 20240425-Information_ Kita Bündnis NRW Aktion - Rettet unse-70637.eml... ✅ 55c54c21
+📧 Ingesting: 20240425-Kita schließt am Freitag 26.04. bereits um 16_30-70636.eml... ✅ 004a4812
+📧 Ingesting: 20240429-Protokoll Elternabend 2024-64956.eml... ✅ cbb4ae2e
+📧 Ingesting: 20240506-Absage Ausflug in den Tierpark am Mittwoch-70638.eml... ✅ fb7e769a
+📧 Ingesting: 20240507-Ausflug Kölner Zoo_ Trip Cologne Zoo-73565.eml... ✅ 49ce53fc
+📧 Ingesting: 20240508-Eingeschränkte Betreuungszeiten heute, Mittwoch 08-70639.eml... ✅ 2c312860
+📧 Ingesting: 20240508-Schließung der U3 um 15_30-70640.eml... ✅ 0711984f
+📧 Ingesting: 20240524-Personal decke knapp - Kita schließt heute um 17_0-70641.eml... ✅ 0bf18be7
+📧 Ingesting: 20240605-Informationen-397.eml... ✅ dbd5876b
+📧 Ingesting: 20240605-Lindenthaler Tierpark-398.eml... ✅ 25b34c3d
+📧 Ingesting: 20240617-Sommerfest 2024-399.eml... ✅ 1c8ccf8e
+📧 Ingesting: 20240619-Personalengpass Mittwoch 19.06.2024-400.eml... ✅ d891388f
+📧 Ingesting: 20240620-Freitag. 21.06.24 Betreuung bis 16.30-401.eml... ❌ HTTP 429
+📧 Ingesting: 20240626-Update Bonner Wall-402.eml... ✅ b58cfffb
+📧 Ingesting: 20240702-U 3 Gruppen schließen heute um 15 Uhr-403.eml... ✅ f369e7fc
+📧 Ingesting: 20240703-Anhaltender Personalengpass & weitere Krankmeldung-53.eml... ✅ 2066c224
+📧 Ingesting: 20240711-Kitajahresende-404.eml... ✅ 0e2892a2
+📧 Ingesting: 20240716-U 3 Gruppen schließen heute um 15 Uhr-406.eml... ✅ b7381f4b
+📧 Ingesting: 20240814-Information Ausflüge !!-409.eml... ❌ HTTP 429
+📧 Ingesting: 20240827-Personelle Veränderungen-412.eml... ❌ HTTP 429
+📧 Ingesting: 20240830-aktuelle Informationen-413.eml... ❌ HTTP 429
+📧 Ingesting: 20240912-Jetzt auch mit Anhang-420.eml... ❌ HTTP 429
+📧 Ingesting: 20240912-Politiker im Praktikum-416.eml... ❌ HTTP 429
+📧 Ingesting: 20240912-aktualisierte Jahresplanung 2024-360.eml... ✅ d13c230d
+📧 Ingesting: 20240912-aktualisierte Jahresplanung 2024-419.eml... ✅ f97d5675
+📧 Ingesting: 20240912-versuch 2 mit Anhang-630.eml... ❌ HTTP 429
+📧 Ingesting: 20240918-Betreuung im Nachmittagsbereich-650.eml... ✅ 7d4f0248
+📧 Ingesting: 20240919-Ausflug 3- Jährige_ Excursion 3- year- olds-359.eml... ❌ HTTP 429
+📧 Ingesting: 20240919-Informationen zum Sand am Bonner Wall-357.eml... ✅ cb793508
+📧 Ingesting: 20240920-ich bin dann mal weg-763.eml... ❌ HTTP 429
+📧 Ingesting: 20240926-Hoher Personalmangel_ Ü3-Bereich muss am Freitag, -370.eml... ❌ HTTP 429
+📧 Ingesting: 20240926-Liederliste-374.eml... ✅ 9f4ef708
+📧 Ingesting: 20240926-Personalengpass in der Ü3 am Nachmittag-373.eml... ✅ a103e164
+📧 Ingesting: 20240930-Gekürzte Öffnungszeiten_ Astronauten-Gruppe-810.eml... ✅ a6150d8f
+📧 Ingesting: 20240930-Vorbereitung Laternen Basteln-874.eml... ❌ HTTP 429
+📧 Ingesting: 20241001-2.10.24 - Ü3-Gruppen werden vor 9 Uhr und ab 15_30-813.eml... ❌ HTTP 429
+📧 Ingesting: 20241002-Kastanien-Tauschaktion-379.eml... ✅ 8617772b
+📧 Ingesting: 20241007-2.10.24 - Ü3-Gruppen werden vor 9 Uhr und ab 15_30-829.eml... ✅ 1ecd2c79
+📧 Ingesting: 20241007-Korrekrtur_ Regenbogen-Gruppe muss morgen (8.10.24-830.eml... ✅ e0fc2268
+📧 Ingesting: 20241007-Personalengpass Villa Luna K1 07.10.2024-863.eml... ✅ 5d2344bb
+📧 Ingesting: 20241008-09.10 - 11.10 - eingeschränkte Betreuung + kein La-833.eml... ✅ a1f6dbbf
+📧 Ingesting: 20241008-09.10 - 11.10_ kein LC, Ü3-Notbetreuung + U3 ab 14-834.eml... ❌ HTTP 429
+📧 Ingesting: 20241008-Zusätzlicher Personalengpass Dienstag 08.10.2024-871.eml... ❌ HTTP 429
+📧 Ingesting: 20241009-10.10 + 11.10_ Kita öffnet erst um 8 + U3 Notbetre-839.eml... ✅ 8db450a2
+📧 Ingesting: 20241009-Südstadtzug 2025-384.eml... ❌ HTTP 429
+📧 Ingesting: 20241009-Weiterer Personalausfall - U3 Gruppen müssen leide-835.eml... ✅ 7ae979e4
+📧 Ingesting: 20241010-Notgruppe - Wetterfeste Kleidung_Wechselsachen-387.eml... ❌ HTTP 429
+📧 Ingesting: 20241011-14.10 + 15.10 Kita ist von 8 bis 16.30 auf; U3 + Ü-848.eml... ✅ 8eb80af8
+📧 Ingesting: 20241011-Notbetreuung Anmeldungen-849.eml... ✅ 4d722f73
+📧 Ingesting: 20241011-Villa Luna Köln Neustadt-Süd - Planung des Kitajah-847.eml... ✅ 16fedb3b
+📧 Ingesting: 20241015-Ausflug 18.10_ Trip 18.10-424.eml... ✅ 027e8a41
+📧 Ingesting: 20241015-Notbetreuung (U+Ü) bis zum einschl. 18.10 (Anmeldu-917.eml... ✅ c2812103
+📧 Ingesting: 20241015-Notbetreuung U3 - weitere Abmeldungen sind nötig; -426.eml... ❌ HTTP 429
+📧 Ingesting: 20241015-Zu viele Notbetreuung-Anmeldungen - bitte nach Mög-425.eml... ❌ HTTP 429
+📧 Ingesting: 20241016-Laternen _ Lanterns-429.eml... ❌ HTTP 429
+📧 Ingesting: 20241018-Kopfläuse_ head lice -435.eml... ✅ 7069b66f
+📧 Ingesting: 20241018-ab 21.10 - voraussichtlich wieder Normalbetrieb-436.eml... ✅ 7fed859e
+📧 Ingesting: 20241022-23.10 - 25.10 Kita schließt um 17 Uhr + Einschränk-437.eml... ✅ 55e0ed07
+📧 Ingesting: 20241022-Eingeschränkte Betreuungszeiten heute, Dienstag 22-935.eml... ✅ ab388779
+📧 Ingesting: 20241022-Eingeschränkte Betreuungszeiten heute, Dienstag 22-936.eml... ✅ 11f101d4
+📧 Ingesting: 20241023-24.10 + 25.10 - weitere Einschränkungen. Öffnungsz-943.eml... ✅ 5365b5a6
+📧 Ingesting: 20241023-Astronauten_ die Aufteilung der Notgruppen-440.eml... ✅ 85d0c756
+📧 Ingesting: 20241023-Eingeschränkte Betreuungszeiten heute, Mittwoch 23-439.eml... ✅ 41713b68
+📧 Ingesting: 20241023-Halloween-942.eml... ✅ d9802512
+📧 Ingesting: 20241023-Haribo-Kastanien_Eichel-Tauschaktion-941.eml... ✅ 3561009e
+📧 Ingesting: 20241025-Haribo-Tauschaktion-450.eml... ✅ 8ec97830
+📧 Ingesting: 20241025-Normalbetrieb ab 28.10 _ Urlaub-452.eml... ✅ de7064e5
+📧 Ingesting: 20241029-Sankt Martin Informationen_ Saint Martin Informati-70726.eml... ✅ bdda09b0
+📧 Ingesting: 20241030-Karnevalsvorbereitungen Südstadtzug 2025-462.eml... ✅ af9a3b02
+📧 Ingesting: 20241105-Re_Wenn beginnt morgen Umgang-473.eml... ❌ HTTP 429
+📧 Ingesting: 20241105-Wenn beginnt morgen Umgang-9576.eml... ✅ 9af8a885
+📧 Ingesting: 20241105-Ü3 Notbetreuung 06.11 + 07.11-472.eml... ❌ HTTP 429
+📧 Ingesting: 20241107-08.11 - Ü3 Notbetreuung + St Martin-1014.eml... ✅ 76ee8744
+📧 Ingesting: 20241107-Sankt Martin Lieder_ Songs-1015.eml... ❌ HTTP 429
+📧 Ingesting: 20241108-Karneval 2025 _ Carnival 2025-484.eml... ✅ fcda5d4d
+📧 Ingesting: 20241108-Notbetreuung U3 + Ü3  Montag 11.11.24-1024.eml... ❌ HTTP 429
+📧 Ingesting: 20241111-Betreuungssituation bis zum 15.11.2024-492.eml... ✅ 1e5e4dbe
+📧 Ingesting: 20241111-Informationen und Maßnahmen zur Verbesserung der S-1035.eml... ❌ HTTP 429
+📧 Ingesting: 20241111-Schließung der gesamten Einrichtung-488.eml... ❌ HTTP 429
+📧 Ingesting: 20241113-Einladung zur Mitgliederversammlung Förderverein V-498.eml... ✅ ec19b150
+📧 Ingesting: 20241115-Stellungnahme Fr. Giedziella _ Elternrat-505.eml... ✅ 3b9ff7c7
+📧 Ingesting: 20241115-Stellungnahme der Geschäftsführung-1055.eml... ❌ HTTP 429
+📧 Ingesting: 20241115-Update zur Personalsituation und weitere Maßnahmen-504.eml... ❌ HTTP 429
+📧 Ingesting: 20241115-ab 18.11 - voraussichtlich wieder Normalbetrieb-506.eml... ❌ HTTP 429
+📧 Ingesting: 20241118-Fundkiste_ lost and found box-1063.eml... ✅ 467dea9b
+📧 Ingesting: 20241119-Theaterbesuch _Wut im Bauch_ 21.November-73752.eml... ❌ HTTP 429
+📧 Ingesting: 20241120-21.11 verkürzte Öffnungszeiten_ Kita ist nur von 8-1072.eml... ✅ 4944adbe
+📧 Ingesting: 20241120-Heizungsausfall in der Kita-1069.eml... ✅ da48c305
+📧 Ingesting: 20241120-Theaterbesuch abgesagt-73753.eml... ✅ a47410a4
+📧 Ingesting: 20241121-22.11 - eingeschränkte Betreuung_ Gruppe B ist dra-1078.eml... ✅ 3650accd
+📧 Ingesting: 20241121-Karneval 2025 _ Carnival 2025-1077.eml... ✅ b58d1482
+📧 Ingesting: 20241121-Nikolaustag, St. Nicholas Day-1075.eml... ✅ 8a2b366a
+📧 Ingesting: 20241122-22.11. - die Öffnungszeiten müssen weiter eingesch-1081.eml... ✅ cb92a927
+📧 Ingesting: 20241122-25.11 - Stand jetzt - Normalbetrieb wieder möglich-1085.eml... ✅ e9091301
+📧 Ingesting: 20241122-Betreff_ Einladung zur Elternvollversammlung und B-1084.eml... ❌ HTTP 429
+📧 Ingesting: 20241126-27.11 - 29.11_ gekürzte Öffnungszeiten (8 bis 16 U-1091.eml... ✅ 24c93e97
+📧 Ingesting: 20241128-Ergebnisbedarfsabfrage & Wechsel der Zuständigkeit-1095.eml... ❌ HTTP 429
+📧 Ingesting: 20241128-U3 + Ü3_ Bedarfsabfrage für Abend 3.12. + Infos-1094.eml... ✅ 0f175358
+📧 Ingesting: 20241202-Satzung Förderverein Villa Luna e.V-1099.eml... ❌ HTTP 429
+📧 Ingesting: 20241204-Jahresplanung 2025-1102.eml... ❌ HTTP 429
+📧 Ingesting: 20241204-Jahresplanung 2025-1103.eml... ❌ HTTP 429
+📧 Ingesting: 20241206-Ergebnis Elternvollversammlung _ Result of the par-1109.eml... ✅ b71b945d
+📧 Ingesting: 20241206-Infos zur kommenden Woche + Personaländerung-1110.eml... ✅ 2ee3e27c
+📧 Ingesting: 20241209-Notbetreuung 10.12.24-509.eml... ❌ HTTP 429
+📧 Ingesting: 20241210-Weihnachtsmarkt, Christmas market-512.eml... ✅ 0c62fd49
+📧 Ingesting: 20241210-reguläre Betreuung 11.12.24 _ Astronauten, Regenbo-511.eml... ❌ HTTP 429
+📧 Ingesting: 20241211-12.12.24 - Ü3-Notbetreuung_ A-Gruppn sind dran-1121.eml... ✅ 0b805a09
+📧 Ingesting: 20241211-Informationen zur Rückerstattung zu viel gezahlter-514.eml... ❌ HTTP 429
+📧 Ingesting: 20241212-U+Ü_ 13.12 Notbetreuung (Gruppen B) + Ü-Weihnachts-1122.eml... ❌ HTTP 429
+📧 Ingesting: 20241213-Ab 16.12 wieder Normalbetrieb (Stand jetzt)-520.eml... ❌ HTTP 429
+📧 Ingesting: 20241216-17.12 U+Ü Notbetreuung, Gruppe A dran-524.eml... ❌ HTTP 429
+📧 Ingesting: 20241216-Villa Luna - Lastschrifteinzüge - Beitrag Januar 2-1132.eml... ✅ 124e244e
+📧 Ingesting: 20241216-Villa Luna Bonner Wall -  Direct debit collections-1133.eml... ❌ HTTP 429
+📧 Ingesting: 20241217-18.12 Ü3 wieder regulär betreut, U3 in der Notbetr-1139.eml... ❌ HTTP 429
+📧 Ingesting: 20241217-Brief vom Elternbeirat-527.eml... ❌ HTTP 429
+📧 Ingesting: 20241219-Fotos Weihnachtskugeln 2024-529.eml... ✅ 98bdad1f
+📧 Ingesting: 20241219-Wichtige Informationen und Ausblick für das neue J-1143.eml... ✅ 5be59b70
+📧 Ingesting: 20241220-Weihnachtsgrüße + Infos für 2025-532.eml... ✅ 3e88f840
+📧 Ingesting: 20250102-New year update-73819.eml... ✅ b9502d8f
+📧 Ingesting: 20250110-Informationen Südstadtzug 2025-1190.eml... ✅ ca749fc7
+📧 Ingesting: 20250110-Infos zum Fototermin am 15.01.25-557.eml... ✅ 0de2f5c2
+📧 Ingesting: 20250115-Telefon und Geburtstag-9594.eml... ✅ 2fd94015
+📧 Ingesting: 20250116-Capes Karneval Wiederverwendung-574.eml... ✅ 425ca296
+📧 Ingesting: 20250116-Erinnerung_ am 17.01 bleibt Kita geschlossen (Konz-575.eml... ✅ 01e66cd0
+📧 Ingesting: 20250116-Informationen zum Kostümbasteln am Samstag, den 25-1221.eml... ✅ 72a9b786
+📧 Ingesting: 20250121-Neues Thema-73857.eml... ✅ 38fe8d28
+📧 Ingesting: 20250122-Abwesenheitsnotiz _ Öffnungszeiten _ am 04.03 gesc-1231.eml... ✅ 6630ad07
+📧 Ingesting: 20250123-Preschool-73862.eml... ✅ 7766f41b
+📧 Ingesting: 20250127-Kostüme Südstadtzug 2025-584.eml... ✅ 47b23c16
+📧 Ingesting: 20250130-31.01.25_ Ü-Bereich komplett geschlossen-588.eml... ✅ 5a5afa8b
+📧 Ingesting: 20250203-Betreuungssituation 03.02.2025-595.eml... ✅ 842ddb9f
+📧 Ingesting: 20250203-Betreuungssituation 04.02.2025-597.eml... ✅ 483bce6a
+📧 Ingesting: 20250203-Ü schließt heute um 14 Uhr, U bitte nach Möglichke-593.eml... ✅ 24d34cb4
+📧 Ingesting: 20250207-Betreuungssituation 07.02.2025-1274.eml... ✅ b422364f
+📧 Ingesting: 20250212-Follow-up aktuelle Situation _ current situation-603.eml... ✅ 8c47fb74
+📧 Ingesting: 20250212-Formulare Lastschriftmandate-1345.eml... ✅ 27e2da88
+📧 Ingesting: 20250213-Konzeptionstag am 14.02 (Kita bleibt geschlossen) -607.eml... ❌ HTTP 429
+📧 Ingesting: 20250214-Teamtag 14.02 _ neue Garderobe Astronauten + Regen-609.eml... ✅ a37cdae5
+📧 Ingesting: 20250219-Südstadtzug Informationen-1296.eml... ✅ b0f396f6
+📧 Ingesting: 20250220-K1 - Villa Luna - Beitragsaussetzung Förderverein -1034.eml... ✅ cd2c3748
+📧 Ingesting: 20250220-K1 - Villa Luna - Suspension of contributions Förd-1332.eml... ✅ 639bb5e1
+📧 Ingesting: 20250220-Personalinfo _ Asma Ouakel Einrichtungswechsel-1075.eml... ❌ HTTP 429
+📧 Ingesting: 20250220-Personalinfo _ Asma Ouakel Einrichtungswechsel-1076.eml... ❌ HTTP 429
+📧 Ingesting: 20250221-Astronauten Gruppe schließt heute um 14 Uhr-1093.eml... ❌ HTTP 429
+📧 Ingesting: 20250224-Einsatzende Olga Logunova-1541.eml... ✅ c467636e
+📧 Ingesting: 20250225-Kamelle-1164.eml... ❌ HTTP 429
+📧 Ingesting: 20250226-AW_ Re[2]_ Formulare Lastschriftmandate-1194.eml... ❌ HTTP 429
+📧 Ingesting: 20250226-Morgen Karneval-1199.eml... ❌ HTTP 429
+📧 Ingesting: 20250226-Morgen feiern wir Karneval-1612.eml... ❌ HTTP 429
+📧 Ingesting: 20250226-Re_Formulare Lastschriftmandate-1182.eml... ✅ 1521eca5
+📧 Ingesting: 20250226-Re_Formulare Lastschriftmandate-9775.eml... ❌ HTTP 429
+📧 Ingesting: 20250226-Re_Formulare Lastschriftmandate-9776.eml... ✅ 61f71e13
+📧 Ingesting: 20250227-Informationen Aufstellung Südstadtzug-1222.eml... ❌ HTTP 429
+📧 Ingesting: 20250305-Karneval Bilder-1799.eml... ❌ HTTP 429
+📧 Ingesting: 20250306-Ausflug Theater morgen 07.03.25_ Theatre trip tomo-1857.eml... ✅ a6cd719b
+📧 Ingesting: 20250306-Wir haben uns vertan_ We made a mistake-1859.eml... ❌ HTTP 429
+📧 Ingesting: 20250312-Entwicklungsgespräch Termin-2052.eml... ❌ HTTP 429
+📧 Ingesting: 20250312-Erinnerung Theater_ Reminder Theater-2050.eml... ❌ HTTP 429
+📧 Ingesting: 20250312-Pola EWG-2063.eml... ✅ ed1284b5
+📧 Ingesting: 20250314-Keine Nüsse No Nuts-2120.eml... ✅ 3f2f7afd
+📧 Ingesting: 20250315-Kalenderwoche 11-2144.eml... ❌ HTTP 429
+📧 Ingesting: 20250318-Einladung zur Elternvollversammlung am 25.03.2025 -2208.eml... ✅ 737748c4
+📧 Ingesting: 20250319-Holi fest morgen-2237.eml... ❌ HTTP 429
+📧 Ingesting: 20250320-NOTBETREUUNG VILLA LUNA BONNER WALL GRUPPE A-2279.eml... ✅ aa147ee4
+📧 Ingesting: 20250321-INFOS-2301.eml... ✅ 5debde3f
+📧 Ingesting: 20250324-Elterinfo --_ Sonneschutz-2362.eml... ❌ HTTP 429
+📧 Ingesting: 20250326-Fundstück-2410.eml... ✅ 78fdd0fa
+📧 Ingesting: 20250326-Notgruppen Listen AKTUELL 04_2025-2420.eml... ❌ HTTP 429
+📧 Ingesting: 20250327-INFOS-1390.eml... ✅ 52f4eb61
+📧 Ingesting: 20250328-Kunstmappe_Art folder-1415.eml... ❌ HTTP 429
+📧 Ingesting: 20250328-Regeln in der Garderobe_ Rules in the wardrobe-2491.eml... ✅ 6814f767
+📧 Ingesting: 20250402-Nachbericht zur Elternvollversammlung & Anpassung -2625.eml... ❌ HTTP 429
+📧 Ingesting: 20250403-Notbetreuung Gruppe B-2666.eml... ✅ c05e6594
+📧 Ingesting: 20250404-K1 - Villa Luna - Information zur Berechnung des F-1550.eml... ❌ HTTP 429
+📧 Ingesting: 20250405-INFO-1570.eml... ❌ HTTP 429
+📧 Ingesting: 20250423-Notbetreuung 25.05.2025-1858.eml... ❌ HTTP 429
+📧 Ingesting: 20250425-INFOS-3295.eml... ❌ HTTP 429
+📧 Ingesting: 20250428-Neues Projekt _ New project-3348.eml... ✅ a0c5bb06
+📧 Ingesting: 20250429-Badesachen_ Swimwear-1955.eml... ❌ HTTP 429
+📧 Ingesting: 20250430-Kennenlernen unserer neuen Einrichtungsleitung-1968.eml... ✅ 38efc345
+📧 Ingesting: 20250505-Elternabend Ü & U Gruppen-3579.eml... ❌ HTTP 429
+📧 Ingesting: 20250505-Team Mediation-3581.eml... ❌ HTTP 429
+📧 Ingesting: 20250507-Notbetreuung Regenbogen und Astronauten-2112.eml... ❌ HTTP 429
+📧 Ingesting: 20250513-Info Trägerfinanzierung-2218.eml... ❌ HTTP 429
+📧 Ingesting: 20250513-Protokoll-3815.eml... ✅ 817818c0
+📧 Ingesting: 20250513-Vielen Dank für das Protokoll-3828.eml... ❌ HTTP 429
+📧 Ingesting: 20250526-Notbetreuung Morgen und Übermorgen-4190.eml... ❌ HTTP 429
+📧 Ingesting: 20250526-Notbetreuung Villa Luna am 27.06 und 28.06-4189.eml... ❌ HTTP 429
+📧 Ingesting: 20250602-Notbetreuung 03.06 und 04.06-4399.eml... ✅ efbb05f7
+📧 Ingesting: 20250604-Notbetreuung 05. und 06. Juni-4452.eml... ❌ HTTP 429
+📧 Ingesting: 20250605-Aaron Kirlar-4508.eml... ✅ 63c45a1c
+📧 Ingesting: 20250605-Abschied-4488.eml... ✅ 3adf6ec7
+📧 Ingesting: 20250605-Sommerfest und der Rausschmiss der Vorschulkinder-4494.eml... ❌ HTTP 429
+📧 Ingesting: 20250610-Danke! Thank you!-4641.eml... ✅ 5956323e
+📧 Ingesting: 20250610-UV- Kleidung  UV clothing-4648.eml... ❌ HTTP 429
+📧 Ingesting: 20250616-Nachtrag Sommerfest FREITAG den 27. Juni von 15_30-4822.eml... ✅ 35078ff3
+📧 Ingesting: 20250616-Sommerfest Vorschulrausschmiss 27.06.25 von 15_30 -4820.eml... ❌ HTTP 429
+📧 Ingesting: 20250620-Elterninformation - Förderverein Villa Luna - Bonn-4968.eml... ❌ HTTP 429
+📧 Ingesting: 20250620-Krankenstand 20.06.25-4955.eml... ❌ HTTP 429
+📧 Ingesting: 20250620-Sommerfest am 27.Juni Villa Luna-4969.eml... ❌ HTTP 429
+📧 Ingesting: 20250623-Ayaans Goodbye-5066.eml... ✅ 77b98ffb
+📧 Ingesting: 20250625-AW_ Ayaans Goodbye-5145.eml... ✅ 6abe843e
+📧 Ingesting: 20250625-Notbetreuung 26.06.25-5138.eml... ✅ 96d2f566
+📧 Ingesting: 20250625-Waldwochen vom 30.06.-11.07.25-5141.eml... ❌ HTTP 429
+📧 Ingesting: 20250627-Erinnerung_ Alle Kinder werden heute um 14_00 Uhr -5208.eml... ✅ ead3d461
+📧 Ingesting: 20250702-Hitze in der Kita-5345.eml... ✅ bcca18c4
+📧 Ingesting: 20250703-Personalveränderungen in unserer Einrichtung-5391.eml... ❌ HTTP 429
+📧 Ingesting: 20250703-Waldtag morgen 04.07.2025-5390.eml... ❌ HTTP 429
+📧 Ingesting: 20250704-Dringende Bitte an alle Eltern-5417.eml... ✅ 84d66da6
+📧 Ingesting: 20250707-Abschiedsfeier Lexi & Cathy-5470.eml... ❌ HTTP 429
+📧 Ingesting: 20250709-Notbetreuung 10.07.25-5528.eml... ✅ 74dd4719
+📧 Ingesting: 20250711-Abwesenheitsnotiz Annika Moosbrucker heute-5593.eml... ✅ 4bc9b45e
+📧 Ingesting: 20250715-Sommerferien_ Summer holidays-5707.eml... ❌ HTTP 429
+📧 Ingesting: 20250717-Personalsituation heute und Freitag Villa Luna-5760.eml... ❌ HTTP 429
+📧 Ingesting: 20250718-Sommerpause – mit einem herzlichen Dankeschön-5793.eml... ✅ 15b78119
+📧 Ingesting: 20250807-Elternkommunikation Kita Neustrukturierung Köln Sü-6353.eml... ✅ 19bc3bbc
+📧 Ingesting: 20250814-Herzlich Wilkommen Ines-6562.eml... ✅ fb643824
+📧 Ingesting: 20250819-Vorschule 25_26-6720.eml... ✅ ea5e9cea
+📧 Ingesting: 20250828-Abwesenheitsnotiz Annika Moosbrucker-6990.eml... ✅ 6c37ae67
+📧 Ingesting: 20250828-Neuer Mitarbeiter ab 01.09.2025-6975.eml... ❌ HTTP 429
+📧 Ingesting: 20250904-CORONAFÄLLE IN DER VILLA LUNA-7190.eml... ✅ 51252d7b
+📧 Ingesting: 20250904-Mitteilung des Jugendamts für Eltern - Kitajahr 20-7201.eml... ✅ e1f967ec
+📧 Ingesting: 20250905-Notbetreuung 05.09.2025-7225.eml... ✅ bcc0ffc9
+📧 Ingesting: 20250905-Notbetreuung 05.09.25-7224.eml... ✅ a5e4903e
+📧 Ingesting: 20250905-Vielen Dank & aktuelle Listen für die Notbetreuung-7236.eml... ❌ HTTP 429
+📧 Ingesting: 20250911-Nachtrag-7396.eml... ❌ HTTP 429
+📧 Ingesting: 20250911-Neue Infos Villa Luna Bonnerwall-7387.eml... ✅ 514fe02b
+📧 Ingesting: 20250912-Eine Bitte an alle Eltern-7424.eml... ❌ HTTP 429
+📧 Ingesting: 20250918-Weltkindertagfeier 19.09-7583.eml... ✅ e31769b9
+📧 Ingesting: 20250929-Abwesenheit am 30.09. und 01.10.2025 – Vertretung -7911.eml... ✅ ba641132
+📧 Ingesting: 20250929-Veränderungen Astronauten-7910.eml... ✅ b35d64e2
+📧 Ingesting: 20250930-Heute bitte früher abholen-7934.eml... ✅ 072a9642
+📧 Ingesting: 20250930-Waldausflug morgen 1.10.-7940.eml... ✅ 61c96709
+📧 Ingesting: 20251002-Rückblick auf unsere Schließwoche & wichtige Neuer-8010.eml... ❌ HTTP 429
+📧 Ingesting: 20251006-Wichtige Mitteilung_ Heute Abholung aller Kinder b-8106.eml... ❌ HTTP 429
+📧 Ingesting: 20251009-Einige Bitten...-8203.eml... ✅ 2ea00e62
+📧 Ingesting: 20251009-Krankheitswelle im Team – Bitte um Unterstützung a-8216.eml... ❌ HTTP 429
+📧 Ingesting: 20251013-HEUTE Notbetreuung-8324.eml... ✅ 702191e3
+📧 Ingesting: 20251013-WG_ Wichtige Infos für morgen -8332.eml... ❌ HTTP 429
+📧 Ingesting: 20251013-Wichtige Infos für morgen -8331.eml... ❌ HTTP 429
+📧 Ingesting: 20251014-Personalausfall K1-8353.eml... ❌ HTTP 429
+
+📊 Summary: 295 successful, 223 failed
+✅ 9d4a99fd
+📧 Ingesting: 20221216-Zuwachs im Leitungsteam ab 01.01.2023-70562.eml... ✅ a14df083
+📧 Ingesting: 20221219-AW_ yellow group yearly calendar-73161.eml... ✅ 04ec4c4e
+📧 Ingesting: 20221219-yellow group yearly calendar-310.eml... ✅ 159de1a1
+📧 Ingesting: 20221220-Jahresplanung 2023-311.eml... ❌ Error: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=60)
+📧 Ingesting: 20221220-Jahresplanung 2023-312.eml... ❌ Error: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+📧 Ingesting: 20230104-Einladung Südstadtzug Karneval 21.02.2023-52716.eml... ✅ d4f542d9
+📧 Ingesting: 20230116-Südstadtzug-52811.eml... ✅ 49206a40
+📧 Ingesting: 20230124-Krankheitsfälle-70563.eml... ✅ 1ccc7874
+📧 Ingesting: 20230126-Schreiben vom Ministerium-70564.eml... ✅ 93f0c3e6
+📧 Ingesting: 20230127-Ringelrötelfall-70567.eml... ✅ 27b12e7f
+📧 Ingesting: 20230127-Ringelröteln-70565.eml... ❌ Error: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=60)
+📧 Ingesting: 20230127-Ringelröteln-70566.eml... ❌ Error: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=60)
+📧 Ingesting: 20230130-Zwischenbericht vom Bonner Wall-70568.eml... ✅ e10afa2c
+📧 Ingesting: 20230131-Erste Schritte zur Nachhaltigkeit-52945.eml... ✅ a14be0a8
+📧 Ingesting: 20230202-Villa Luna Köln Neustadt Süd - Elterninformation_ -70569.eml... ✅ 2809ba97
+📧 Ingesting: 20230206-eingeschränkte Betreuungszeiten-70570.eml... ✅ 586221af
+📧 Ingesting: 20230213-Corona-70571.eml... ✅ c8ff426d
+📧 Ingesting: 20230213-Südstadtzug-70572.eml... ✅ 8839b240
+📧 Ingesting: 20230215-Informationen zum Karneval-70573.eml... ✅ a94632d6
+📧 Ingesting: 20230220-Südstadtzug-70574.eml... ✅ d5a43f29
+📧 Ingesting: 20230227-Elternbeiratssitzung-60045.eml... ✅ 73aef9af
+📧 Ingesting: 20230301-hoher Krankheitsstand-70575.eml... ✅ 0e41f97e
+📧 Ingesting: 20230301-hoher Krankheitsstand-70576.eml... ✅ 12eaf378
+📧 Ingesting: 20230302-Einladung zur Elternbeiratssitzung-60070.eml... ✅ 9cd5d788
+📧 Ingesting: 20230313-hoher Krankheitsstand-70577.eml... ✅ 0df81aff
+📧 Ingesting: 20230314-Betreuungssituation-70578.eml... ✅ efc26a8e
+📧 Ingesting: 20230320-grüne und gelbe Gruppe geschlossen-70579.eml... ✅ a07b5a15
+📧 Ingesting: 20230321-grün_gelb-70580.eml... ✅ 0a56b86f
+📧 Ingesting: 20230328-Neuigkeiten und Informationen im Überblick-70581.eml... ✅ db144497
+📧 Ingesting: 20230406-Personelle Veränderung im Leitungsbüro-70582.eml... ✅ 36d95068
+📧 Ingesting: 20230412-Renovierungsarbeiten-70583.eml... ✅ 0aef9349
+📧 Ingesting: 20230419-aktuelle Termine-70584.eml... ✅ 164d28d9
+📧 Ingesting: 20230508-aktuelles-70585.eml... ✅ c6098f7a
+📧 Ingesting: 20230510-Sommerfest 2023-70586.eml... ✅ 05e9bdbe
+📧 Ingesting: 20230515-Sommerfest 2023-70587.eml... ✅ 9f127c88
+📧 Ingesting: 20230601-Informationen im Überblick-70588.eml... ✅ 9b4ae2cf
+📧 Ingesting: 20230621-Ringelröteln-70589.eml... ✅ 1ba62414
+📧 Ingesting: 20230622-Unwetterwarnung-70590.eml... ✅ d03344da
+📧 Ingesting: 20230628-Scharlach-61118.eml... ✅ 67320667
+📧 Ingesting: 20230703-Abschiedsfeier Voschulkinder_Farewell party presch-61178.eml... ✅ 63e96074
+📧 Ingesting: 20230705-Beginn der Teilöffnung-70591.eml... ✅ 2a7914d5
+📧 Ingesting: 20230707-Fliegerbombe-61218.eml... ✅ 0b74b6fb
+📧 Ingesting: 20230811-Personalzuwachs im Leitungsbüro _ Increase in staf-70592.eml... ✅ 42d19e72
+📧 Ingesting: 20230814-Elternbefragung _ parental survey 2023 Villa Luna -70593.eml... ✅ 5b06c06b
+📧 Ingesting: 20230815-Neuigkeiten und Informationen im Überblick-70594.eml... ✅ 1cf3ad96
+📧 Ingesting: 20230822-Villa Luna Köln Neustadt-Süd - Abfrage Geschwister-70595.eml... ✅ 9d5ef15e
+📧 Ingesting: 20230901-Astronauten Wochenrückblick-61766.eml... ✅ 0b4531fc
+📧 Ingesting: 20230907-Elternbefragung-70596.eml... ✅ 546b4357
+📧 Ingesting: 20230911-Gruppengestaltung, Elternabend-61878.eml... ✅ cf413b98
+📧 Ingesting: 20230913-Aller guten dinge....-9090.eml... ✅ c103ac1a
+📧 Ingesting: 20230913-Fwd_ Video grüne Gruppe ElternAbend-9087.eml... ✅ 1de037e4
+📧 Ingesting: 20230913-Fwd_ Video grüne Gruppe ElternAbend-9089.eml... ✅ 378a88ce
+📧 Ingesting: 20230913-Re_Video grüne Gruppe ElternAbend-9088.eml... ✅ ac357386
+📧 Ingesting: 20230913-Video grüne Gruppe ElternAbend-9387.eml... ✅ faac8fe5
+📧 Ingesting: 20230914-AW_ Aller guten dinge....-73356.eml... ✅ 6028fc4a
+📧 Ingesting: 20230926-Krankheitswelle-70597.eml... ✅ 52c375b6
+📧 Ingesting: 20230927-Bring- und Abholphase-62024.eml... ✅ 75836894
+📧 Ingesting: 20230928-Villa Luna Köln Neustadt-Süd - Planung Kita-Jahr 2-70598.eml... ✅ 64829494
+📧 Ingesting: 20231005-Personalengpass Villa Luna K1-70599.eml... ✅ 658d43fd
+📧 Ingesting: 20231005-Weitere Informationen_ Personalengpass Villa Luna -70600.eml... ✅ 4189c0c3
+📧 Ingesting: 20231012-Do und Fr Betreuung bis 16.30 Uhr-70601.eml... ✅ aa85147f
+📧 Ingesting: 20231024-hoher Krankheitsstand-70602.eml... ✅ 70fb988e
+📧 Ingesting: 20231025-Ausblick auf den restlichen Verlauf der Woche-70604.eml... ✅ bfa31782
+📧 Ingesting: 20231025-Villa Luna Köln Neustadt Süd- Elterninformation_ P-70603.eml... ✅ a3939866
+📧 Ingesting: 20231026-Einladung St.Martin _ St.Martin Lieder-62395.eml... ✅ d7f2d794
+📧 Ingesting: 20231027-Weitere Informationen_ Personalengpass Villa Luna -70605.eml... ✅ d57f55af
+📧 Ingesting: 20231030-Jubiläumsfeier verschoben-70606.eml... ✅ 55b55196
+📧 Ingesting: 20231108-Hinzugefügte Information zum Verkleidungstag (Zeke-73398.eml... ✅ d734df6d
+📧 Ingesting: 20231108-Verkleidungsfeier, Spielzeugtag-73397.eml... ✅ 03da3097
+📧 Ingesting: 20231116-Karneval 2024-62685.eml... ✅ bd027e98
+📧 Ingesting: 20231204-Personalengpass Villa Luna K1-70607.eml... ✅ 0a03f0a8
+📧 Ingesting: 20231207-Freitag, 8.12.23-70608.eml... ✅ e41b9083
+📧 Ingesting: 20231213-Weihnachtsfeier-63062.eml... ✅ 12df1f1c
+📧 Ingesting: 20231215-weitere  Krankmeldungen-70609.eml... ✅ 86ddcf32
+📧 Ingesting: 20231221-Öffnungszeiten am Freitag, 22.12.2023, bis 17 Uhr-70610.eml... ✅ d8638dcf
+📧 Ingesting: 20240105-Südstadtzug 2024-63344.eml... ✅ fff34309
+📧 Ingesting: 20240108-Personelles-70611.eml... ✅ afbbf9ad
+📧 Ingesting: 20240110-Gruppenschließung ab 14_30 Astronauten und Regenbo-70612.eml... ✅ b573d836
+📧 Ingesting: 20240111-Villa Luna Köln Neustadt Süd- Trägerinformation Ne-70613.eml... ✅ ea3671e0
+📧 Ingesting: 20240112-Fehlende Rückmeldung wg Teilnahme Südstadtzug-63431.eml... ✅ 85b0b1f5
+📧 Ingesting: 20240117-Ankündigung Beitragsanpassung Villa Luna Köln - Fö-70614.eml... ✅ d2ac6596
+📧 Ingesting: 20240123-Personalengpass-63563.eml... ✅ 5beaabdc
+📧 Ingesting: 20240125-Kostüme für den Südstadtzug-70615.eml... ✅ f910f731
+📧 Ingesting: 20240126-PS_ Verkleidungsparty-73489.eml... ✅ 0f31b90e
+📧 Ingesting: 20240201-Karneval-73496.eml... ✅ 7ddf7dc1
+📧 Ingesting: 20240201-Vorbereitunegn zum SÜdstadtzug diesen Montag 05.02-70616.eml... ✅ 00a35a52
+📧 Ingesting: 20240202-Neues Mitglied-73498.eml... ✅ 33e63209
+📧 Ingesting: 20240205-Karnevalsbuffet-63739.eml... ✅ 39e50336
+📧 Ingesting: 20240207-Aktuelle Informationen _ Information Update-70618.eml... ✅ 5e5ac7e7
+📧 Ingesting: 20240207-Finale Informationen zum Südstadtzug __ Final info-70617.eml... ✅ 930a8cb7
+📧 Ingesting: 20240215-Erste Hilfe Kurs für Kinder-70619.eml... ✅ dbd02c4e
+📧 Ingesting: 20240220-Elterninformationsschreiben _Kita Bündnis NRW__Par-70620.eml... ✅ e6fcb0c4
+📧 Ingesting: 20240223-Personalengpass Villa Luna K1-70621.eml... ✅ 846a1716
+📧 Ingesting: 20240228-1. Hilfe Kurs Teil 2-70622.eml... ✅ 28f55566
+📧 Ingesting: 20240301-Seeds and gardening equipment for our roof terrass-70623.eml... ✅ 49046d9e
+📧 Ingesting: 20240301-WG_ Teilweise Schließung der Astronautengruppe & k-64142.eml... ✅ aaf44398
+📧 Ingesting: 20240307-Unklarheiten-70625.eml... ✅ 118e3563
+📧 Ingesting: 20240307-hoher Krankheitsstand der Mitarbeitenden-70624.eml... ✅ 25b64e7b
+📧 Ingesting: 20240308-Informationsschreiben Förderverein Villa Luna-70626.eml... ✅ da848fa5
+📧 Ingesting: 20240319-Villa Luna Köln Neustadt Süd - Informationsschreib-70627.eml... ✅ 59204f61
+📧 Ingesting: 20240321-Update-70628.eml... ✅ 06509415
+📧 Ingesting: 20240403-Termine für unsere Tierpark-Ausflüge-70630.eml... ✅ 6ad8c2b8
+📧 Ingesting: 20240417-Neuer Praktikant-73557.eml... ✅ ca818422
+📧 Ingesting: 20240422-Betreuungszeiten unserer Einrichtung für deise Woc-70632.eml... ✅ 4d9aa14f
+📧 Ingesting: 20240422-Gruppenschießung wegen Personalmangel-70631.eml... ✅ 3ace6e52
+📧 Ingesting: 20240423-Theaterbesuch Ü3 findet statt-70633.eml... ✅ 91748ba3
+📧 Ingesting: 20240424-Ausflug Tierpark findet nicht statt-70634.eml... ✅ 1fc2ef53
+📧 Ingesting: 20240424-Betreuung auf Sparflamme-70635.eml... ❌ Error: ('Connection aborted.', ConnectionResetError(54, 'Connection reset by peer'))
+📧 Ingesting: 20240425-Information_ Kita Bündnis NRW Aktion - Rettet unse-70637.eml... ✅ 9ea270e2
+📧 Ingesting: 20240425-Kita schließt am Freitag 26.04. bereits um 16_30-70636.eml... ✅ 4e5d3cf3
+📧 Ingesting: 20240429-Protokoll Elternabend 2024-64956.eml... ✅ 8cb5e84e
+📧 Ingesting: 20240506-Absage Ausflug in den Tierpark am Mittwoch-70638.eml... ✅ c6ac9999
+📧 Ingesting: 20240507-Ausflug Kölner Zoo_ Trip Cologne Zoo-73565.eml... ✅ 1307e35b
+📧 Ingesting: 20240508-Eingeschränkte Betreuungszeiten heute, Mittwoch 08-70639.eml... ✅ a80ccfb8
+📧 Ingesting: 20240508-Schließung der U3 um 15_30-70640.eml... ✅ a2ba26e4
+📧 Ingesting: 20240524-Personal decke knapp - Kita schließt heute um 17_0-70641.eml... ✅ 43c225ff
+📧 Ingesting: 20240605-Informationen-397.eml... ✅ 54b38302
+📧 Ingesting: 20240605-Lindenthaler Tierpark-398.eml... ✅ 64b5838b
+📧 Ingesting: 20240617-Sommerfest 2024-399.eml... ✅ 00393d96
+📧 Ingesting: 20240619-Personalengpass Mittwoch 19.06.2024-400.eml... ✅ aa234464
+📧 Ingesting: 20240620-Freitag. 21.06.24 Betreuung bis 16.30-401.eml... ✅ 5fbf3812
+📧 Ingesting: 20240626-Update Bonner Wall-402.eml... ✅ 900debdb
+📧 Ingesting: 20240702-U 3 Gruppen schließen heute um 15 Uhr-403.eml... ✅ 3d301aab
+📧 Ingesting: 20240703-Anhaltender Personalengpass & weitere Krankmeldung-53.eml... ✅ dbd4da16
+📧 Ingesting: 20240711-Kitajahresende-404.eml... ✅ 64b10599
+📧 Ingesting: 20240716-U 3 Gruppen schließen heute um 15 Uhr-406.eml... ✅ 5f763c7a
+📧 Ingesting: 20240814-Information Ausflüge !!-409.eml... ✅ 6d80ccf2
+📧 Ingesting: 20240827-Personelle Veränderungen-412.eml... ✅ fab577bd
+📧 Ingesting: 20240830-aktuelle Informationen-413.eml... ✅ 2e73f1dd
+📧 Ingesting: 20240912-Jetzt auch mit Anhang-420.eml... ✅ 5a5dd26b
+📧 Ingesting: 20240912-Politiker im Praktikum-416.eml... ✅ 73b57939
+📧 Ingesting: 20240912-aktualisierte Jahresplanung 2024-360.eml... ✅ f3a7d5b6
+📧 Ingesting: 20240912-aktualisierte Jahresplanung 2024-419.eml... ✅ 939ccf68
+📧 Ingesting: 20240912-versuch 2 mit Anhang-630.eml... ✅ 151c9cb2
+📧 Ingesting: 20240918-Betreuung im Nachmittagsbereich-650.eml... ✅ c46a63bc
+📧 Ingesting: 20240919-Ausflug 3- Jährige_ Excursion 3- year- olds-359.eml... ✅ f258d18f
+📧 Ingesting: 20240919-Informationen zum Sand am Bonner Wall-357.eml... ✅ b8fe8e0e
+📧 Ingesting: 20240920-ich bin dann mal weg-763.eml... ✅ ecb4a3cb
+📧 Ingesting: 20240926-Hoher Personalmangel_ Ü3-Bereich muss am Freitag, -370.eml... ✅ bbf4ea61
+📧 Ingesting: 20240926-Liederliste-374.eml... ✅ 93721141
+📧 Ingesting: 20240926-Personalengpass in der Ü3 am Nachmittag-373.eml... ✅ a620d692
+📧 Ingesting: 20240930-Gekürzte Öffnungszeiten_ Astronauten-Gruppe-810.eml... ✅ 43e8580f
+📧 Ingesting: 20240930-Vorbereitung Laternen Basteln-874.eml... ✅ 39982ee0
+📧 Ingesting: 20241001-2.10.24 - Ü3-Gruppen werden vor 9 Uhr und ab 15_30-813.eml... ✅ 899f4494
+📧 Ingesting: 20241002-Kastanien-Tauschaktion-379.eml... ✅ a53421a4
+📧 Ingesting: 20241007-2.10.24 - Ü3-Gruppen werden vor 9 Uhr und ab 15_30-829.eml... ✅ 5a7b7d15
+📧 Ingesting: 20241007-Korrekrtur_ Regenbogen-Gruppe muss morgen (8.10.24-830.eml... ✅ 0394b42c
+📧 Ingesting: 20241007-Personalengpass Villa Luna K1 07.10.2024-863.eml... ✅ 1597bf2d
+📧 Ingesting: 20241008-09.10 - 11.10 - eingeschränkte Betreuung + kein La-833.eml... ✅ 0b964f3b
+📧 Ingesting: 20241008-09.10 - 11.10_ kein LC, Ü3-Notbetreuung + U3 ab 14-834.eml... ✅ 4ba7a934
+📧 Ingesting: 20241008-Zusätzlicher Personalengpass Dienstag 08.10.2024-871.eml... ✅ dadce8f4
+📧 Ingesting: 20241009-10.10 + 11.10_ Kita öffnet erst um 8 + U3 Notbetre-839.eml... ✅ 787cca04
+📧 Ingesting: 20241009-Südstadtzug 2025-384.eml... ✅ 115cc7ff
+📧 Ingesting: 20241009-Weiterer Personalausfall - U3 Gruppen müssen leide-835.eml... ✅ 6d546f90
+📧 Ingesting: 20241010-Notgruppe - Wetterfeste Kleidung_Wechselsachen-387.eml... ✅ 711a1237
+📧 Ingesting: 20241011-14.10 + 15.10 Kita ist von 8 bis 16.30 auf; U3 + Ü-848.eml... ✅ a1dd709c
+📧 Ingesting: 20241011-Notbetreuung Anmeldungen-849.eml... ✅ 52594c06
+📧 Ingesting: 20241011-Villa Luna Köln Neustadt-Süd - Planung des Kitajah-847.eml... ✅ 78dc107b
+📧 Ingesting: 20241015-Ausflug 18.10_ Trip 18.10-424.eml... ✅ 7e7a5319
+📧 Ingesting: 20241015-Notbetreuung (U+Ü) bis zum einschl. 18.10 (Anmeldu-917.eml... ✅ 56d98f78
+📧 Ingesting: 20241015-Notbetreuung U3 - weitere Abmeldungen sind nötig; -426.eml... ✅ 8823037f
+📧 Ingesting: 20241015-Zu viele Notbetreuung-Anmeldungen - bitte nach Mög-425.eml... ✅ 61a48f75
+📧 Ingesting: 20241016-Laternen _ Lanterns-429.eml... ✅ f978528b
+📧 Ingesting: 20241018-Kopfläuse_ head lice -435.eml... ✅ 2b9cc60f
+📧 Ingesting: 20241018-ab 21.10 - voraussichtlich wieder Normalbetrieb-436.eml... ✅ 23d7f43e
+📧 Ingesting: 20241022-23.10 - 25.10 Kita schließt um 17 Uhr + Einschränk-437.eml... ✅ e4e9f9e4
+📧 Ingesting: 20241022-Eingeschränkte Betreuungszeiten heute, Dienstag 22-935.eml... ✅ e94425bd
+📧 Ingesting: 20241022-Eingeschränkte Betreuungszeiten heute, Dienstag 22-936.eml... ✅ 997c6920
+📧 Ingesting: 20241023-24.10 + 25.10 - weitere Einschränkungen. Öffnungsz-943.eml... ✅ eff3a070
+📧 Ingesting: 20241023-Astronauten_ die Aufteilung der Notgruppen-440.eml... ✅ 550aa386
+📧 Ingesting: 20241023-Eingeschränkte Betreuungszeiten heute, Mittwoch 23-439.eml... ✅ 66a17448
+📧 Ingesting: 20241023-Halloween-942.eml... ✅ 8b504cfa
+📧 Ingesting: 20241023-Haribo-Kastanien_Eichel-Tauschaktion-941.eml... ✅ b735398a
+📧 Ingesting: 20241025-Haribo-Tauschaktion-450.eml... ✅ edc299ef
+📧 Ingesting: 20241025-Normalbetrieb ab 28.10 _ Urlaub-452.eml... ✅ 02932476
+📧 Ingesting: 20241029-Sankt Martin Informationen_ Saint Martin Informati-70726.eml... ✅ 06965050
+📧 Ingesting: 20241030-Karnevalsvorbereitungen Südstadtzug 2025-462.eml... ✅ f82e0065
+📧 Ingesting: 20241105-Re_Wenn beginnt morgen Umgang-473.eml... ✅ 5737e2ae
+📧 Ingesting: 20241105-Wenn beginnt morgen Umgang-9576.eml... ✅ 1aa1dee2
+📧 Ingesting: 20241105-Ü3 Notbetreuung 06.11 + 07.11-472.eml... ✅ 941e2895
+📧 Ingesting: 20241107-08.11 - Ü3 Notbetreuung + St Martin-1014.eml... ✅ 013d942f
+📧 Ingesting: 20241107-Sankt Martin Lieder_ Songs-1015.eml... ✅ 8791802a
+📧 Ingesting: 20241108-Karneval 2025 _ Carnival 2025-484.eml... ✅ c1ffadca
+📧 Ingesting: 20241108-Notbetreuung U3 + Ü3  Montag 11.11.24-1024.eml... ✅ b8e07d6c
+📧 Ingesting: 20241111-Betreuungssituation bis zum 15.11.2024-492.eml... ✅ 2f9af882
+📧 Ingesting: 20241111-Informationen und Maßnahmen zur Verbesserung der S-1035.eml... ✅ e4281b59
+📧 Ingesting: 20241111-Schließung der gesamten Einrichtung-488.eml... ✅ d99be60a
+📧 Ingesting: 20241113-Einladung zur Mitgliederversammlung Förderverein V-498.eml... ✅ 1295d579
+📧 Ingesting: 20241115-Stellungnahme Fr. Giedziella _ Elternrat-505.eml... ✅ e8f3089e
+📧 Ingesting: 20241115-Stellungnahme der Geschäftsführung-1055.eml... ✅ a9e8178f
+📧 Ingesting: 20241115-Update zur Personalsituation und weitere Maßnahmen-504.eml... ✅ df6ea384
+📧 Ingesting: 20241115-ab 18.11 - voraussichtlich wieder Normalbetrieb-506.eml... ✅ cfc01d45
+📧 Ingesting: 20241118-Fundkiste_ lost and found box-1063.eml... ✅ 8d127fd5
+📧 Ingesting: 20241119-Theaterbesuch _Wut im Bauch_ 21.November-73752.eml... ✅ 4a63c68a
+📧 Ingesting: 20241120-21.11 verkürzte Öffnungszeiten_ Kita ist nur von 8-1072.eml... ✅ 0b4dc0d3
+📧 Ingesting: 20241120-Heizungsausfall in der Kita-1069.eml... ✅ 70c6b073
+📧 Ingesting: 20241120-Theaterbesuch abgesagt-73753.eml... ✅ 28dfaa59
+📧 Ingesting: 20241121-22.11 - eingeschränkte Betreuung_ Gruppe B ist dra-1078.eml... ✅ 3f7a9d90
+📧 Ingesting: 20241121-Karneval 2025 _ Carnival 2025-1077.eml... ✅ 2b3be3f0
+📧 Ingesting: 20241121-Nikolaustag, St. Nicholas Day-1075.eml... ✅ 555b234a
+📧 Ingesting: 20241122-22.11. - die Öffnungszeiten müssen weiter eingesch-1081.eml... ✅ b366a67d
+📧 Ingesting: 20241122-25.11 - Stand jetzt - Normalbetrieb wieder möglich-1085.eml... ✅ 75d3f9c2
+📧 Ingesting: 20241122-Betreff_ Einladung zur Elternvollversammlung und B-1084.eml... ✅ 87d77994
+📧 Ingesting: 20241126-27.11 - 29.11_ gekürzte Öffnungszeiten (8 bis 16 U-1091.eml... ✅ 32b2ad25
+📧 Ingesting: 20241128-Ergebnisbedarfsabfrage & Wechsel der Zuständigkeit-1095.eml... ✅ 91fafe80
+📧 Ingesting: 20241128-U3 + Ü3_ Bedarfsabfrage für Abend 3.12. + Infos-1094.eml... ✅ 3643ddeb
+📧 Ingesting: 20241202-Satzung Förderverein Villa Luna e.V-1099.eml... ✅ c8cdcf5e
+📧 Ingesting: 20241204-Jahresplanung 2025-1102.eml... ✅ a9b9e2c4
+📧 Ingesting: 20241204-Jahresplanung 2025-1103.eml... ✅ 889658a9
+📧 Ingesting: 20241206-Ergebnis Elternvollversammlung _ Result of the par-1109.eml... ✅ fbe92c85
+📧 Ingesting: 20241206-Infos zur kommenden Woche + Personaländerung-1110.eml... ✅ 37607b51
+📧 Ingesting: 20241209-Notbetreuung 10.12.24-509.eml... ✅ 81f3a736
+📧 Ingesting: 20241210-Weihnachtsmarkt, Christmas market-512.eml... ✅ 3b45beb1
+📧 Ingesting: 20241210-reguläre Betreuung 11.12.24 _ Astronauten, Regenbo-511.eml... ✅ 9901ef92
+📧 Ingesting: 20241211-12.12.24 - Ü3-Notbetreuung_ A-Gruppn sind dran-1121.eml... ✅ 20933bda
+📧 Ingesting: 20241211-Informationen zur Rückerstattung zu viel gezahlter-514.eml... ✅ 74fa4bcf
+📧 Ingesting: 20241212-U+Ü_ 13.12 Notbetreuung (Gruppen B) + Ü-Weihnachts-1122.eml... ✅ a9858fa8
+📧 Ingesting: 20241213-Ab 16.12 wieder Normalbetrieb (Stand jetzt)-520.eml... ✅ 8e04a497
+📧 Ingesting: 20241216-17.12 U+Ü Notbetreuung, Gruppe A dran-524.eml... ✅ 37143aa5
+📧 Ingesting: 20241216-Villa Luna - Lastschrifteinzüge - Beitrag Januar 2-1132.eml... ✅ 128cdaae
+📧 Ingesting: 20241216-Villa Luna Bonner Wall -  Direct debit collections-1133.eml... ✅ e8ff2e7c
+📧 Ingesting: 20241217-18.12 Ü3 wieder regulär betreut, U3 in der Notbetr-1139.eml... ✅ 70bdd693
+📧 Ingesting: 20241217-Brief vom Elternbeirat-527.eml... ✅ e82f20b8
+📧 Ingesting: 20241219-Fotos Weihnachtskugeln 2024-529.eml... ✅ c6372802
+📧 Ingesting: 20241219-Wichtige Informationen und Ausblick für das neue J-1143.eml... ✅ 93aae81c
+📧 Ingesting: 20241220-Weihnachtsgrüße + Infos für 2025-532.eml... ✅ 24364e5a
+📧 Ingesting: 20250102-New year update-73819.eml... ✅ 6fb14a85
+📧 Ingesting: 20250110-Informationen Südstadtzug 2025-1190.eml... ✅ dd945f9f
+📧 Ingesting: 20250110-Infos zum Fototermin am 15.01.25-557.eml... ✅ b5f23525
+📧 Ingesting: 20250115-Telefon und Geburtstag-9594.eml... ✅ 6c160107
+📧 Ingesting: 20250116-Capes Karneval Wiederverwendung-574.eml... ✅ b52de6df
+📧 Ingesting: 20250116-Erinnerung_ am 17.01 bleibt Kita geschlossen (Konz-575.eml... ✅ 23fe6b4f
+📧 Ingesting: 20250116-Informationen zum Kostümbasteln am Samstag, den 25-1221.eml... ✅ d3db8fc7
+📧 Ingesting: 20250121-Neues Thema-73857.eml... ✅ ba66b4f9
+📧 Ingesting: 20250122-Abwesenheitsnotiz _ Öffnungszeiten _ am 04.03 gesc-1231.eml... ✅ 46b5c0e4
+📧 Ingesting: 20250123-Preschool-73862.eml... ✅ 8aeddf31
+📧 Ingesting: 20250127-Kostüme Südstadtzug 2025-584.eml... ✅ 7a2aed98
+📧 Ingesting: 20250130-31.01.25_ Ü-Bereich komplett geschlossen-588.eml... ✅ 6da5c58e
+📧 Ingesting: 20250203-Betreuungssituation 03.02.2025-595.eml... ✅ 1d82d538
+📧 Ingesting: 20250203-Betreuungssituation 04.02.2025-597.eml... ✅ c061d305
+📧 Ingesting: 20250203-Ü schließt heute um 14 Uhr, U bitte nach Möglichke-593.eml... ✅ f89bf3f5
+📧 Ingesting: 20250207-Betreuungssituation 07.02.2025-1274.eml... ✅ 9b5ae3b9
+📧 Ingesting: 20250212-Follow-up aktuelle Situation _ current situation-603.eml... ✅ 1d8cf89c
+📧 Ingesting: 20250212-Formulare Lastschriftmandate-1345.eml... ✅ 1259f435
+📧 Ingesting: 20250213-Konzeptionstag am 14.02 (Kita bleibt geschlossen) -607.eml... ✅ b438f0dd
+📧 Ingesting: 20250214-Teamtag 14.02 _ neue Garderobe Astronauten + Regen-609.eml... ✅ 5f5b5970
+📧 Ingesting: 20250219-Südstadtzug Informationen-1296.eml... ✅ 79ec5dfc
+📧 Ingesting: 20250220-K1 - Villa Luna - Beitragsaussetzung Förderverein -1034.eml... ✅ a5204c14
+📧 Ingesting: 20250220-K1 - Villa Luna - Suspension of contributions Förd-1332.eml... ✅ ae96d7e9
+📧 Ingesting: 20250220-Personalinfo _ Asma Ouakel Einrichtungswechsel-1075.eml... ✅ 34056b7e
+📧 Ingesting: 20250220-Personalinfo _ Asma Ouakel Einrichtungswechsel-1076.eml... ✅ 0e0b8285
+📧 Ingesting: 20250221-Astronauten Gruppe schließt heute um 14 Uhr-1093.eml... ✅ 2616a971
+📧 Ingesting: 20250224-Einsatzende Olga Logunova-1541.eml... ✅ c1044e81
+📧 Ingesting: 20250225-Kamelle-1164.eml... ✅ 97f185de
+📧 Ingesting: 20250226-AW_ Re[2]_ Formulare Lastschriftmandate-1194.eml... ✅ 1b85212e
+📧 Ingesting: 20250226-Morgen Karneval-1199.eml... ✅ ebcaa56d
+📧 Ingesting: 20250226-Morgen feiern wir Karneval-1612.eml... ✅ 91b5fe5a
+📧 Ingesting: 20250226-Re_Formulare Lastschriftmandate-1182.eml... ✅ 861f1616
+📧 Ingesting: 20250226-Re_Formulare Lastschriftmandate-9775.eml... ✅ df995ba1
+📧 Ingesting: 20250226-Re_Formulare Lastschriftmandate-9776.eml... ✅ 5ca11da1
+📧 Ingesting: 20250227-Informationen Aufstellung Südstadtzug-1222.eml... ✅ 7be44dfd
+📧 Ingesting: 20250305-Karneval Bilder-1799.eml... ✅ eb21a024
+📧 Ingesting: 20250306-Ausflug Theater morgen 07.03.25_ Theatre trip tomo-1857.eml... ✅ f1fc219c
+📧 Ingesting: 20250306-Wir haben uns vertan_ We made a mistake-1859.eml... ✅ 4774e44a
+📧 Ingesting: 20250312-Entwicklungsgespräch Termin-2052.eml... ✅ 6244b4fc
+📧 Ingesting: 20250312-Erinnerung Theater_ Reminder Theater-2050.eml... ✅ 8e810685
+📧 Ingesting: 20250312-Pola EWG-2063.eml... ✅ 8b5e73c2
+📧 Ingesting: 20250314-Keine Nüsse No Nuts-2120.eml... ✅ 7bb5c74d
+📧 Ingesting: 20250315-Kalenderwoche 11-2144.eml... ✅ e24fc27f
+📧 Ingesting: 20250318-Einladung zur Elternvollversammlung am 25.03.2025 -2208.eml... ✅ b8a5276d
+📧 Ingesting: 20250319-Holi fest morgen-2237.eml... ✅ e200468d
+📧 Ingesting: 20250320-NOTBETREUUNG VILLA LUNA BONNER WALL GRUPPE A-2279.eml... ✅ 464d3dbb
+📧 Ingesting: 20250321-INFOS-2301.eml... ✅ 48322e85
+📧 Ingesting: 20250324-Elterinfo --_ Sonneschutz-2362.eml... ✅ c8b39c38
+📧 Ingesting: 20250326-Fundstück-2410.eml... ✅ b814527c
+📧 Ingesting: 20250326-Notgruppen Listen AKTUELL 04_2025-2420.eml... ✅ ebcce96e
+📧 Ingesting: 20250327-INFOS-1390.eml... ✅ c13ada97
+📧 Ingesting: 20250328-Kunstmappe_Art folder-1415.eml... ✅ c0025b20
+📧 Ingesting: 20250328-Regeln in der Garderobe_ Rules in the wardrobe-2491.eml... ✅ 9d98b7a7
+📧 Ingesting: 20250402-Nachbericht zur Elternvollversammlung & Anpassung -2625.eml... ✅ e3624983
+📧 Ingesting: 20250403-Notbetreuung Gruppe B-2666.eml... ✅ 9779ff77
+📧 Ingesting: 20250404-K1 - Villa Luna - Information zur Berechnung des F-1550.eml... ✅ d0677b10
+📧 Ingesting: 20250405-INFO-1570.eml... ✅ 1e6ea7b0
+📧 Ingesting: 20250423-Notbetreuung 25.05.2025-1858.eml... ✅ f7f3f34a
+📧 Ingesting: 20250425-INFOS-3295.eml... ✅ 47c49c1e
+📧 Ingesting: 20250428-Neues Projekt _ New project-3348.eml... ✅ df17298c
+📧 Ingesting: 20250429-Badesachen_ Swimwear-1955.eml... ✅ e1dfde45
+📧 Ingesting: 20250430-Kennenlernen unserer neuen Einrichtungsleitung-1968.eml... ✅ 3fe22493
+📧 Ingesting: 20250505-Elternabend Ü & U Gruppen-3579.eml... ✅ ba4b04ec
+📧 Ingesting: 20250505-Team Mediation-3581.eml... ✅ 361ee5a9
+📧 Ingesting: 20250507-Notbetreuung Regenbogen und Astronauten-2112.eml... ✅ 72610195
+📧 Ingesting: 20250513-Info Trägerfinanzierung-2218.eml... ✅ 7c05ab85
+📧 Ingesting: 20250513-Protokoll-3815.eml... ✅ 07b5262b
+📧 Ingesting: 20250513-Vielen Dank für das Protokoll-3828.eml... ✅ 0a5d95c7
+📧 Ingesting: 20250526-Notbetreuung Morgen und Übermorgen-4190.eml... ✅ 131ef1b0
+📧 Ingesting: 20250526-Notbetreuung Villa Luna am 27.06 und 28.06-4189.eml... ✅ cdc5529a
+📧 Ingesting: 20250602-Notbetreuung 03.06 und 04.06-4399.eml... ✅ 118eee81
+📧 Ingesting: 20250604-Notbetreuung 05. und 06. Juni-4452.eml... ✅ ace3064e
+📧 Ingesting: 20250605-Aaron Kirlar-4508.eml... ✅ bbe346e1
+📧 Ingesting: 20250605-Abschied-4488.eml... ✅ 13ae50b0
+📧 Ingesting: 20250605-Sommerfest und der Rausschmiss der Vorschulkinder-4494.eml... ✅ 2447320e
+📧 Ingesting: 20250610-Danke! Thank you!-4641.eml... ✅ 3f1cc622
+📧 Ingesting: 20250610-UV- Kleidung  UV clothing-4648.eml... ✅ a895c410
+📧 Ingesting: 20250616-Nachtrag Sommerfest FREITAG den 27. Juni von 15_30-4822.eml... ✅ 376f655d
+📧 Ingesting: 20250616-Sommerfest Vorschulrausschmiss 27.06.25 von 15_30 -4820.eml... ✅ a73cdb7a
+📧 Ingesting: 20250620-Elterninformation - Förderverein Villa Luna - Bonn-4968.eml... ✅ 302c28ff
+📧 Ingesting: 20250620-Krankenstand 20.06.25-4955.eml... ✅ 69485abb
+📧 Ingesting: 20250620-Sommerfest am 27.Juni Villa Luna-4969.eml... ✅ 354f23ff
+📧 Ingesting: 20250623-Ayaans Goodbye-5066.eml... ✅ 9aeae8a2
+📧 Ingesting: 20250625-AW_ Ayaans Goodbye-5145.eml... ✅ 3caabc9d
+📧 Ingesting: 20250625-Notbetreuung 26.06.25-5138.eml... ✅ ae7c8a62
+📧 Ingesting: 20250625-Waldwochen vom 30.06.-11.07.25-5141.eml... ✅ d151c378
+📧 Ingesting: 20250627-Erinnerung_ Alle Kinder werden heute um 14_00 Uhr -5208.eml... ✅ 1989af99
+📧 Ingesting: 20250702-Hitze in der Kita-5345.eml... ✅ ce0d14f7
+📧 Ingesting: 20250703-Personalveränderungen in unserer Einrichtung-5391.eml... ✅ 67479f34
+📧 Ingesting: 20250703-Waldtag morgen 04.07.2025-5390.eml... ✅ eee39b79
+📧 Ingesting: 20250704-Dringende Bitte an alle Eltern-5417.eml... ✅ 21c93d4b
+📧 Ingesting: 20250707-Abschiedsfeier Lexi & Cathy-5470.eml... ✅ 395ea899
+📧 Ingesting: 20250709-Notbetreuung 10.07.25-5528.eml... ✅ 66d4d3e8
+📧 Ingesting: 20250711-Abwesenheitsnotiz Annika Moosbrucker heute-5593.eml... ✅ fbe19301
+📧 Ingesting: 20250715-Sommerferien_ Summer holidays-5707.eml... ✅ f4abd279
+📧 Ingesting: 20250717-Personalsituation heute und Freitag Villa Luna-5760.eml... ✅ 26e0580e
+📧 Ingesting: 20250718-Sommerpause – mit einem herzlichen Dankeschön-5793.eml... ✅ 2f6df493
+📧 Ingesting: 20250807-Elternkommunikation Kita Neustrukturierung Köln Sü-6353.eml... ✅ 6f47d174
+📧 Ingesting: 20250814-Herzlich Wilkommen Ines-6562.eml... ✅ 5be08320
+📧 Ingesting: 20250819-Vorschule 25_26-6720.eml... ✅ e209d27b
+📧 Ingesting: 20250828-Abwesenheitsnotiz Annika Moosbrucker-6990.eml... ✅ 4283e439
+📧 Ingesting: 20250828-Neuer Mitarbeiter ab 01.09.2025-6975.eml... ✅ c6e2d1eb
+📧 Ingesting: 20250904-CORONAFÄLLE IN DER VILLA LUNA-7190.eml... ✅ 366ae34d
+📧 Ingesting: 20250904-Mitteilung des Jugendamts für Eltern - Kitajahr 20-7201.eml... ✅ 046c2f98
+📧 Ingesting: 20250905-Notbetreuung 05.09.2025-7225.eml... ✅ 06b019d7
+📧 Ingesting: 20250905-Notbetreuung 05.09.25-7224.eml... ✅ 78b490a4
+📧 Ingesting: 20250905-Vielen Dank & aktuelle Listen für die Notbetreuung-7236.eml... ✅ 09d95f6e
+📧 Ingesting: 20250911-Nachtrag-7396.eml... ✅ 50858e10
+📧 Ingesting: 20250911-Neue Infos Villa Luna Bonnerwall-7387.eml... ✅ 86cb9a8e
+📧 Ingesting: 20250912-Eine Bitte an alle Eltern-7424.eml... ✅ 1d269b70
+📧 Ingesting: 20250918-Weltkindertagfeier 19.09-7583.eml... ✅ 61083ff7
+📧 Ingesting: 20250929-Abwesenheit am 30.09. und 01.10.2025 – Vertretung -7911.eml... ✅ b73e9b72
+📧 Ingesting: 20250929-Veränderungen Astronauten-7910.eml... ✅ 7418023c
+📧 Ingesting: 20250930-Heute bitte früher abholen-7934.eml... ✅ 6ef104f8
+📧 Ingesting: 20250930-Waldausflug morgen 1.10.-7940.eml... ✅ ff67f4f7
+📧 Ingesting: 20251002-Rückblick auf unsere Schließwoche & wichtige Neuer-8010.eml... ✅ c867a018
+📧 Ingesting: 20251006-Wichtige Mitteilung_ Heute Abholung aller Kinder b-8106.eml... ✅ dd90d488
+📧 Ingesting: 20251009-Einige Bitten...-8203.eml... ✅ b14995c2
+📧 Ingesting: 20251009-Krankheitswelle im Team – Bitte um Unterstützung a-8216.eml... ✅ 3eb856f8
+📧 Ingesting: 20251013-HEUTE Notbetreuung-8324.eml... ✅ 096e5f88
+📧 Ingesting: 20251013-WG_ Wichtige Infos für morgen -8332.eml... ✅ 0f472e36
+📧 Ingesting: 20251013-Wichtige Infos für morgen -8331.eml... ✅ 5d6bdc99
+📧 Ingesting: 20251014-Personalausfall K1-8353.eml... ✅ cd7ff5c8
+
+📊 Summary: 446 successful, 72 failed
