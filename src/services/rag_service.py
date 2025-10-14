@@ -778,6 +778,7 @@ class RAGService:
             orgs_list = enriched_lists.get("organizations", [])
             locs_list = enriched_lists.get("locations", [])
             dates_list = enriched_lists.get("dates", [])
+            technologies_list = enriched_lists.get("technologies", [])  # FIX: Extract technologies!
 
             # Extract summary string (handle both dict and string formats)
             summary_value = enriched_metadata.get("summary", "")
@@ -797,6 +798,7 @@ class RAGService:
                     people=people_list,
                     organizations=orgs_list,
                     locations=locs_list,
+                    technologies=technologies_list,  # FIX: Add technologies!
                     dates=dates_list
                 ),
                 reading_time=f"{enriched_metadata.get('estimated_reading_time_min', 1)} min",

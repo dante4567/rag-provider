@@ -269,6 +269,17 @@ class EnrichmentService:
                     return self.sanitize_title(f"{prefix} {match.group(1)}")
                 return self.sanitize_title(prefix)
 
+        # Strategy 0d: Email Subject line (emails, newsletters)
+        # Pattern: "Subject: ..." at start of content (from email parsing)
+        subject_match = re.search(r'^Subject:\s*(.+)$', content[:500], re.MULTILINE | re.IGNORECASE)
+        if subject_match:
+            subject = subject_match.group(1).strip()
+            # Remove common email prefixes
+            subject = re.sub(r'^(Re:|RE:|Fwd:|FWD:|Fw:)\s*', '', subject, flags=re.IGNORECASE).strip()
+            words = subject.split()
+            if 3 <= len(words) <= 20:
+                return self.sanitize_title(subject)
+
         # Strategy 1: Markdown heading (handle both with and without newlines)
         heading_match = re.search(r'^#\s+([^\n#]+)', content, re.MULTILINE)
         if heading_match:
@@ -615,24 +626,27 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
         )
 
         try:
-            # Use Claude Haiku for enrichment with Instructor for type-safe structured output
-            # Upgraded from Groq Llama 3.1 8B for better instruction-following and tag generation
+            # Use Groq Llama 3.3 70B for enrichment (ultra-fast, free, excellent quality)
+            # Oct 2025: Anthropic out of credits, Groq 3.3 70B best free model available
             from src.models.enrichment_models import EnrichmentResponse
 
             llm_response, cost, model_used = await self.llm_service.call_llm_structured(
                 prompt=prompt,
                 response_model=EnrichmentResponse,
-                model_id="anthropic/claude-3-haiku-20240307",
+                model_id="openai/gpt-4o-mini",  # Testing: Check if model quality is issue
                 temperature=0.1
             )
 
             # Debug: Log structured LLM response
-            logger.debug("=" * 80)
-            logger.debug(f"Structured Instructor Response:")
-            logger.debug(f"  - Topics: {llm_response.topics}")
-            logger.debug(f"  - People count: {len(llm_response.entities.people)}")
-            logger.debug(f"  - Summary: {llm_response.summary[:100]}...")
-            logger.debug("=" * 80)
+            logger.info("=" * 80)
+            logger.info(f"🔍 LLM RESPONSE DEBUG:")
+            logger.info(f"  - Title: {llm_response.title}")
+            logger.info(f"  - Topics: {llm_response.topics}")
+            logger.info(f"  - People: {len(llm_response.entities.people)}")
+            logger.info(f"  - Organizations: {llm_response.entities.organizations}")
+            logger.info(f"  - Technologies: {llm_response.entities.technologies}")  # KEY DEBUG LINE
+            logger.info(f"  - Summary: {llm_response.summary[:100]}...")
+            logger.info("=" * 80)
 
             # Convert Pydantic model to dict for backwards compatibility
             llm_data = llm_response.model_dump()
@@ -682,18 +696,24 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
             # Deduplicate numbers (simple strings/numbers)
             all_numbers = list(set(llm_numbers + regex_numbers))
 
-            # Update entities with merged data
+            # Update entities with merged data (preserve all fields!)
             llm_entities["people"] = llm_people[:20]  # Max 20 people
             llm_entities["dates"] = sorted(all_dates, key=lambda x: x.get('date', x) if isinstance(x, dict) else x)[:30]  # Max 30 dates
             llm_entities["numbers"] = sorted(all_numbers)[:50]  # Max 50 numbers
+            # IMPORTANT: Preserve organizations, places, technologies from LLM response
+            # (they were already extracted, don't lose them!)
             llm_data["entities"] = llm_entities
 
-            logger.debug(f"Final entities after fallback:")
-            logger.debug(f"  - People: {len(llm_entities.get('people', []))}")
-            logger.debug(f"  - Dates: {len(llm_entities.get('dates', []))}")
+            logger.info(f"🔍 AFTER ENTITY MERGING:")
+            logger.info(f"  - People: {len(llm_entities.get('people', []))}")
+            logger.info(f"  - Dates: {len(llm_entities.get('dates', []))}")
+            logger.info(f"  - Technologies: {llm_entities.get('technologies', [])}") # KEY DEBUG
 
             # Validate and clean with controlled vocabulary
             validated = self._validate_with_vocabulary(llm_data, created_at)
+
+            logger.info(f"🔍 AFTER VALIDATION:")
+            logger.info(f"  - Technologies: {validated.get('entities', {}).get('technologies', [])}")  # KEY DEBUG
 
             # Build enriched metadata
             enriched = self._build_enriched_metadata(
@@ -707,6 +727,9 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
                 existing_metadata=existing_metadata,
                 enrichment_cost=cost
             )
+
+            logger.info(f"🔍 FINAL METADATA (in enriched):")
+            logger.info(f"  - Technologies: {enriched.get('entities', {}).get('technologies', [])}") # KEY DEBUG
 
             # Add semantic document type to metadata
             enriched["semantic_document_type"] = semantic_doc_type
@@ -833,11 +856,8 @@ Extract the following (return as JSON):
    - numbers: Significant numbers that APPEAR in the document (case numbers, amounts, percentages)
      ⚠️ NOT phone/bank numbers (those belong in people/organization objects) ⚠️
 
-   - technologies: Technologies/tools/platforms EXPLICITLY MENTIONED in the document
-     Examples: Python, JavaScript, ChromaDB, PostgreSQL, Docker, Kubernetes, AWS, OpenAI, Claude, GPT-4,
-               RAG, embeddings, transformers, LLM, machine learning, neural networks, React, FastAPI, etc.
-     ⚠️ ONLY extract technologies that are ACTUALLY MENTIONED in the document above ⚠️
-     ⚠️ If no technologies mentioned, return empty array [] ⚠️
+   - technologies: List of all technologies/tools/platforms mentioned (e.g., OpenAI, ChromaDB, Docker, Python, RAG, embeddings, LLM, GPT-4, React, FastAPI, PostgreSQL, AWS, Kubernetes, machine learning, neural networks, etc.)
+     Extract any technology names you see in the document content.
 
    ⚠️⚠️⚠️ FINAL WARNING ⚠️⚠️⚠️
    Extract ONLY from the document content shown above.
@@ -977,6 +997,10 @@ Return ONLY this JSON structure (no markdown, no explanations):
             # CSV string
             people = to_list(people_raw)
 
+        # Extract technologies from entities dict (new field!)
+        entities = metadata.get("entities", {})
+        technologies = entities.get("technologies", []) if isinstance(entities, dict) else []
+
         return {
             "tags": to_list(metadata.get("topics", "")),
             "key_points": [],  # Not stored in flat metadata
@@ -984,6 +1008,7 @@ Return ONLY this JSON structure (no markdown, no explanations):
             "organizations": to_list(metadata.get("organizations", "")),
             "locations": to_list(metadata.get("places", "")),
             "dates": to_list(metadata.get("dates", "")),
+            "technologies": technologies if isinstance(technologies, list) else []  # FIX: Add technologies!
         }
 
     def _build_enriched_metadata(
@@ -1064,10 +1089,13 @@ Return ONLY this JSON structure (no markdown, no explanations):
 
             # === ENTITIES DICT (for Obsidian frontmatter) ===
             "entities": {
-                "orgs": entities.get("organizations", [])[:10],
+                "people": entities.get("people", [])[:20],
+                "organizations": entities.get("organizations", [])[:10],
+                "places": entities.get("places", [])[:10],
                 "dates": dates_list[:30],
                 "dates_detailed": dates_detailed[:30],
-                "numbers": entities.get("numbers", [])[:50]
+                "numbers": entities.get("numbers", [])[:50],
+                "technologies": entities.get("technologies", [])[:20]  # FIX: Add technologies!
             },
 
             # === SCORING ===
