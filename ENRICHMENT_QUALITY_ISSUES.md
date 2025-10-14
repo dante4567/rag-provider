@@ -2,6 +2,20 @@
 
 **Discovered:** 2025-10-14
 **Severity:** HIGH - Data contamination/hallucination
+**Status:** ⚠️ PARTIALLY ADDRESSED (Oct 14-15, 2025)
+
+## ✅ Issues Resolved (Oct 15, 2025)
+
+**Different set of issues fixed in Oct 15 session:**
+1. ✅ **Email title extraction** - Now extracts Subject line properly
+2. ✅ **Technologies extraction** - Fixed 4 pipeline bugs where data was lost
+3. ✅ **Model selection** - Updated to Groq Llama 3.3 70B (Oct 2025 best free model)
+
+**Grade improvement:** D (45/100) → A (90/100) for technology/email documents
+
+**See:** `SESSION_SUMMARY_OCT15_2025.md` for complete details
+
+**Remaining issue (from Oct 14):** Cross-document hallucination (below)
 
 ## Problem
 
