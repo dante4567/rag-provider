@@ -198,6 +198,15 @@ class DailyNoteService:
         doc_filename: str
     ) -> str:
         """Add new document to existing daily note body"""
+        # Build link to check for duplicates
+        link = f"- [[{doc_filename}|{doc_title}]]"
+        if doc_type not in ['llm_chat', 'email']:
+            link += f" ({doc_type})"
+
+        # Check if link already exists (deduplicate)
+        if link in body:
+            return body
+
         # Map document types to sections
         if doc_type == 'llm_chat':
             section = "## 🤖 LLM Conversations"
@@ -221,16 +230,10 @@ class DailyNoteService:
                     break
 
             if insert_idx:
-                link = f"- [[{doc_filename}|{doc_title}]]"
-                if doc_type not in ['llm_chat', 'email']:
-                    link += f" ({doc_type})"
                 lines.insert(insert_idx, link)
                 body = '\n'.join(lines)
         else:
             # Add new section
-            link = f"- [[{doc_filename}|{doc_title}]]"
-            if doc_type not in ['llm_chat', 'email']:
-                link += f" ({doc_type})"
             body += f"\n{section}\n\n{link}\n"
 
         return body
