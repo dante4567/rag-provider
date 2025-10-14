@@ -424,14 +424,15 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
             doc_type = response.strip().lower()
 
             # Validate against vocabulary
-            if self.vocab_service.is_valid_document_type(doc_type):
+            if self.vocab and self.vocab.is_valid_document_type(doc_type):
                 return doc_type
 
             # Try fuzzy matching
-            suggested = self.vocab_service.suggest_document_type(doc_type)
-            if suggested != doc_type:
-                logger.info(f"Document type fuzzy matched: {doc_type} → {suggested}")
-                return suggested
+            if self.vocab:
+                suggested = self.vocab.suggest_document_type(doc_type)
+                if suggested != doc_type:
+                    logger.info(f"Document type fuzzy matched: {doc_type} → {suggested}")
+                    return suggested
 
         except Exception as e:
             logger.warning(f"LLM classification failed: {e}")
@@ -777,67 +778,47 @@ Extract the following (return as JSON):
    - Meeting notes, agendas → "meeting/notes", "meeting/agenda"
    - Privacy policies, data protection → "education/privacy", "education/data-protection"
 
-   Only use topics from the controlled list above. Choose ALL relevant topics (typically 5-15).
+   Only use topics from the controlled list above. Generate 8-15 relevant topics per document.
    Prefer specific topics (e.g., "legal/court/decision") over generic ones (e.g., "communication/announcement").
-   Include both broad and specific tags to enable flexible searching.
+   Include both broad and specific tags to enable flexible searching (e.g., "education/childcare", "education/school/enrollment", "business/hr").
 
 3. **suggested_topics**: Array of NEW topics you think should be added to vocabulary
    (These will be reviewed by user, not used directly)
 
 4. **entities**: Extract ONLY entities that are EXPLICITLY mentioned in the text:
-   - organizations: Company/organization names that appear in the text (e.g., "Amtsgericht Köln", "Sparkasse")
-   - people: Extract people as STRUCTURED OBJECTS (ALWAYS use full object format, NOT just names):
-     * name: Full name with titles/roles (REQUIRED)
-     * role: Their role/function if mentioned
-     * email: Email address if mentioned
-     * phone: Phone number if mentioned
-     * address: Physical address if mentioned
-     * organization: Organization they belong to if mentioned
-     * birth_date: Date of birth in YYYY-MM-DD if mentioned
-     * **relationships: CRITICAL - ALWAYS extract if ANY relationship is mentioned**
+   - organizations: Company/organization names that EXPLICITLY APPEAR in the document text above
+   - people: Extract people as STRUCTURED OBJECTS ONLY if they are EXPLICITLY named in the document above.
+
+     ⚠️ CRITICAL: DO NOT invent, hallucinate, or copy people from examples! ⚠️
+     ⚠️ If NO people are mentioned by name, return an EMPTY people array [] ⚠️
+
+     For each person EXPLICITLY named in the document, extract:
+     * name: Full name EXACTLY as it appears in the document (REQUIRED)
+     * role: Their role/function ONLY if stated in document
+     * email: Email address ONLY if stated in document
+     * phone: Phone number ONLY if stated in document
+     * address: Physical address ONLY if stated in document
+     * organization: Organization ONLY if stated in document
+     * birth_date: Date of birth in YYYY-MM-DD ONLY if stated in document
+     * relationships: Family/professional connections ONLY if stated in document
        Format: [{{"type": "father/mother/son/daughter/colleague/manager", "person": "Name"}}]
 
-     **RELATIONSHIP EXTRACTION IS MANDATORY when text mentions ANY family/professional connection.**
+     Skip generic roles without specific names: "the lawyer", "a teacher", "User", "Assistant"
 
-     ⚠️ FORMAT EXAMPLES ONLY - DO NOT EXTRACT THESE NAMES FROM EXAMPLES ⚠️
-     These are FICTIONAL examples showing the STRUCTURE, NOT real people to extract:
-
-     Example Structure #1: "Jane Doe was born. John Doe is the father"
-        → [{{"name": "Jane Doe", "birth_date": "YYYY-MM-DD", "relationships": [{{"type": "daughter", "person": "John Doe"}}]}},
-           {{"name": "John Doe", "role": "father", "relationships": [{{"type": "father", "person": "Jane Doe"}}]}}]
-
-     Example Structure #2: "Attorney Smith representing Client Jones"
-        → [{{"name": "Attorney Smith", "role": "lawyer"}},
-           {{"name": "Client Jones", "relationships": [{{"type": "client", "person": "Attorney Smith"}}]}}]
-
-     ⚠️ ONLY extract people WHO ARE ACTUALLY MENTIONED in the document content above ⚠️
-
-     ❌ WRONG: {{"name": "Jane Doe"}} when text says "John Doe is her father" (missing relationship!)
-     ✅ CORRECT: Include relationships: [{{"type": "daughter", "person": "John Doe"}}]
-
-     Skip ONLY generic roles without names: "the lawyer", "a teacher", etc.
-
-   - dates: Extract dates as STRUCTURED OBJECTS with context (ALWAYS include type and description):
+   - dates: Extract dates as STRUCTURED OBJECTS ONLY if EXPLICITLY mentioned in the document:
      * date: Date in ISO format YYYY-MM-DD (REQUIRED)
-     * type: REQUIRED - One of: "deadline", "meeting", "birthday", "event", "appointment"
-     * description: REQUIRED - Brief context about what this date represents
+     * type: One of: "deadline", "meeting", "birthday", "event", "appointment"
+     * description: Brief context about what this date represents
 
-     **DATE CONTEXT IS MANDATORY - Never extract bare dates without type/description.**
+     ⚠️ Only extract dates that are ACTUALLY IN THE DOCUMENT - not from examples! ⚠️
 
-     CORRECT Examples:
-     ✅ Input: "Submit the proposal by December 15"
-        Output: {{"date": "2025-12-15", "type": "deadline", "description": "Submit proposal"}}
+   - numbers: Significant numbers that APPEAR in the document (case numbers, amounts, percentages)
+     ⚠️ NOT phone/bank numbers (those belong in people/organization objects) ⚠️
 
-     ✅ Input: "Team meeting on November 25 to kick off the project"
-        Output: {{"date": "2025-11-25", "type": "meeting", "description": "Project kickoff meeting"}}
-
-     ✅ Input: "Anna was born on January 15"
-        Output: {{"date": "2025-01-15", "type": "birthday", "description": "Anna's birthday"}}
-
-     ❌ WRONG: {{"date": "2025-12-15"}} without type/description (incomplete!)
-   - numbers: Significant numbers (case numbers, amounts, percentages - NOT phone/bank numbers, those go in people objects)
-
-   CRITICAL: Do NOT extract entities from examples or generic references. Only extract entities that are actual content of this specific document.
+   ⚠️⚠️⚠️ FINAL WARNING ⚠️⚠️⚠️
+   Extract ONLY from the document content shown above.
+   Do NOT invent, hallucinate, or copy entities from instruction examples.
+   If an entity type has no matches in the document, return an empty array [].
 
 5. **places**: Places from content that match this list:
    {json.dumps(all_places[:15] if all_places else [])}
@@ -853,27 +834,21 @@ Return ONLY this JSON structure (no markdown, no explanations):
   "topics": ["topic1", "topic2"],
   "suggested_topics": ["new_topic_if_needed"],
   "entities": {{
-    "organizations": ["Organization Name 1", "Organization Name 2"],
+    "organizations": ["ONLY_IF_MENTIONED_IN_DOCUMENT"],
     "people": [
       {{
-        "name": "Rechtsanwalt Dr. Schmidt",
-        "role": "representing the plaintiff",
-        "email": "schmidt@lawfirm.de",
-        "phone": "0221-12345"
-      }},
-      {{
-        "name": "Anna Lins",
-        "birth_date": "2025-01-15",
-        "relationships": [{{"type": "daughter", "person": "Steven Lins"}}]
+        "name": "ONLY_USE_NAMES_FROM_DOCUMENT",
+        "role": "ONLY_IF_MENTIONED",
+        "email": "ONLY_IF_MENTIONED",
+        "phone": "ONLY_IF_MENTIONED"
       }}
     ],
     "dates": [
-      {{"date": "2025-12-15", "type": "deadline", "description": "Submit proposal"}},
-      {{"date": "2025-11-25", "type": "meeting", "description": "Project kickoff"}}
+      {{"date": "YYYY-MM-DD", "type": "deadline", "description": "ONLY_IF_MENTIONED"}}
     ],
-    "numbers": ["310 F 141/25", "€1,500"]
+    "numbers": ["ONLY_NUMBERS_FROM_DOCUMENT"]
   }},
-  "places": ["Köln", "Berlin"],
+  "places": ["ONLY_PLACES_FROM_DOCUMENT"],
   "quality_indicators": {{
     "ocr_quality": 1.0,
     "content_completeness": 1.0
@@ -1323,6 +1298,7 @@ Return ONLY this JSON structure (no markdown):
             "quality_score": 0.5,
             "recency_score": round(recency_score, 3),
             "enrichment_version": "2.0",
+            "enrichment_cost": 0.0,  # No LLM cost when fallback is used
             "enriched": False,
             "word_count": len(content.split()),
             "created_at": datetime.now().isoformat(),
