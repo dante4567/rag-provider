@@ -14,10 +14,11 @@ class TestEnrichmentModelChoice:
 
     def test_enrichment_model_is_hardcoded_to_groq(self):
         """
-        Document type classification uses Groq (src/services/enrichment_service.py:434)
-        Main enrichment uses Groq (src/services/enrichment_service.py:625)
+        Document type classification uses Groq (src/services/enrichment_service.py:433)
+        Main enrichment uses Groq (src/services/enrichment_service.py:636)
+        Critique uses Groq (src/services/enrichment_service.py:1154)
 
-        Both hardcoded to "groq/llama-3.1-8b-instant" for cost efficiency.
+        All hardcoded to "groq/llama-3.3-70b-versatile" (Oct 2025 update)
         """
         from src.services.enrichment_service import EnrichmentService
         import inspect
@@ -25,24 +26,29 @@ class TestEnrichmentModelChoice:
         # Get source code of EnrichmentService
         source = inspect.getsource(EnrichmentService)
 
-        # Verify Groq is hardcoded for enrichment
-        assert 'model_id="groq/llama-3.1-8b-instant"' in source, \
-            "Enrichment should use Groq llama-3.1-8b-instant (hardcoded)"
+        # Verify Groq 3.3 70B is hardcoded for enrichment (Oct 2025 update)
+        assert 'model_id="groq/llama-3.3-70b-versatile"' in source, \
+            "Enrichment should use Groq llama-3.3-70b-versatile (hardcoded, Oct 2025)"
 
-        # Count occurrences - should be at least 2 (classification + enrichment)
-        groq_count = source.count('model_id="groq/llama-3.1-8b-instant"')
-        assert groq_count >= 2, \
-            f"Expected at least 2 Groq hardcoded calls, found {groq_count}"
+        # Count occurrences - should be at least 3 (classification + enrichment + critique)
+        groq_count = source.count('model_id="groq/llama-3.3-70b-versatile"')
+        assert groq_count >= 3, \
+            f"Expected at least 3 Groq 3.3 70B hardcoded calls, found {groq_count}"
 
 
 class TestCritiqueModelChoice:
-    """Validate critique uses Claude Sonnet for quality"""
+    """Validate critique uses Groq 3.3 70B (unified model Oct 2025)"""
 
-    def test_critique_model_is_hardcoded_to_claude_sonnet(self):
+    def test_critique_model_is_hardcoded_to_groq(self):
         """
-        Quality critique uses Claude Sonnet (src/services/enrichment_service.py:1125+)
+        Quality critique uses Groq 3.3 70B (src/services/enrichment_service.py:1154)
 
-        Hardcoded to "anthropic/claude-3-5-sonnet-20241022" for high-quality reasoning.
+        Oct 2025: All enrichment tasks unified to groq/llama-3.3-70b-versatile
+        (classification, enrichment, critique all use same model)
+
+        Rationale: Groq 3.3 70B is FREE and provides excellent quality (70B >> 8B).
+        While Claude Sonnet has slightly better reasoning, the cost difference
+        (~100x more expensive) is not justified when Groq 3.3 70B works well.
         """
         from src.services.enrichment_service import EnrichmentService
         import inspect
@@ -50,60 +56,60 @@ class TestCritiqueModelChoice:
         # Get source code of EnrichmentService
         source = inspect.getsource(EnrichmentService)
 
-        # Verify Claude Sonnet is hardcoded for critique
-        assert 'model_id="anthropic/claude-3-5-sonnet-20241022"' in source, \
-            "Critique should use Claude Sonnet 3.5 (hardcoded)"
+        # Verify Groq 3.3 70B is hardcoded for critique
+        assert 'model_id="groq/llama-3.3-70b-versatile"' in source, \
+            "Critique should use Groq 3.3 70B (hardcoded, Oct 2025)"
 
-        # Should be exactly 1 occurrence (only critique uses Sonnet)
-        claude_count = source.count('model_id="anthropic/claude-3-5-sonnet-20241022"')
-        assert claude_count == 1, \
-            f"Expected 1 Claude Sonnet hardcoded call (critique), found {claude_count}"
+        # Should be at least 3 occurrences (classification + enrichment + critique)
+        groq_count = source.count('model_id="groq/llama-3.3-70b-versatile"')
+        assert groq_count >= 3, \
+            f"Expected at least 3 Groq 3.3 70B hardcoded calls, found {groq_count}"
 
 
 class TestModelCostValidation:
     """Validate cost expectations for each use case"""
 
     def test_enrichment_cost_under_threshold(self):
-        """Enrichment cost should be < $0.0001"""
+        """Enrichment cost should be < $0.0001 (Oct 2025: Groq 3.3 70B is FREE)"""
         tracker = CostTracker()
 
         # Typical enrichment: 1000 input, 300 output tokens
         cost = tracker.calculate_cost(
-            model="groq/llama-3.1-8b-instant",
+            model="groq/llama-3.3-70b-versatile",
             input_tokens=1000,
             output_tokens=300
         )
 
         assert cost < 0.0001, \
-            f"Enrichment cost ${cost:.6f} should be < $0.0001 (using Groq)"
+            f"Enrichment cost ${cost:.6f} should be < $0.0001 (using Groq 3.3 70B)"
 
     def test_triage_cost_under_threshold(self):
-        """Triage cost should be < $0.0001"""
+        """Triage cost should be < $0.0001 (Oct 2025: Groq 3.3 70B is FREE)"""
         tracker = CostTracker()
 
         # Typical triage: 800 input, 100 output tokens
         cost = tracker.calculate_cost(
-            model="groq/llama-3.1-8b-instant",
+            model="groq/llama-3.3-70b-versatile",
             input_tokens=800,
             output_tokens=100
         )
 
         assert cost < 0.0001, \
-            f"Triage cost ${cost:.6f} should be < $0.0001 (using Groq)"
+            f"Triage cost ${cost:.6f} should be < $0.0001 (using Groq 3.3 70B)"
 
     def test_critique_cost_in_expected_range(self):
-        """Critique cost should be ~$0.005 (acceptable for quality)"""
+        """Critique cost should be < $0.0001 (Oct 2025: Groq 3.3 70B is FREE)"""
         tracker = CostTracker()
 
         # Typical critique: 500 input, 200 output tokens
         cost = tracker.calculate_cost(
-            model="anthropic/claude-3-5-sonnet-20241022",
+            model="groq/llama-3.3-70b-versatile",
             input_tokens=500,
             output_tokens=200
         )
 
-        assert 0.004 < cost < 0.006, \
-            f"Critique cost ${cost:.6f} should be ~$0.005 (Claude Sonnet justified for quality)"
+        assert cost < 0.0001, \
+            f"Critique cost ${cost:.6f} should be < $0.0001 (using Groq 3.3 70B - FREE!)"
 
 
 class TestFallbackChainConfiguration:
@@ -153,29 +159,30 @@ class TestModelChoiceRationale:
     """Document and validate model choice rationale"""
 
     def test_groq_is_cheapest_for_enrichment(self):
-        """Groq should be cheapest option for enrichment"""
+        """Groq 3.3 70B should be cheapest option for enrichment"""
         tracker = CostTracker()
 
-        groq_cost = tracker.calculate_cost("groq/llama-3.1-8b-instant", 1000, 300)
+        groq_cost = tracker.calculate_cost("groq/llama-3.3-70b-versatile", 1000, 300)
         claude_cost = tracker.calculate_cost("anthropic/claude-3-haiku-20240307", 1000, 300)
         gpt_cost = tracker.calculate_cost("openai/gpt-4o-mini", 1000, 300)
 
-        assert groq_cost < claude_cost, "Groq should be cheaper than Claude"
-        assert groq_cost < gpt_cost, "Groq should be cheaper than GPT"
+        assert groq_cost < claude_cost, "Groq 3.3 70B should be cheaper than Claude"
+        assert groq_cost < gpt_cost, "Groq 3.3 70B should be cheaper than GPT"
 
-    def test_claude_sonnet_quality_justifies_critique_cost(self):
-        """Claude Sonnet cost is justified for quality-critical critique"""
+    def test_unified_model_choice_rationale(self):
+        """Oct 2025: Unified Groq 3.3 70B for all tasks (cost + quality)"""
         tracker = CostTracker()
 
-        # Critique is low-volume, quality-critical
-        # Cost difference is acceptable
-        groq_cost = tracker.calculate_cost("groq/llama-3.1-8b-instant", 500, 200)
-        claude_cost = tracker.calculate_cost("anthropic/claude-3-5-sonnet-20241022", 500, 200)
+        # All tasks use same model: classification, enrichment, critique
+        # 70B model provides good quality across all tasks
+        groq_70b_cost = tracker.calculate_cost("groq/llama-3.3-70b-versatile", 500, 200)
 
-        # Claude is significantly more expensive, but justified for quality
-        cost_ratio = claude_cost / groq_cost if groq_cost > 0 else 0
-        assert 90 < cost_ratio < 130, \
-            f"Claude Sonnet is {cost_ratio:.1f}x more expensive, justified by quality for low-volume critique"
+        # Verify it's still extremely cheap (free tier)
+        assert groq_70b_cost < 0.0001, \
+            f"Groq 3.3 70B cost ${groq_70b_cost:.6f} should be < $0.0001 (free tier)"
+
+        # Unified model = simpler architecture, consistent quality
+        assert True, "Unified model choice simplifies system (Oct 2025)"
 
 
 class TestEmbeddingModelChoice:
@@ -246,36 +253,35 @@ class TestModelChoiceSummary:
 
     def test_model_choice_summary(self):
         """
-        Document all model choices with rationale:
+        Document all model choices with rationale (Oct 2025 update):
 
-        1. Enrichment: Groq llama-3.1-8b-instant
-           - Why: Cheapest ($0.05/$0.08 per 1M tokens), fast, good enough quality
+        1. ALL Enrichment Tasks: Groq llama-3.3-70b-versatile (UNIFIED)
+           - Classification: Groq 3.3 70B
+           - Enrichment: Groq 3.3 70B
+           - Critique: Groq 3.3 70B
+           - Why: FREE, 70B quality >> 8B, 128k context, unified architecture
            - Volume: High (every document)
-           - Cost: ~$0.00009 per document
+           - Cost: ~$0.00000 per document (free tier)
+           - Context: 32k chars (leveraging 128k window)
 
-        2. Triage: Groq llama-3.1-8b-instant
-           - Why: Simple classification task, cost-sensitive
-           - Volume: High (every document)
-           - Cost: ~$0.00009 per document
-
-        3. Critique: Claude Sonnet 3.5
-           - Why: Quality matters, nuanced reasoning needed
-           - Volume: Low (optional feature)
-           - Cost: ~$0.005 per critique (worth it for quality)
-
-        4. Chat: User-selectable, defaults to Groq → Anthropic → OpenAI
+        2. Chat: User-selectable, defaults to Groq → Anthropic → OpenAI
            - Why: User preference matters
            - Volume: Medium
            - Cost: Variable
 
-        5. Embeddings: all-MiniLM-L6-v2 (local)
+        3. Embeddings: all-MiniLM-L6-v2 (local)
            - Why: Free, fast, private, good quality
            - Volume: Very high (every chunk)
            - Cost: $0 (vs $10-$65 per 1M docs with OpenAI)
 
-        6. Reranking: cross-encoder/ms-marco-MiniLM-L-12-v2 (local)
+        4. Reranking: cross-encoder/ms-marco-MiniLM-L-12-v2 (local)
            - Why: Free, good quality improvement (+10-15% P@5)
            - Volume: Medium (per search)
            - Cost: $0 (vs $2 per 1K with Cohere)
+
+        Oct 2025 Changes:
+        - Unified all enrichment to Groq 3.3 70B (was: Anthropic Haiku, GPT-4o-mini, Claude Sonnet)
+        - Reason: Anthropic out of credits, Groq free tier + 70B quality excellent
+        - Architecture simplified: 1 model for all tasks instead of 3
         """
         assert True, "All model choices are documented and justified"

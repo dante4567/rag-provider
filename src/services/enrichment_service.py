@@ -427,10 +427,10 @@ Choose ONLY ONE from these document types:
 Return ONLY the document type string (e.g., "legal/court-decision"), nothing else."""
 
         try:
-            # Use Claude Haiku for classification (upgraded from Groq for better accuracy)
+            # Use Groq 3.3 70B for classification (Oct 2025: Anthropic out of credits)
             response, _, _ = await self.llm_service.call_llm(
                 prompt=prompt,
-                model_id="anthropic/claude-3-haiku-20240307",
+                model_id="groq/llama-3.3-70b-versatile",
                 temperature=0.0
             )
             doc_type = response.strip().lower()
@@ -633,7 +633,7 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
             llm_response, cost, model_used = await self.llm_service.call_llm_structured(
                 prompt=prompt,
                 response_model=EnrichmentResponse,
-                model_id="openai/gpt-4o-mini",  # Testing: Check if model quality is issue
+                model_id="groq/llama-3.3-70b-versatile",  # Oct 2025: Best free model (70B, 128k context)
                 temperature=0.1
             )
 
@@ -769,9 +769,10 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
         all_topics = self.vocab.get_all_topics() if self.vocab else []
         all_places = self.vocab.get_all_places() if self.vocab else []
 
-        # Truncate content (increased from 3000 to 8000 for better entity extraction)
-        content_sample = content[:8000]
-        if len(content) > 8000:
+        # Truncate content (increased to 32000 for Groq 3.3 70B's 128k context window)
+        # Using ~32k to allow room for prompt + vocabulary + response
+        content_sample = content[:32000]
+        if len(content) > 32000:
             content_sample += "\n\n[...content truncated...]"
 
         # Show ALL topics to LLM (no truncation - let LLM see full vocabulary)
@@ -1148,10 +1149,11 @@ Return ONLY this JSON structure (no markdown, no explanations):
         prompt = self._build_critic_prompt(content, enriched_metadata, filename)
 
         try:
-            # Use Anthropic for critic (better reasoning)
+            # Use Groq 3.3 70B for critic (Oct 2025: Anthropic out of credits)
+            # 70B model provides good reasoning quality for critique
             critic_response, cost, model_used = await self.llm_service.call_llm(
                 prompt=prompt,
-                model_id="anthropic/claude-3-5-sonnet-20241022",
+                model_id="groq/llama-3.3-70b-versatile",
                 temperature=0.0  # Deterministic scoring
             )
 
