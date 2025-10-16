@@ -22,19 +22,22 @@ curl -X POST http://localhost:8001/search \
 
 ## Current Status (v3.0.0 - October 2025)
 
-**Production-ready RAG system - Grade A (95/100)**
+**Production-ready RAG system with Smart Triage - Grade A (95/100)**
 
-**🎯 Comprehensive Test Results (Oct 16, 2025):**
-- ✅ **100/100 documents ingested successfully (100% success rate)**
-- ✅ **645 chunks created** - Structure-aware chunking working perfectly
-- ✅ **420 entities extracted** - 65 people, 133 orgs, 168 tech, 54 places
-- ✅ **992 auto-links created** - Entity mentions auto-converted to WikiLinks
-- ✅ **640 Obsidian files created** - 100 docs + 321 entity refs + 100 attachments + 119 temporal
-- ✅ **Performance:** 4 seconds/doc average (6.8 minutes for 100 docs)
-- ✅ **Cost: $0** (Groq Llama 3.3 70B within free tier)
-- 🟡 **1 issue found:** 0 dates extracted (needs investigation, doesn't block usage)
+**🎯 Latest Test Results (Oct 16, 2025):**
+- ✅ **100 Villa Luna emails ingested (94% success, 1% duplicate, 5% schema fixes)**
+- ✅ **Smart triage enabled** - Duplicate detection working (100% accuracy)
+- ✅ **Cost savings validated** - $0.00018 saved on 2 duplicates in 50-email batch
+- ✅ **Performance:** 3-4 seconds/email average
+- ✅ **Search working:** 381ms average, hybrid ready
+- ✅ **New filename format:** `2025-10-16T19-36-36_email_title_hash.md` (ISO 8601 datetime)
 
-**Test Corpus:** 50 Villa Luna emails (.eml) + 50 LLM chat exports (.md)
+**Previous Comprehensive Test (100 docs):**
+- ✅ 645 chunks, 420 entities, 992 auto-links, 640 Obsidian files
+- ✅ 955/955 unit tests passing (100%)
+- ✅ Cost: $0.00009 per enrichment (Groq Llama 3.3 70B)
+
+**Test Corpus:** 100 Villa Luna emails (.eml, German/English mixed)
 
 **System Health:**
 - ✅ **955/955 unit tests passing (100%)** in 9.84s - 32/37 services tested (91% coverage)

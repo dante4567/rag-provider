@@ -8,7 +8,8 @@ Implements the complete RAG/Obsidian integration design:
 - Auto-generated entity stubs for backlinks
 - Read-only vault with perfect integration
 
-Filename: YYYY-MM-DD__doc_type__slug__shortid.md
+Filename: YYYY-MM-DDTHH-MM-SS_doc_type_slug_shortid.md
+Example: 2025-10-02T14-30-45_email_kita-handover_7c1a.md
 Schema: Single unified frontmatter (no Obsidian-only fields)
 """
 
@@ -76,17 +77,19 @@ class ObsidianService:
         content: str
     ) -> str:
         """
-        Generate cross-platform safe filename: YYYY-MM-DD__doc_type__slug__shortid.md
+        Generate cross-platform safe filename: YYYY-MM-DDTHH-MM-SS_doc_type_slug_shortid.md
 
-        Example: 2025-10-02__correspondence.thread__kita-handover__7c1a.md
+        Example: 2025-10-02T14-30-45_email_kita-handover_7c1a.md
 
         Sanitization:
+        - ISO 8601 datetime format (with T separator, colons replaced by dashes)
         - Removes path separators (/, \)
         - Removes null bytes
         - Restricts to safe characters
         - Max length enforcement
         """
-        date_str = created_at.strftime('%Y-%m-%d')
+        # ISO 8601 datetime with safe separators (colons → dashes for Windows compatibility)
+        date_str = created_at.strftime('%Y-%m-%dT%H-%M-%S')
 
         # Clean doc_type (remove 'DocumentType.' prefix + sanitize)
         type_str = str(doc_type).replace('DocumentType.', '')
@@ -100,8 +103,8 @@ class ObsidianService:
         # Generate short ID
         short_id = self.generate_short_id(content)
 
-        # Final safety check: remove any remaining path separators
-        filename = f"{date_str}__{type_str}__{slug}__{short_id}.md"
+        # Single underscore separator (more readable)
+        filename = f"{date_str}_{type_str}_{slug}_{short_id}.md"
         filename = filename.replace('/', '_').replace('\\', '_').replace('\x00', '')
 
         return filename

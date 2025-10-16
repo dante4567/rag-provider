@@ -41,7 +41,8 @@
       "Bash(/tmp/ingest_10_emails.sh:*)",
       "Bash(awk:*)",
       "Bash(/tmp/ingest_50_emails.sh:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(docker volume rm:*)"
     ],
     "deny": [],
     "ask": []
