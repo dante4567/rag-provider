@@ -259,6 +259,21 @@ class ObsidianService:
             'created_at': created_at.strftime('%Y-%m-%d'),
             'ingested_at': ingested_at.strftime('%Y-%m-%d'),
 
+            # === Email Threading (for conversation grouping) ===
+            'thread_id': metadata.get('thread_id', ''),
+            'message_id': metadata.get('message_id', ''),
+            'in_reply_to': metadata.get('in_reply_to', ''),
+            'references': metadata.get('references', ''),
+            'sender': metadata.get('sender', ''),
+            'recipients': metadata.get('recipients', ''),
+            'subject': metadata.get('subject', ''),
+
+            # === Attachment Context ===
+            'has_attachments': metadata.get('has_attachments', False),
+            'attachment_count': metadata.get('attachment_count', 0),
+            'is_attachment': metadata.get('is_attachment', False),
+            'parent_doc_id': metadata.get('parent_doc_id', ''),
+
             # === Summary ===
             'summary': self._sanitize_yaml_string(metadata.get('summary', '')),
 

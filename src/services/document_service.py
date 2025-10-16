@@ -27,6 +27,14 @@ from src.services.ocr_service import OCRService
 from src.services.whatsapp_parser import WhatsAppParser
 from src.services.llm_chat_parser import LLMChatParser
 from src.services.email_threading_service import EmailThreadingService, EmailMessage
+from src.services.document_type_handlers import (
+    EmailHandler,
+    ChatLogHandler,
+    ScannedDocHandler,
+    InvoiceHandler,
+    ManualHandler,
+)
+from src.services.pii_filter_service import get_pii_filter_service, PIIType
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +76,13 @@ class DocumentService:
         # Initialize email threading service
         self.email_threading = EmailThreadingService()
 
+        # Initialize document type handlers
+        self.email_handler = EmailHandler()
+        self.chat_log_handler = ChatLogHandler()
+        self.scanned_doc_handler = ScannedDocHandler()
+        self.invoice_handler = InvoiceHandler()
+        self.manual_handler = ManualHandler()
+
     async def process_upload(
         self,
         file: UploadFile,
@@ -97,6 +112,12 @@ class DocumentService:
                 file_path=temp_path,
                 process_ocr=process_ocr if process_ocr is not None else self.settings.use_ocr
             )
+
+            # Apply document type-specific handler for preprocessing
+            text, metadata = self._apply_document_type_handler(text, doc_type, metadata, temp_path)
+
+            # Apply PII filtering (privacy protection)
+            text, metadata = self._apply_pii_filtering(text, metadata)
 
             # Add file metadata
             metadata.update({
@@ -187,7 +208,9 @@ class DocumentService:
 
         elif file_extension in ['.eml', '.msg']:
             text, email_metadata = await self._process_email(file_path)
+            logger.info(f"📧 RECEIVED email_metadata with keys: {list(email_metadata.keys())}, thread_id={email_metadata.get('thread_id', 'NONE')}")
             metadata.update(email_metadata)
+            logger.info(f"📧 AFTER UPDATE, metadata has keys: {list(metadata.keys())}, thread_id={metadata.get('thread_id', 'NONE')}")
             return text, DocumentType.email, metadata
 
         elif file_extension == '.mbox':
@@ -396,9 +419,10 @@ class DocumentService:
         - Email headers (From, To, Subject, Date)
         - Email body (text/plain and text/html)
         - Attachments (saved and referenced for separate processing)
+        - Threading metadata (Message-ID, In-Reply-To, References)
 
         Returns:
-            Tuple of (email text content, metadata dict with created_date)
+            Tuple of (email text content, metadata dict with created_date + threading fields)
         """
         try:
             import tempfile
@@ -422,29 +446,61 @@ class DocumentService:
                 except Exception as e:
                     logger.warning(f"Failed to parse email date '{date_str}': {e}")
 
-            # Extract headers (decode properly handles encoded words like =?iso-8859-1?Q?...?=)
-            text = f"From: {email.header.decode_header(msg.get('From', 'Unknown'))[0][0]}\n" if msg.get('From') else "From: Unknown\n"
-            text += f"To: {email.header.decode_header(msg.get('To', 'Unknown'))[0][0]}\n" if msg.get('To') else "To: Unknown\n"
+            # Extract threading metadata
+            metadata['message_id'] = msg.get('Message-ID', f"<generated-{file_path.stem}>")
+            metadata['in_reply_to'] = msg.get('In-Reply-To', '')
+            metadata['references'] = msg.get('References', '')
 
-            # Subject often has encoded words
-            if msg.get('Subject'):
-                decoded_subject = email.header.decode_header(msg.get('Subject'))
-                subject_parts = []
-                for part, charset in decoded_subject:
+            # Extract thread topic/index if available
+            thread_topic = msg.get('Thread-Topic', '')
+            if thread_topic:
+                metadata['thread_topic'] = thread_topic
+            thread_index = msg.get('Thread-Index', '')
+            if thread_index:
+                metadata['thread_index'] = thread_index
+
+            # Extract sender and recipients for threading
+            metadata['sender'] = msg.get('From', 'Unknown')
+            metadata['recipients'] = ', '.join(msg.get_all('To', []) or ['Unknown'])
+
+            # Subject for threading
+            subject = msg.get('Subject', '(No Subject)')
+            metadata['subject'] = subject
+
+            # Generate thread_id from normalized subject
+            normalized_subject = self.email_threading.normalize_subject(subject)
+            import hashlib
+            metadata['thread_id'] = hashlib.md5(normalized_subject.encode()).hexdigest()[:12]
+
+            logger.info(f"📧 Threading: thread_id={metadata['thread_id']}, message_id={metadata['message_id'][:50]}...")
+
+            # Extract headers with proper decoding
+            def decode_header_value(header_value):
+                """Decode email header, handling bytes and encoded-words"""
+                if not header_value:
+                    return 'Unknown'
+                decoded_parts = email.header.decode_header(header_value)
+                result = []
+                for part, charset in decoded_parts:
                     if isinstance(part, bytes):
-                        subject_parts.append(part.decode(charset or 'utf-8', errors='replace'))
+                        result.append(part.decode(charset or 'utf-8', errors='replace'))
                     else:
-                        subject_parts.append(part)
-                text += f"Subject: {''.join(subject_parts)}\n"
-            else:
-                text += "Subject: No Subject\n"
+                        result.append(str(part))
+                return ''.join(result)
 
+            text = f"From: {decode_header_value(msg.get('From'))}\n"
+            text += f"To: {decode_header_value(msg.get('To'))}\n"
+            text += f"Subject: {decode_header_value(msg.get('Subject'))}\n"
             text += f"Date: {msg.get('Date', 'Unknown')}\n\n"
 
-            # Track attachments
+            # Track attachments - save to persistent storage
             attachments = []
-            attachment_dir = Path(tempfile.gettempdir()) / "email_attachments" / file_path.stem
+            # Save to processed directory (so they persist)
+            from datetime import datetime
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            attachment_dir = Path(self.settings.processed_path) / "email_attachments" / f"{timestamp}_{file_path.stem}"
             attachment_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"📎 Saving email attachments to: {attachment_dir}")
 
             # Extract body and attachments
             if msg.is_multipart():
@@ -524,11 +580,30 @@ class DocumentService:
                     text += f"📎 {Path(att_path).name} (saved at: {att_path})\n"
 
                 # Store attachment paths in metadata for batch processing
-                # This is accessible via self._email_attachments if needed
-                if not hasattr(self, '_email_attachments'):
-                    self._email_attachments = []
-                self._email_attachments.extend(attachments)
+                metadata['attachment_paths'] = attachments
+                metadata['attachment_count'] = len(attachments)
+                metadata['has_attachments'] = True
 
+                logger.info(f"📎 Email has {len(attachments)} attachments for processing")
+            else:
+                metadata['has_attachments'] = False
+                metadata['attachment_count'] = 0
+
+            # Preprocess email content using EmailHandler
+            # This removes reply chains, forwarding headers, signatures, etc.
+            original_length = len(text)
+            metadata['original_length'] = original_length  # For handler to calculate removal ratio
+
+            text = self.email_handler.preprocess(text, metadata)
+
+            # Extract additional email-specific metadata
+            handler_metadata = self.email_handler.extract_metadata(text, metadata)
+            metadata.update(handler_metadata)
+
+            logger.info(
+                f"📧 EMAIL METADATA BEING RETURNED: thread_id={metadata.get('thread_id', 'NONE')}, "
+                f"cleaned: {original_length}→{len(text)} chars, keys={list(metadata.keys())}"
+            )
             return text, metadata
 
         except Exception as e:
@@ -669,6 +744,147 @@ class DocumentService:
         except Exception as e:
             logger.error(f"HTML processing failed for {file_path}: {e}")
             return f"Failed to process HTML: {file_path.name}"
+
+    def _apply_document_type_handler(
+        self,
+        text: str,
+        doc_type: DocumentType,
+        metadata: Dict[str, Any],
+        file_path: Optional[Path] = None
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Apply type-specific document handler for preprocessing and metadata extraction.
+
+        Routes to appropriate handler based on:
+        1. Explicit document type (email, scanned, llm_chat)
+        2. Content detection (invoice, manual keywords)
+        3. Fallback to no preprocessing
+
+        Args:
+            text: Extracted text
+            doc_type: Detected document type
+            metadata: Existing metadata
+            file_path: Optional file path for additional context
+
+        Returns:
+            Tuple of (preprocessed_text, updated_metadata)
+        """
+        original_length = len(text)
+        handler_used = None
+
+        # Email handler (already applied in _process_email, but this is for consistency)
+        if doc_type == DocumentType.email:
+            # Email preprocessing already done in _process_email
+            handler_used = "email"
+
+        # Chat log handler
+        elif doc_type == DocumentType.llm_chat:
+            metadata['original_length'] = original_length
+            text = self.chat_log_handler.preprocess(text, metadata)
+            handler_metadata = self.chat_log_handler.extract_metadata(text, metadata)
+            metadata.update(handler_metadata)
+            handler_used = "chat_log"
+
+        # Scanned document handler
+        elif doc_type == DocumentType.scanned:
+            metadata['original_length'] = original_length
+            text = self.scanned_doc_handler.preprocess(text, metadata)
+            handler_metadata = self.scanned_doc_handler.extract_metadata(text, metadata)
+            metadata.update(handler_metadata)
+            handler_used = "scanned_doc"
+
+        # Content-based detection for invoices and manuals
+        else:
+            # Detect invoice (check first 2000 chars for invoice indicators)
+            text_sample = text[:2000].lower()
+            invoice_keywords = ['invoice', 'rechnung', 'facture', 'total', 'amount due', 'payment',
+                               'bill to', 'invoice number', 'invoice date']
+            invoice_score = sum(1 for kw in invoice_keywords if kw in text_sample)
+
+            # Detect manual/documentation
+            manual_keywords = ['table of contents', 'chapter', 'section', 'introduction',
+                              'installation', 'configuration', 'user guide', 'manual',
+                              'documentation', 'reference', 'appendix']
+            manual_score = sum(1 for kw in manual_keywords if kw in text_sample)
+
+            # Apply invoice handler if confident
+            if invoice_score >= 3:
+                metadata['original_length'] = original_length
+                text = self.invoice_handler.preprocess(text, metadata)
+                handler_metadata = self.invoice_handler.extract_metadata(text, metadata)
+                metadata.update(handler_metadata)
+                handler_used = "invoice"
+
+            # Apply manual handler if confident
+            elif manual_score >= 3:
+                metadata['original_length'] = original_length
+                text = self.manual_handler.preprocess(text, metadata)
+                handler_metadata = self.manual_handler.extract_metadata(text, metadata)
+                metadata.update(handler_metadata)
+                handler_used = "manual"
+
+        if handler_used:
+            cleaned_length = len(text)
+            retention_pct = (cleaned_length / original_length * 100) if original_length > 0 else 0
+            logger.info(f"📋 Applied {handler_used} handler: {original_length} → {cleaned_length} chars ({retention_pct:.1f}% retained)")
+            metadata['handler_applied'] = handler_used
+
+        return text, metadata
+
+    def _apply_pii_filtering(
+        self,
+        text: str,
+        metadata: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Apply PII filtering for privacy protection.
+
+        Detects and redacts:
+        - Email addresses
+        - Phone numbers
+        - SSNs
+        - Credit card numbers
+        - IP addresses
+        - IBANs
+
+        Args:
+            text: Document text
+            metadata: Existing metadata
+
+        Returns:
+            Tuple of (filtered_text, updated_metadata)
+        """
+        pii_filter = get_pii_filter_service(redaction_mode="mask")
+
+        # Detect PII
+        detected_pii = pii_filter.detect(text)
+
+        if not detected_pii:
+            metadata['has_pii'] = False
+            return text, metadata
+
+        # Get summary of what was found
+        pii_summary = pii_filter.get_pii_summary(text)
+
+        # Redact PII
+        filtered_text, redacted_instances = pii_filter.redact(text)
+
+        # Update metadata
+        metadata['has_pii'] = True
+        metadata['pii_detected'] = pii_summary
+        metadata['pii_redacted_count'] = len(redacted_instances)
+        metadata['pii_types_found'] = [m.pii_type.value for m in redacted_instances]
+
+        original_length = len(text)
+        filtered_length = len(filtered_text)
+
+        logger.info(
+            f"🔒 PII filtering: {len(redacted_instances)} instances redacted "
+            f"({', '.join(set(m.pii_type.value for m in redacted_instances))}), "
+            f"{original_length} → {filtered_length} chars"
+        )
+
+        return filtered_text, metadata
 
     def chunk_text(self, text: str) -> List[str]:
         """

@@ -22,6 +22,13 @@ from src.services.llm_service import LLMService
 from src.services.vocabulary_service import VocabularyService
 from src.services.entity_deduplication_service import get_entity_deduplication_service
 from src.models.schemas import DocumentType, SemanticDocumentType
+from src.services.document_type_handlers import (
+    EmailHandler,
+    ChatLogHandler,
+    ScannedDocHandler,
+    InvoiceHandler,
+    ManualHandler,
+)
 
 # Self-improvement loop imports
 import logging
@@ -48,6 +55,13 @@ class EnrichmentService:
 
         # Load entity deduplication service
         self.entity_dedup = get_entity_deduplication_service(similarity_threshold=0.85)
+
+        # Initialize document type handlers for type-specific processing
+        self.email_handler = EmailHandler()
+        self.chat_log_handler = ChatLogHandler()
+        self.scanned_doc_handler = ScannedDocHandler()
+        self.invoice_handler = InvoiceHandler()
+        self.manual_handler = ManualHandler()
 
     def generate_content_hash(self, content: str) -> str:
         """Generate SHA-256 hash for deduplication"""
@@ -317,6 +331,14 @@ class EnrichmentService:
         title = re.sub(r'upload_[a-f0-9-]{30,}', '', title, flags=re.IGNORECASE)
         # Remove common prefixes
         title = re.sub(r'^(document|file|untitled|scan)[-_\s]*', '', title, flags=re.IGNORECASE)
+
+        # Remove email ID suffixes (e.g., "-72851", "-9087")
+        title = re.sub(r'-\d{4,5}$', '', title)
+
+        # Remove date prefixes for emails (YYYYMMDD- pattern)
+        title = re.sub(r'^\d{8}-', '', title)
+
+        # Replace separators with spaces
         title = title.replace('_', ' ').replace('-', ' ')
         title = re.sub(r'\s+', ' ', title).strip()
 
@@ -622,7 +644,8 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
             content=content,
             filename=filename,
             document_type=document_type,
-            extracted_title=extracted_title
+            extracted_title=extracted_title,
+            metadata=existing_metadata
         )
 
         try:
@@ -756,12 +779,87 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
                 existing_metadata=existing_metadata
             )
 
+    def _get_summary_instructions(self, document_type: DocumentType, metadata: Optional[Dict] = None) -> str:
+        """
+        Generate type-specific summary instructions.
+
+        Different document types need different summarization approaches:
+        - Email: Focus on decisions, action items, outcomes
+        - Chat: Questions asked, solutions provided, code examples
+        - Invoice: Extract vendor, amount, key line items
+        - Manual: Capture main procedure or instruction
+        - Scanned: Document type, parties, amounts, dates
+        - Report: Key findings and recommendations
+        - Default: 2-3 sentence general summary
+
+        Args:
+            document_type: Type of document
+            metadata: Optional metadata that may contain handler-specific info
+
+        Returns:
+            Type-specific instructions for summary generation
+        """
+        # Check if a handler was applied and use its summary instructions
+        if metadata and 'handler_applied' in metadata:
+            handler_type = metadata['handler_applied']
+
+            if handler_type == 'email':
+                return self.email_handler.get_summary_prompt("", metadata)
+            elif handler_type == 'chat_log':
+                return self.chat_log_handler.get_summary_prompt("", metadata)
+            elif handler_type == 'scanned_doc':
+                return self.scanned_doc_handler.get_summary_prompt("", metadata)
+            elif handler_type == 'invoice':
+                return self.invoice_handler.get_summary_prompt("", metadata)
+            elif handler_type == 'manual':
+                return self.manual_handler.get_summary_prompt("", metadata)
+
+        # Fallback to document type-based instructions
+        if document_type == DocumentType.email:
+            return """2-3 sentence summary focusing on:
+   - The key decision or outcome (not just "discussion about X")
+   - Action items or next steps
+   - Important dates or deadlines
+   - Be specific and actionable (e.g., "Decided to postpone project until March" not "Email discussing project timeline")"""
+
+        elif document_type == DocumentType.llm_chat:
+            return """2-3 sentence summary focusing on:
+   - The main question(s) or problem being solved
+   - The solution or approach discussed
+   - Key code examples or implementations provided (if any)
+   - Be specific about outcomes and actionable insights"""
+
+        elif document_type == DocumentType.scanned:
+            return """2-3 sentence summary capturing:
+   - Document type (invoice, receipt, letter, form, etc.)
+   - Key parties involved (vendor, customer, sender, recipient)
+   - Main purpose or outcome
+   - Important amounts, dates, or reference numbers"""
+
+        elif document_type == DocumentType.text:
+            # Could be manual, report, documentation, etc.
+            return """2-3 sentence summary capturing:
+   - Main topic or purpose
+   - Key instructions, findings, or recommendations
+   - Important warnings, requirements, or constraints (if present)"""
+
+        elif document_type == DocumentType.office:
+            return """2-3 sentence summary capturing:
+   - Document purpose (presentation, report, spreadsheet analysis)
+   - Main points, findings, or recommendations
+   - Key data, conclusions, or next steps"""
+
+        else:
+            # Default for other types
+            return "2-3 sentence summary of main content"
+
     def _build_controlled_enrichment_prompt(
         self,
         content: str,
         filename: str,
         document_type: DocumentType,
-        extracted_title: str
+        extracted_title: str,
+        metadata: Optional[Dict] = None
     ) -> str:
         """Build enrichment prompt with controlled vocabulary"""
 
@@ -805,7 +903,7 @@ Extract the following (return as JSON):
    - Format examples: "Q3 Launch: AI Integration Plan", "Legal Motion: Custody Modification", "ChatGPT: RAG Architecture Discussion"
    - Be specific and informative, not generic
 
-2. **summary**: 2-3 sentence summary of main content
+2. **summary**: {self._get_summary_instructions(document_type, metadata)}
 
 3. **topics**: Array of topics from this CONTROLLED list:
    {json.dumps(topic_examples)}
@@ -1051,6 +1149,7 @@ Return ONLY this JSON structure (no markdown, no explanations):
                 dates_detailed.append({"date": d})
 
         # Define keys we're setting (to avoid duplicates from existing_metadata)
+        # NOTE: Threading fields (thread_id, message_id, etc.) NOT in this list - they pass through from existing_metadata
         known_keys = {
             "content_hash", "content_hash_short", "filename", "document_type",
             "title", "summary", "topics", "places", "projects",
@@ -1059,6 +1158,11 @@ Return ONLY this JSON structure (no markdown, no explanations):
             "enrichment_version", "enrichment_date", "enrichment_cost",
             "word_count", "char_count", "created_at", "enriched", "entities"
         }
+
+        # EXPLICIT: Preserve email threading metadata from existing_metadata
+        threading_fields = ['thread_id', 'message_id', 'in_reply_to', 'references', 'sender', 'recipients', 'subject',
+                           'thread_topic', 'thread_index', 'has_attachments', 'attachment_count', 'attachment_paths',
+                           'is_attachment', 'parent_doc_id', 'parent_sender']
 
         metadata = {
             # === IDENTITY ===
@@ -1117,10 +1221,15 @@ Return ONLY this JSON structure (no markdown, no explanations):
             "created_at": datetime.now().isoformat(),
             "enriched": True,
 
-            # Preserve existing (that aren't in our known keys)
+            # === EMAIL THREADING (explicit preservation) ===
+            **{k: existing_metadata.get(k, '') for k in threading_fields if k in existing_metadata},
+
+            # Preserve other existing metadata (that aren't in our known keys)
             **{k: str(v) for k, v in existing_metadata.items()
-               if isinstance(v, (str, int, float, bool)) and k not in known_keys}
+               if isinstance(v, (str, int, float, bool, list)) and k not in known_keys and k not in threading_fields}
         }
+
+        logger.info(f"📧 Threading preserved: thread_id={metadata.get('thread_id', 'MISSING')}, sender={metadata.get('sender', 'MISSING')[:30]}")
 
         return metadata
 

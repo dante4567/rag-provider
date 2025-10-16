@@ -986,8 +986,18 @@ class RAGService:
             logger.error(f"Document processing failed: {e}")
             raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
-    async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True, use_critic: bool = False, use_iteration: bool = False) -> IngestResponse:
-        """Process a file from path"""
+    async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True, use_critic: bool = False, use_iteration: bool = False, process_attachments: bool = True) -> IngestResponse:
+        """
+        Process a file from path
+
+        Args:
+            file_path: Path to file
+            process_ocr: Enable OCR for images
+            generate_obsidian: Generate Obsidian markdown
+            use_critic: Use LLM-as-critic quality scoring
+            use_iteration: Use self-improvement loop
+            process_attachments: Process email attachments as separate documents (default: True)
+        """
         try:
             # Extract text using document service
             logger.info(f"🔄 Processing file: {file_path}")
@@ -998,7 +1008,8 @@ class RAGService:
 
             filename = Path(file_path).name
 
-            return await self.process_document(
+            # Process main document
+            result = await self.process_document(
                 content=content,
                 filename=filename,
                 document_type=document_type,
@@ -1008,9 +1019,97 @@ class RAGService:
                 use_critic=use_critic,
                 use_iteration=use_iteration
             )
+
+            # Process email attachments if present
+            if process_attachments and metadata.get('has_attachments', False):
+                attachment_paths = metadata.get('attachment_paths', [])
+                if attachment_paths:
+                    logger.info(f"📎 Processing {len(attachment_paths)} email attachments as separate documents...")
+                    await self._process_email_attachments(
+                        attachment_paths=attachment_paths,
+                        parent_doc_id=result.doc_id,
+                        parent_metadata=metadata,
+                        process_ocr=process_ocr,
+                        generate_obsidian=generate_obsidian
+                    )
+
+            return result
         except Exception as e:
             logger.error(f"File processing failed for {file_path}: {e}")
             raise
+
+    async def _process_email_attachments(
+        self,
+        attachment_paths: List[str],
+        parent_doc_id: str,
+        parent_metadata: Dict[str, Any],
+        process_ocr: bool = False,
+        generate_obsidian: bool = True
+    ):
+        """
+        Process email attachments as separate documents
+
+        Args:
+            attachment_paths: List of paths to attachment files
+            parent_doc_id: Document ID of parent email
+            parent_metadata: Metadata from parent email (for threading context)
+            process_ocr: Enable OCR for image attachments
+            generate_obsidian: Generate Obsidian markdown for attachments
+        """
+        success_count = 0
+        skip_count = 0
+
+        for att_path in attachment_paths:
+            att_path_obj = Path(att_path)
+
+            # Skip non-document attachments (logos, icons, etc.)
+            if att_path_obj.suffix.lower() in ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico']:
+                # Only process if they're large enough to be content (not logos)
+                if att_path_obj.exists() and att_path_obj.stat().st_size < 50000:  # < 50KB = likely logo/icon
+                    logger.debug(f"   ⏭️  Skipping small image: {att_path_obj.name} ({att_path_obj.stat().st_size} bytes)")
+                    skip_count += 1
+                    continue
+
+            try:
+                # Extract content from attachment
+                content, doc_type, att_metadata = await self.document_service.extract_text_from_file(
+                    att_path,
+                    process_ocr=process_ocr
+                )
+
+                # Skip if no meaningful content extracted
+                if not content or len(content.strip()) < 20:
+                    logger.debug(f"   ⏭️  Skipping attachment with minimal content: {att_path_obj.name}")
+                    skip_count += 1
+                    continue
+
+                # Enrich attachment metadata with parent context
+                att_metadata['parent_doc_id'] = parent_doc_id
+                att_metadata['thread_id'] = parent_metadata.get('thread_id', '')
+                att_metadata['subject'] = f"Attachment: {parent_metadata.get('subject', 'Email')}"
+                att_metadata['is_attachment'] = True
+                att_metadata['parent_sender'] = parent_metadata.get('sender', 'Unknown')
+
+                # Process as regular document
+                await self.process_document(
+                    content=content,
+                    filename=f"[Attachment] {att_path_obj.name}",
+                    document_type=doc_type,
+                    process_ocr=False,  # Already processed if needed
+                    generate_obsidian=generate_obsidian,
+                    file_metadata=att_metadata,
+                    use_critic=False,  # Skip critic for attachments (cost optimization)
+                    use_iteration=False
+                )
+
+                success_count += 1
+                logger.info(f"   ✅ Processed attachment: {att_path_obj.name}")
+
+            except Exception as e:
+                logger.warning(f"   ⚠️  Failed to process attachment {att_path_obj.name}: {e}")
+                continue
+
+        logger.info(f"📎 Attachment processing complete: {success_count} processed, {skip_count} skipped")
 
     async def process_file_from_watch(self, file_path: str):
         """Process file from watch folder and move to processed"""
