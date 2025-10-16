@@ -33,15 +33,32 @@ class RerankingService:
         """Lazy load the cross-encoder model on first use"""
         if self.model is None:
             try:
+                import torch
                 from sentence_transformers import CrossEncoder
                 logger.info(f"📥 Loading {self.model_name} (first use only, ~3GB download)...")
-                self.model = CrossEncoder(self.model_name, max_length=512)
+
+                # Determine device (CPU or CUDA)
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                logger.info(f"🖥️  Using device: {device}")
+
+                # Load model with explicit device handling for PyTorch 2.x
+                # Use default_device context to avoid meta tensor issues
+                with torch.device(device):
+                    self.model = CrossEncoder(
+                        self.model_name,
+                        max_length=512,
+                        device=device
+                    )
+
                 logger.info("✅ Reranking model loaded successfully")
-            except ImportError:
+            except ImportError as e:
+                logger.error(f"❌ Import error: {e}")
                 logger.error("❌ sentence-transformers not installed. Run: pip install sentence-transformers")
                 raise
             except Exception as e:
                 logger.error(f"❌ Failed to load reranking model: {e}")
+                logger.error(f"   Error type: {type(e).__name__}")
+                logger.error(f"   PyTorch version: {torch.__version__ if 'torch' in locals() else 'unknown'}")
                 raise
 
     def rerank(
