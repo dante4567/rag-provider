@@ -419,7 +419,7 @@ class RAGService:
                 vector_service=self.vector_service,
                 obsidian_service=self.obsidian_service,
                 enable_quality_gate=False,  # Disabled by default (set ENABLE_QUALITY_GATE=true to enable)
-                enable_export=False  # Disabled - export stage needs API update to match ObsidianService
+                enable_export=True  # Re-enabled after fixing API mismatch
             )
 
             self.using_new_services = True
