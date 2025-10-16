@@ -1033,7 +1033,8 @@ class RAGService:
     async def process_document_pipeline(self,
                                         content: str,
                                         filename: str = None,
-                                        document_type: DocumentType = DocumentType.text) -> IngestResponse:
+                                        document_type: DocumentType = DocumentType.text,
+                                        metadata: Dict[str, Any] = None) -> IngestResponse:
         """
         Process document using modular pipeline architecture.
 
@@ -1045,6 +1046,7 @@ class RAGService:
             content: Document content
             filename: Optional filename
             document_type: Type of document
+            metadata: Original document metadata (e.g., email headers with created_date)
 
         Returns:
             IngestResponse with ingestion results
@@ -1088,11 +1090,12 @@ class RAGService:
         try:
             logger.info(f"▶️  Starting pipeline ingestion: {filename or doc_id}")
 
-            # Create raw document
+            # Create raw document with original metadata (contains email created_date, etc.)
             raw_doc = RawDocument(
                 content=content,
                 filename=filename,
-                document_type=document_type
+                document_type=document_type,
+                metadata=metadata or {}  # Pass through original metadata from document parsing
             )
 
             # Create pipeline context
@@ -1275,7 +1278,8 @@ class RAGService:
                 result = await self.process_document_pipeline(
                     content=content,
                     filename=filename,
-                    document_type=document_type
+                    document_type=document_type,
+                    metadata=metadata  # Pass metadata with email created_date, etc.
                 )
             else:
                 if use_critic or use_iteration:

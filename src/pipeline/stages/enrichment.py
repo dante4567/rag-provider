@@ -109,12 +109,21 @@ class EnrichmentStage(PipelineStage[RawDocument, EnrichedDocument]):
                 f"{len(locs_list)} places, {len(tech_list)} tech"
             )
 
+            # Merge original metadata (e.g., email created_date) with enriched metadata
+            # Original metadata has precedence for core fields like created_date
+            merged_metadata = {**enriched_metadata}  # Start with enriched
+            if input_data.metadata:
+                # Preserve original metadata fields that shouldn't be overwritten
+                for key in ['created_date', 'message_id', 'thread_id', 'sender', 'recipients', 'subject']:
+                    if key in input_data.metadata:
+                        merged_metadata[key] = input_data.metadata[key]
+
             # Create enriched document
             enriched_doc = EnrichedDocument(
                 content=input_data.content,
                 filename=input_data.filename,
                 document_type=input_data.document_type,
-                enriched_metadata=enriched_metadata,
+                enriched_metadata=merged_metadata,  # Use merged metadata
                 people=people_list,
                 organizations=orgs_list,
                 locations=locs_list,

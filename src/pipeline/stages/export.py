@@ -91,13 +91,26 @@ class ExportStage(PipelineStage[StoredDocument, ExportedDocument]):
             # Get title from metadata
             title = metadata.get("title", context.filename or "Untitled")
 
+            # Get document's original creation date (email send date, etc.)
+            doc_created_at = datetime.now()  # Default to now
+            created_date_str = metadata.get("created_date") or metadata.get("created_at")
+            if created_date_str:
+                try:
+                    if isinstance(created_date_str, str):
+                        # Try parsing ISO date
+                        doc_created_at = datetime.fromisoformat(created_date_str.replace('Z', '+00:00'))
+                    elif isinstance(created_date_str, datetime):
+                        doc_created_at = created_date_str
+                except (ValueError, AttributeError):
+                    self.logger.warning(f"Could not parse created_date: {created_date_str}, using now")
+
             # Export to Obsidian - ObsidianService handles all the parsing internally
             obsidian_path = self.obsidian_service.export_document(
                 title=title,
                 content="",  # Content already in ChromaDB
                 metadata=metadata,  # Pass flat enriched_metadata dict
                 document_type=doc_type_enum,
-                created_at=datetime.now(),
+                created_at=doc_created_at,  # Use document's original date
                 source=context.filename or "pipeline"
             )
 
