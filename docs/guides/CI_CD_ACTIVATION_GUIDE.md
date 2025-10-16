@@ -1,453 +1,234 @@
 # CI/CD Activation Guide
+**Time Required:** 5 minutes
+**Prerequisites:** GitHub repository with workflows configured
 
-**Status:** Ready for activation
-**Workflows:** Configured and pushed to `.github/workflows/`
-**Required:** GitHub repository secrets
+---
 
-## 🎯 Quick Start (5 minutes)
+## Quick Start (5 Minutes)
 
-### Step 1: Add GitHub Secrets
+### Step 1: Get Your API Keys
 
-Navigate to your GitHub repository:
+You need API keys for at least one LLM provider (Groq recommended for cost):
 
-```
-https://github.com/YOUR_USERNAME/rag-provider/settings/secrets/actions
-```
+1. **Groq** (Recommended - Free tier, fast)
+   - Go to: https://console.groq.com/keys
+   - Sign up / Log in
+   - Click "Create API Key"
+   - Copy the key (starts with `gsk_`)
 
-Click **"New repository secret"** and add each of the following:
+2. **Anthropic** (Optional - Higher quality)
+   - Go to: https://console.anthropic.com/settings/keys
+   - Sign up / Log in
+   - Click "Create Key"
+   - Copy the key (starts with `sk-ant-`)
 
-| Secret Name | Value | Required | Purpose |
-|-------------|-------|----------|---------|
-| `GROQ_API_KEY` | `gsk_...` | ✅ Yes | Primary LLM (ultra-cheap) |
-| `ANTHROPIC_API_KEY` | `sk-ant-...` | ✅ Yes | Fallback LLM |
-| `OPENAI_API_KEY` | `sk-...` | ⚠️ Recommended | Emergency fallback |
-| `VOYAGE_API_KEY` | `pa-...` | ✅ Yes | Embeddings (Voyage-3-lite) |
-| `GOOGLE_API_KEY` | `...` | ❌ Optional | Gemini Vision |
+3. **OpenAI** (Optional - Fallback)
+   - Go to: https://platform.openai.com/api-keys
+   - Sign up / Log in
+   - Click "Create new secret key"
+   - Copy the key (starts with `sk-`)
 
-**Where to get keys:**
-- **Groq:** https://console.groq.com/keys
-- **Anthropic:** https://console.anthropic.com/settings/keys
-- **OpenAI:** https://platform.openai.com/api-keys
-- **Voyage:** https://dash.voyageai.com/
-- **Google:** https://makersuite.google.com/app/apikey
+4. **Voyage AI** (Required for embeddings)
+   - Go to: https://dashboard.voyageai.com/
+   - Sign up / Log in
+   - Add payment method (for production rate limits)
+   - Go to API Keys → Create Key
+   - Copy the key
 
-### Step 2: Verify Workflows Exist
+---
 
-Check that workflows are in your repository:
+### Step 2: Add Secrets to GitHub
 
+1. Go to your GitHub repository
+2. Click **Settings** (top right)
+3. In left sidebar: **Secrets and variables** → **Actions**
+4. Click **New repository secret**
+
+Add these secrets one by one:
+
+| Secret Name | Value | Required? |
+|-------------|-------|-----------|
+| `GROQ_API_KEY` | Your Groq key (`gsk_...`) | Yes |
+| `ANTHROPIC_API_KEY` | Your Anthropic key (`sk-ant-...`) | Optional |
+| `OPENAI_API_KEY` | Your OpenAI key (`sk-...`) | Optional |
+| `VOYAGE_API_KEY` | Your Voyage key | Yes |
+
+**Note:** You need at least `GROQ_API_KEY` for the system to work.
+
+---
+
+### Step 3: Trigger Workflows
+
+**Option A: Push a commit**
 ```bash
-ls -la .github/workflows/
-# Should show:
-# - tests.yml
-# - nightly.yml
-```
-
-### Step 3: Trigger First Run
-
-**Option A: Push a commit (automatic)**
-```bash
-git commit --allow-empty -m "Test CI/CD"
+git commit --allow-empty -m "Trigger CI/CD"
 git push
 ```
 
-**Option B: Manual trigger (recommended for first test)**
-1. Go to: `https://github.com/YOUR_USERNAME/rag-provider/actions`
-2. Click on **"Tests"** workflow
-3. Click **"Run workflow"** dropdown
+**Option B: Manually trigger**
+1. Go to **Actions** tab in GitHub
+2. Select workflow (e.g., "Tests")
+3. Click **Run workflow**
 4. Select branch: `main`
-5. Click **"Run workflow"** button
+5. Click **Run workflow**
 
-### Step 4: Monitor First Run
+---
 
-1. Go to Actions tab: `https://github.com/YOUR_USERNAME/rag-provider/actions`
-2. Click on the running workflow
-3. Watch the jobs execute:
-   - ✅ Smoke Tests (< 2 min)
-   - ✅ Unit Tests (< 5 min)
-   - ✅ Fast Integration Tests (< 3 min)
+### Step 4: Verify It Works
 
-**Expected Result:** All jobs complete successfully with green checkmarks ✅
+1. Go to **Actions** tab
+2. See your workflow running (yellow dot)
+3. Wait for completion (green checkmark = success)
+4. If red X → Click workflow → See logs → Fix issue
 
-## 📋 Detailed Setup
+---
 
-### GitHub Actions Workflows Overview
+## Workflow Configuration
 
-**1. tests.yml** - Pull Request & Push Validation
+### tests.yml (Fast Tests on PR)
+**Triggers:** Every push to `main` or PR
+**Duration:** ~3-5 minutes
+**Tests:**
+- Unit tests (921 tests)
+- Smoke tests (11 tests)
+- Skips slow integration tests (marked `@pytest.mark.slow`)
 
-**Triggers:**
-- Every push to `main` or `develop`
-- Every pull request to `main` or `develop`
+**Expected Result:** All tests pass except slow ones
 
-**Jobs:**
-```
-smoke-tests (2 min)
-├── Install dependencies
-├── Start ChromaDB service
-├── Start RAG service
-└── Run 11 smoke tests
+---
 
-unit-tests (5 min)
-├── Install dependencies
-├── Run 571 unit tests
-└── Upload coverage to Codecov
+### nightly.yml (Full Test Suite)
+**Triggers:** Every night at 2 AM UTC
+**Duration:** ~15-20 minutes (includes slow tests)
+**Tests:**
+- All unit tests
+- All integration tests (including slow LLM tests)
+- Full end-to-end validation
 
-fast-integration-tests (3 min)
-├── Install dependencies
-├── Start ChromaDB service
-├── Start RAG service
-└── Run 17 fast integration tests (no LLM calls)
-```
+**Expected Result:** May have some flaky tests (39% integration pass rate currently)
 
-**Total Runtime:** ~10 minutes
+**Known Issues:**
+- Integration tests flaky due to LLM rate limits
+- Voyage rate limiting may cause failures
+- Search timeout issue needs fixing
 
-**2. nightly.yml** - Comprehensive Nightly Testing
+---
 
-**Triggers:**
-- Daily at 2 AM UTC
-- Manual via workflow_dispatch
+### monthly-model-review.yml (Model Pricing Check)
+**Triggers:** 1st of every month at 9 AM UTC
+**Duration:** ~2 minutes
+**Purpose:**
+- Check if model pricing changed
+- Discover new models
+- Generate report
+- Create GitHub issue with recommendations
 
-**Jobs:**
-```
-full-test-suite (20-30 min)
-├── Install dependencies
-├── Start ChromaDB service
-├── Start RAG service
-├── Run 571 unit tests
-├── Run 23 integration tests (including slow)
-├── Generate HTML test report
-├── Upload coverage to Codecov
-└── Upload test artifacts
-```
+**Expected Result:** GitHub issue created with pricing report
 
-**Total Runtime:** ~20-30 minutes
+---
 
-### Environment Setup
+## Troubleshooting
 
-**Required Services:**
+### ❌ Workflow fails: "API key not found"
+**Solution:** Add the missing API key to GitHub Secrets (Step 2)
 
-The workflows automatically start these services:
-
-1. **ChromaDB** (vector database)
-   - Image: `chromadb/chroma:latest`
-   - Port: 8000
-   - Health checks: Automatic
-   - Retries: 5 attempts with 10s interval
-
-2. **RAG Service** (main application)
-   - Starts from repository code
-   - Port: 8001
-   - Health endpoint: `/health`
-   - Startup wait: 10 seconds + retries
-
-**System Dependencies:**
-
-Automatically installed in CI:
-- tesseract-ocr (multiple languages)
-- poppler-utils (PDF processing)
-- libmagic1 (file type detection)
-- Python 3.11
-
-**Python Dependencies:**
-
-Automatically installed from `requirements.txt`:
-- FastAPI, Uvicorn
-- ChromaDB, sentence-transformers
-- LLM clients (litellm, anthropic, openai, groq)
-- Document processing (unstructured, pypdf, python-docx)
-- Testing (pytest, pytest-asyncio, pytest-cov)
-
-## 🔍 Troubleshooting
-
-### Issue 1: "Secrets not found"
-
-**Symptom:** Workflow fails with missing environment variables
-
+### ❌ Workflow fails: "Voyage rate limit exceeded"
 **Solution:**
-1. Verify secrets are added: Settings → Secrets → Actions
-2. Check secret names match exactly (case-sensitive)
-3. Re-run workflow after adding secrets
+1. Add payment method to Voyage account (unlocks 300 RPM)
+2. OR implement local embeddings fallback (see PRODUCTION_READINESS_ASSESSMENT.md)
 
-**Verification:**
-```yaml
-# Secrets should be visible in workflow logs as:
-GROQ_API_KEY: ***
-ANTHROPIC_API_KEY: ***
-```
-
-### Issue 2: "ChromaDB connection failed"
-
-**Symptom:** Tests fail with connection refused errors
-
-**Cause:** ChromaDB service not ready
-
-**Solution:** Already handled by workflow retries
-
-**Check logs:**
-```
-Step: Wait for service
-✅ Service is ready (attempt 3/30)
-```
-
-### Issue 3: "Rate limit exceeded (HTTP 429)"
-
-**Symptom:** Slow integration tests fail
-
-**Expected:** Normal for batch LLM tests
-
+### ❌ Integration tests timeout
 **Solution:**
-- Smoke tests: No LLM calls, always pass ✅
-- Fast integration tests: No LLM calls, always pass ✅
-- Slow integration tests: Run in nightly only, `continue-on-error: true`
+- This is expected (search timeout issue)
+- See PRODUCTION_READINESS_ASSESSMENT.md for investigation steps
+- For now, fast tests should pass
 
-**Status:** Not a failure, by design
-
-### Issue 4: "Tests pass locally, fail in CI"
-
-**Possible causes:**
-1. Missing environment variables
-2. Different Python/package versions
-3. Timing issues
-
-**Debug steps:**
+### ❌ All tests fail
+**Solution:** Check Docker logs:
 ```bash
-# 1. Check workflow logs for specific error
-# 2. Reproduce locally with exact CI Python version
-docker run -it python:3.11-slim bash
-pip install -r requirements.txt
-pytest tests/integration/test_smoke.py -v
-
-# 3. Check service startup timing in logs
-```
-
-## 📊 Monitoring & Badges
-
-### Status Badges
-
-Already added to README.md:
-
-```markdown
-![Tests](https://github.com/YOUR_USERNAME/rag-provider/workflows/Tests/badge.svg)
-![Nightly Tests](https://github.com/YOUR_USERNAME/rag-provider/workflows/Nightly%20Tests/badge.svg)
-```
-
-**Badge Status:**
-- 🟢 Green: All tests passing
-- 🔴 Red: Some tests failing
-- ⚪ Gray: Workflow not run yet
-
-### GitHub CLI Monitoring
-
-```bash
-# Install GitHub CLI
-brew install gh  # macOS
-# or: https://cli.github.com/
-
-# Authenticate
-gh auth login
-
-# List recent runs
-gh run list --workflow=tests.yml
-gh run list --workflow=nightly.yml
-
-# View specific run
-gh run view <run-id>
-
-# Watch live run
-gh run watch
-
-# Download artifacts
-gh run download <run-id>
-```
-
-### Email Notifications
-
-**Configure in GitHub:**
-1. Go to: https://github.com/settings/notifications
-2. Under "Actions":
-   - ✅ Enable "Send notifications for failed workflows only"
-   - Or: Custom notification settings
-
-## 🎨 Optional Enhancements
-
-### 1. Codecov Integration
-
-**Setup:**
-1. Sign up: https://codecov.io/
-2. Add repository
-3. Get upload token
-4. Add `CODECOV_TOKEN` secret (if private repo)
-
-**Benefit:** Coverage tracking over time
-
-**Status:** Already configured in workflows, awaiting token
-
-### 2. Slack Notifications
-
-Add to workflows:
-
-```yaml
-- name: Notify Slack
-  if: failure()
-  uses: slackapi/slack-github-action@v1
-  with:
-    payload: |
-      {
-        "text": "❌ Tests failed on ${{ github.ref }}"
-      }
-  env:
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-```
-
-### 3. Matrix Testing (Multiple Python Versions)
-
-```yaml
-strategy:
-  matrix:
-    python-version: ['3.10', '3.11', '3.12']
-
-steps:
-  - uses: actions/setup-python@v5
-    with:
-      python-version: ${{ matrix.python-version }}
-```
-
-**Benefit:** Test compatibility across Python versions
-
-**Trade-off:** 3x longer CI runtime
-
-### 4. Dependabot (Automated Dependency Updates)
-
-Create `.github/dependabot.yml`:
-
-```yaml
-version: 2
-updates:
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-```
-
-**Benefit:** Automatic PRs for dependency updates
-
-## ✅ Verification Checklist
-
-After activation, verify:
-
-- [ ] Secrets added to GitHub repository
-- [ ] Workflow badges appear in README
-- [ ] First workflow run completed successfully
-- [ ] Smoke tests passing (< 5s)
-- [ ] Unit tests passing (< 5min)
-- [ ] Fast integration tests passing (< 3min)
-- [ ] Workflow logs accessible
-- [ ] Coverage reports generated
-- [ ] Test artifacts uploaded
-
-## 📚 Related Documentation
-
-- **[Testing Guide](TESTING_GUIDE.md)** - How to run tests locally
-- **[CI/CD Setup](.github/README.md)** - Detailed workflow documentation
-- **[Integration Test Analysis](INTEGRATION_TEST_ANALYSIS.md)** - Optimization details
-- **[Project Status](PROJECT_STATUS.md)** - Overall system status
-
-## 🚀 Next Steps
-
-**After CI/CD activation:**
-
-1. **Monitor first few runs**
-   - Watch for any environment-specific issues
-   - Verify all test suites pass
-   - Check timing matches expectations
-
-2. **Configure branch protection** (recommended)
-   - Go to: Settings → Branches → Add rule
-   - Branch name pattern: `main`
-   - ✅ Require status checks to pass before merging
-   - Select: "Smoke Tests", "Unit Tests", "Fast Integration Tests"
-   - ✅ Require branches to be up to date before merging
-
-3. **Set up notifications**
-   - GitHub email notifications
-   - Slack integration (optional)
-   - Custom webhooks (optional)
-
-4. **Production deployment**
-   - Choose hosting platform
-   - Set up monitoring
-   - Configure backups
-
-## 🎓 Best Practices
-
-### For Pull Requests
-
-1. **Keep tests fast**
-   - Smoke tests: < 5s
-   - Unit tests: < 5min
-   - Skip slow LLM tests
-
-2. **Fail fast**
-   - Smoke tests run first
-   - Use `--maxfail=1` for smoke tests
-   - Stop on first critical failure
-
-3. **Clear feedback**
-   - Descriptive test names
-   - Good error messages
-   - Logs available on failure
-
-### For Nightly Builds
-
-1. **Comprehensive coverage**
-   - Run all tests including slow ones
-   - Generate full reports
-   - Track coverage trends
-
-2. **Graceful degradation**
-   - Use `continue-on-error: true` for rate-limited tests
-   - Upload reports even on partial failure
-   - Clear status in final summary
-
-### For Releases
-
-**Before tagging:**
-1. ✅ All tests passing (including nightly)
-2. ✅ Coverage meeting targets
-3. ✅ No critical bugs
-4. ✅ Documentation updated
-
-**Tag and release:**
-```bash
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
-```
-
-## 📞 Support
-
-**If workflows fail:**
-1. Check workflow logs in Actions tab
-2. Review troubleshooting section above
-3. Consult [TESTING_GUIDE.md](TESTING_GUIDE.md)
-4. Verify secrets configuration
-5. Test locally first
-
-**Common commands:**
-```bash
-# Run smoke tests locally
-pytest tests/integration/test_smoke.py -v
-
-# Check service health
-curl http://localhost:8001/health
-
-# View workflow logs
-gh run view --log
-
-# Re-run failed jobs
-gh run rerun <run-id> --failed
+docker logs rag_service --tail 100
 ```
 
 ---
 
-**Activation Status:** ⏸️ Awaiting GitHub secrets
-**Estimated Time:** 5 minutes
-**Next Action:** Add API keys to GitHub secrets
+## Next Steps After Activation
+
+1. **Fix Production Blockers** (see PRODUCTION_READINESS_ASSESSMENT.md)
+   - Voyage rate limiting
+   - Search timeout
+
+2. **Monitor CI/CD**
+   - Check daily for failures
+   - Fix flaky integration tests
+   - Add more test coverage if needed
+
+3. **Monthly Model Review**
+   - Review automated pricing reports
+   - Evaluate new models
+   - Update model selections if better options appear
+
+4. **Performance Monitoring**
+   - Add Prometheus metrics
+   - Set up Grafana dashboards
+   - Monitor latency/throughput in production
+
+---
+
+## FAQ
+
+**Q: Do I need all 4 API keys?**
+A: No. Minimum: `GROQ_API_KEY` + `VOYAGE_API_KEY`. Others are fallbacks.
+
+**Q: Will this cost money?**
+A: Groq free tier is generous. Voyage needs payment method but you have 200M free tokens.
+
+**Q: What if CI/CD fails?**
+A: Check logs, fix issues, push again. Integration tests may be flaky (known issue).
+
+**Q: Can I disable slow tests?**
+A: Yes. They're marked `@pytest.mark.slow` and skipped in fast workflows.
+
+**Q: How do I run tests locally?**
+A:
+```bash
+# Fast tests
+pytest tests/unit/ -v
+
+# All tests except slow
+pytest -m "not slow" -v
+
+# Everything (including slow)
+pytest tests/ -v
+```
+
+---
+
+## Security Best Practices
+
+1. **Never commit API keys** to git
+2. **Use GitHub Secrets** for all sensitive data
+3. **Rotate keys** if accidentally exposed
+4. **Use separate keys** for dev/staging/prod
+5. **Monitor API usage** for unexpected spikes
+
+---
+
+## Useful Commands
+
+```bash
+# Check workflow status
+gh run list --limit 10
+
+# Watch live workflow
+gh run watch
+
+# View workflow logs
+gh run view --log
+
+# Trigger manual workflow
+gh workflow run tests.yml
+```
+
+---
+
+*This guide is part of the production readiness validation (2025-10-13). For production blocker fixes, see PRODUCTION_READINESS_ASSESSMENT.md.*
