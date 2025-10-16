@@ -143,6 +143,17 @@ class ObsidianMetadata(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     enrichment_version: Optional[str] = Field(default="2.0", description="Enrichment system version")
 
+    # === Email Threading Fields (optional, only for emails) ===
+    thread_id: Optional[str] = Field(default=None, description="Email thread identifier")
+    message_id: Optional[str] = Field(default=None, description="RFC 2822 Message-ID")
+    in_reply_to: Optional[str] = Field(default=None, description="In-Reply-To header")
+    references: Optional[str] = Field(default=None, description="References header")
+    sender: Optional[str] = Field(default=None, description="Email sender (From)")
+    recipients: Optional[str] = Field(default=None, description="Email recipients (To)")
+    subject: Optional[str] = Field(default=None, description="Email subject")
+    has_attachments: Optional[bool] = Field(default=None, description="Email has attachments")
+    attachment_count: Optional[int] = Field(default=None, description="Number of attachments")
+
 
 # ===== Request Models =====
 
@@ -168,10 +179,19 @@ class EnrichmentSettings(BaseModel):
 
 
 class Query(BaseModel):
-    """Search query request"""
+    """Search query request with hard filters"""
     text: str = Field(..., min_length=1, description="Search query text")
     top_k: int = Field(default=5, ge=1, le=100, description="Number of results to return")
     filter: Optional[Dict[str, Any]] = Field(default=None, description="Metadata filters")
+
+    # Hard filters (must pass all - enforced before search)
+    doc_types: Optional[List[str]] = Field(default=None, description="Filter by document types")
+    date_from: Optional[str] = Field(default=None, description="Filter docs after date (YYYY-MM-DD)")
+    date_to: Optional[str] = Field(default=None, description="Filter docs before date (YYYY-MM-DD)")
+    languages: Optional[List[str]] = Field(default=None, description="Filter by language codes (en, de, fr)")
+    min_quality: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Minimum quality score")
+    has_no_pii: Optional[bool] = Field(default=None, description="Exclude documents with detected PII")
+    tenant_id: Optional[str] = Field(default=None, description="Multi-tenant isolation")
 
 
 class ChatRequest(BaseModel):

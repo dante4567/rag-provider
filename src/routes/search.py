@@ -176,6 +176,146 @@ async def get_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/threads/{thread_id}")
+async def get_thread_messages(
+    thread_id: str,
+    collection = Depends(get_app_collection)
+):
+    """
+    Get all messages in an email thread
+
+    Returns messages grouped by thread_id, sorted chronologically
+    """
+    try:
+        # Search for all documents with this thread_id
+        results = collection.get(
+            where={"thread_id": thread_id},
+            include=['metadatas']
+        )
+
+        if not results['metadatas']:
+            raise HTTPException(status_code=404, detail=f"Thread {thread_id} not found")
+
+        # Group by doc_id and get unique documents
+        docs_by_id = {}
+        for metadata in results['metadatas']:
+            doc_id = metadata.get('doc_id')
+            if doc_id and doc_id not in docs_by_id:
+                docs_by_id[doc_id] = metadata
+
+        # Sort by created_at date
+        thread_docs = sorted(docs_by_id.values(), key=lambda x: x.get('created_at', ''))
+
+        return {
+            "thread_id": thread_id,
+            "message_count": len(thread_docs),
+            "messages": [
+                {
+                    "doc_id": doc.get('doc_id'),
+                    "title": doc.get('title'),
+                    "subject": doc.get('subject'),
+                    "sender": doc.get('sender'),
+                    "created_at": doc.get('created_at'),
+                    "summary": doc.get('summary', '')[:200]
+                }
+                for doc in thread_docs
+            ]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get thread {thread_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/entities/{entity_name}/timeline")
+async def get_entity_timeline(
+    entity_name: str,
+    entity_type: str = "person",
+    collection = Depends(get_app_collection)
+):
+    """
+    Get timeline of all documents mentioning an entity
+
+    Args:
+        entity_name: Name of entity (e.g., "Vimalas Borsch", "Köln")
+        entity_type: Type of entity (person, place, organization)
+
+    Returns chronologically sorted documents mentioning the entity
+    """
+    try:
+        # Get all documents (we'll filter client-side since ChromaDB doesn't support LIKE queries)
+        results = collection.get(include=['metadatas'])
+
+        # Filter documents containing the entity
+        matching_docs = []
+        for metadata in results['metadatas']:
+            doc_id = metadata.get('doc_id')
+
+            # Check if entity appears in appropriate field
+            if entity_type == "person":
+                people_str = metadata.get('people', '')
+                if isinstance(people_str, list):
+                    people_names = people_str
+                else:
+                    people_names = people_str.split(',') if people_str else []
+
+                if any(entity_name.lower() in name.lower() for name in people_names):
+                    matching_docs.append((doc_id, metadata))
+
+            elif entity_type == "place":
+                places_str = metadata.get('places', '')
+                if isinstance(places_str, list):
+                    places = places_str
+                else:
+                    places = places_str.split(',') if places_str else []
+
+                if any(entity_name.lower() in place.lower() for place in places):
+                    matching_docs.append((doc_id, metadata))
+
+            elif entity_type == "organization":
+                orgs_str = metadata.get('organizations', '')
+                if isinstance(orgs_str, list):
+                    orgs = orgs_str
+                else:
+                    orgs = orgs_str.split(',') if orgs_str else []
+
+                if any(entity_name.lower() in org.lower() for org in orgs):
+                    matching_docs.append((doc_id, metadata))
+
+        # Remove duplicates by doc_id
+        unique_docs = {doc_id: meta for doc_id, meta in matching_docs}
+
+        # Sort chronologically
+        timeline = sorted(
+            unique_docs.values(),
+            key=lambda x: x.get('created_at', ''),
+            reverse=True  # Most recent first
+        )
+
+        return {
+            "entity": entity_name,
+            "entity_type": entity_type,
+            "document_count": len(timeline),
+            "timeline": [
+                {
+                    "doc_id": doc.get('doc_id'),
+                    "title": doc.get('title'),
+                    "created_at": doc.get('created_at'),
+                    "summary": doc.get('summary', '')[:200],
+                    "doc_type": doc.get('doc_type'),
+                    "thread_id": doc.get('thread_id', '')
+                }
+                for doc in timeline
+            ]
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get entity timeline for {entity_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.delete("/documents/{doc_id}")
 async def delete_document(
     doc_id: str,

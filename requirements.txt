@@ -222,3 +222,4 @@ xlrd==2.0.2
 xlsxwriter==3.2.9
 yarl==1.22.0
 zipp==3.23.0
+flashtext==2.7

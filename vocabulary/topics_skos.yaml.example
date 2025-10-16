@@ -1,0 +1,272 @@
+# SKOS-Enhanced Topics Vocabulary
+# This is the NEW format with semantic properties
+# Migration: Gradually convert topics.yaml to this format
+
+# Metadata
+meta:
+  version: "2.0"
+  format: "SKOS-compatible YAML"
+  last_updated: "2025-10-16"
+  total_concepts: 12
+  changelog_url: "VOCABULARY_CHANGELOG.md"
+
+# Concepts (SKOS format)
+concepts:
+  # Technology / AI Concepts
+  - id: "tech_ai_001"
+    prefLabel: "Artificial Intelligence"
+    altLabel:
+      - "AI"
+      - "machine intelligence"
+      - "artificial general intelligence"
+      - "AGI"
+    hiddenLabel:  # Common misspellings/variants for matching only
+      - "artifical intelligence"
+      - "AI/ML"
+      - "A.I."
+    scopeNote: |
+      Use for general AI discussions, research, and applications.
+      For specific ML topics, use narrower terms (tech_ml_001, tech_nlp_001).
+      Do NOT use for simple automation or rule-based systems.
+    broader:
+      - "tech_computing_001"
+    narrower:
+      - "tech_ml_001"
+      - "tech_nlp_001"
+      - "tech_cv_001"
+    related:
+      - "tech_data_science_001"
+    examples:
+      - "AI ethics and alignment"
+      - "Neural network architectures"
+      - "Large language models"
+    status: "active"  # active, deprecated, proposed
+    created: "2025-01-01"
+    modified: "2025-10-16"
+
+  - id: "tech_ml_001"
+    prefLabel: "Machine Learning"
+    altLabel:
+      - "ML"
+      - "statistical learning"
+      - "predictive modeling"
+    hiddenLabel:
+      - "maching learning"
+      - "M.L."
+    scopeNote: |
+      Use for supervised, unsupervised, and reinforcement learning.
+      Includes traditional ML (SVM, decision trees) and deep learning.
+      Prefer narrower terms for specific techniques when applicable.
+    broader:
+      - "tech_ai_001"
+    narrower:
+      - "tech_deep_learning_001"
+      - "tech_supervised_learning_001"
+    related:
+      - "tech_data_science_001"
+      - "tech_statistics_001"
+    status: "active"
+    created: "2025-01-01"
+    modified: "2025-10-16"
+
+  - id: "tech_nlp_001"
+    prefLabel: "Natural Language Processing"
+    altLabel:
+      - "NLP"
+      - "computational linguistics"
+      - "language AI"
+      - "text processing"
+    hiddenLabel:
+      - "N.L.P."
+      - "natural language procssing"
+    scopeNote: |
+      Use for text analysis, language understanding, and generation.
+      Includes: tokenization, parsing, NER, sentiment analysis, LLMs.
+      Use tech_llm_001 specifically for large language models.
+    broader:
+      - "tech_ai_001"
+    narrower:
+      - "tech_llm_001"
+      - "tech_ner_001"
+      - "tech_sentiment_001"
+    related:
+      - "tech_ml_001"
+    examples:
+      - "Named entity recognition"
+      - "Machine translation"
+      - "Text summarization"
+    status: "active"
+    created: "2025-01-01"
+    modified: "2025-10-16"
+
+  - id: "tech_llm_001"
+    prefLabel: "Large Language Models"
+    altLabel:
+      - "LLM"
+      - "language models"
+      - "foundation models"
+      - "generative AI"
+    hiddenLabel:
+      - "L.L.M."
+      - "LLMs"
+    scopeNote: |
+      Use for models like GPT, Claude, Llama, etc.
+      Includes: prompting, fine-tuning, RLHF, embeddings.
+      Use tech_rag_001 for RAG-specific discussions.
+    broader:
+      - "tech_nlp_001"
+    narrower:
+      - "tech_rag_001"
+      - "tech_prompt_engineering_001"
+    related:
+      - "tech_ai_001"
+    examples:
+      - "GPT-4 capabilities"
+      - "Prompt engineering techniques"
+      - "LLM evaluation metrics"
+    status: "active"
+    created: "2025-03-01"
+    modified: "2025-10-16"
+
+  - id: "tech_rag_001"
+    prefLabel: "Retrieval-Augmented Generation"
+    altLabel:
+      - "RAG"
+      - "retrieval augmented generation"
+      - "knowledge-enhanced LLMs"
+    hiddenLabel:
+      - "R.A.G."
+      - "RAG systems"
+    scopeNote: |
+      Use for systems combining vector search with LLM generation.
+      Includes: embeddings, vector DBs, hybrid search, reranking.
+      Core topic for this repository!
+    broader:
+      - "tech_llm_001"
+    narrower:
+      - "tech_embeddings_001"
+      - "tech_vector_db_001"
+    related:
+      - "tech_information_retrieval_001"
+    examples:
+      - "Hybrid search strategies"
+      - "Embedding model selection"
+      - "Reranking techniques"
+    status: "active"
+    created: "2025-03-01"
+    modified: "2025-10-16"
+    tags:
+      - "core"  # Core topic for this system
+      - "technical"
+
+  # Legal Concepts
+  - id: "legal_court_001"
+    prefLabel: "Court Proceedings"
+    altLabel:
+      - "court case"
+      - "litigation"
+      - "judicial proceedings"
+      - "lawsuit"
+    hiddenLabel:
+      - "court preceedings"
+      - "legal case"
+    scopeNote: |
+      Use for documents related to court cases, hearings, trials.
+      Includes: motions, decisions, summons, judgments.
+      Use narrower terms for specific court types (family, criminal, civil).
+    broader:
+      - "legal_system_001"
+    narrower:
+      - "legal_family_court_001"
+      - "legal_criminal_court_001"
+    related:
+      - "legal_lawyer_001"
+    status: "active"
+    created: "2025-01-01"
+    modified: "2025-10-16"
+
+  # Education Concepts
+  - id: "edu_school_001"
+    prefLabel: "School Education"
+    altLabel:
+      - "school"
+      - "K-12 education"
+      - "primary school"
+      - "elementary school"
+    hiddenLabel:
+      - "scool"
+      - "schule"  # German
+    scopeNote: |
+      Use for K-12 school-related documents.
+      Includes: enrollment, report cards, parent-teacher communication.
+      Use edu_university_001 for higher education.
+    broader:
+      - "education_001"
+    narrower:
+      - "edu_elementary_001"
+      - "edu_high_school_001"
+    related:
+      - "edu_curriculum_001"
+    status: "active"
+    created: "2025-01-01"
+    modified: "2025-10-16"
+
+  # Deprecated Concept Example
+  - id: "tech_machine_intelligence_001"
+    prefLabel: "Machine Intelligence"
+    altLabel: []
+    scopeNote: "DEPRECATED: Use tech_ai_001 (Artificial Intelligence) instead."
+    status: "deprecated"
+    replacedBy: "tech_ai_001"
+    created: "2025-01-01"
+    deprecated: "2025-06-01"
+    reason: "Redundant with Artificial Intelligence concept"
+
+# Stop Concepts (too broad for useful indexing)
+stop_concepts:
+  - id: "document_001"
+    prefLabel: "Document"
+    reason: "Too generic, use specific document types instead"
+
+  - id: "information_001"
+    prefLabel: "Information"
+    reason: "Too abstract, use specific topics"
+
+# External Mappings (to Wikidata, Schema.org, etc.)
+mappings:
+  - concept_id: "tech_ai_001"
+    exactMatch:
+      - "http://www.wikidata.org/entity/Q11660"  # Artificial Intelligence
+      - "https://schema.org/ArtificialIntelligence"
+    confidence: 0.95
+
+  - concept_id: "tech_ml_001"
+    closeMatch:
+      - "http://www.wikidata.org/entity/Q2539"  # Machine Learning
+    confidence: 0.90
+
+# Governance
+governance:
+  review_frequency: "monthly"
+  maintainers:
+    - "system_admin"
+  approval_required: true
+  ci_validation: true
+  changelog_required: true
+
+# Validation Rules (for SHACL or custom validator)
+validation_rules:
+  - rule: "no_cycles"
+    description: "broader/narrower relationships must not form cycles"
+
+  - rule: "unique_prefLabel"
+    description: "Each prefLabel must be unique"
+
+  - rule: "unique_altLabel"
+    description: "altLabels must not duplicate across concepts"
+
+  - rule: "required_fields"
+    description: "prefLabel, status, created are required"
+
+  - rule: "deprecated_has_replacedBy"
+    description: "Deprecated concepts must specify replacedBy"

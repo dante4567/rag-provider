@@ -69,27 +69,36 @@ async def chat_with_rag(
 
         logger.info(f"🎯 Reranking: {len(results_for_reranking)} → {len(reranked_results)} results")
 
-        # Step 2: Prepare context from reranked results
+        # Step 2: Prepare context from reranked results with chunk IDs
         context_chunks = []
-        for result in reranked_results:
-            context_chunks.append(f"Source: {result['metadata'].get('filename', 'Unknown')}\nContent: {result['content']}")
+        for idx, result in enumerate(reranked_results, 1):
+            filename = result['metadata'].get('filename', 'Unknown')
+            context_chunks.append(f"[Chunk {idx}] Source: {filename}\n{result['content']}")
 
         context = "\n\n---\n\n".join(context_chunks)
 
-        # Step 3: Create RAG prompt
-        rag_prompt = f"""You are an AI assistant that answers questions based on the provided context. Use only the information from the context to answer the question. If the context doesn't contain enough information to answer the question, say so clearly.
+        # Step 3: Create RAG prompt with citation requirements
+        rag_prompt = f"""You are an AI assistant that answers questions based ONLY on the provided context chunks.
 
-Context:
+IMPORTANT CITATION RULES:
+1. Every factual statement MUST cite its source using [Chunk N] format
+2. If information is NOT in the chunks, you MUST say "I don't have enough evidence for that"
+3. If chunks contradict each other, highlight the conflict and ask which source is authoritative
+4. DO NOT use prior knowledge - ONLY use the provided chunks
+5. If a chunk is partially relevant, cite it and explain what's missing
+
+Context Chunks:
 {context}
 
 Question: {request.question}
 
-Instructions:
-- Answer based solely on the provided context
-- Be accurate and specific
-- If the context is insufficient, clearly state that
-- Cite relevant parts of the context when possible
-- Keep your answer concise but complete
+Required Format:
+- "The deadline is March 2026." [Chunk 3]
+- "Alice agreed to the proposal." [Chunk 1]
+- "I don't have enough evidence about the budget approval process."
+
+If chunks conflict:
+- "Chunk 2 states the deadline is March 2026, but Chunk 5 mentions April 2026. Which policy version applies?"
 
 Answer:"""
 
