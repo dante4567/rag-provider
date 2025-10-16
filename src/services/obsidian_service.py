@@ -222,6 +222,7 @@ class ObsidianService:
         projects: List[str] = None,
         topics: List[str] = None,
         organizations: List[str] = None,
+        technologies: List[str] = None,
         created_at: datetime = None,
         ingested_at: datetime = None,
         metadata: Dict[str, Any] = None
@@ -283,6 +284,7 @@ class ObsidianService:
             'places': places if places else [],
             'topics': topics if topics else [],
             'organizations': orgs if orgs else [],
+            'technologies': technologies if technologies else [],
             'dates': dates if dates else [],
             'numbers': numbers,
 
@@ -1239,6 +1241,21 @@ LIMIT 50
         else:
             organizations = self._parse_csv(organizations)
 
+        # Extract technologies from entities dict
+        # Technologies can be EntityObject dicts or simple strings
+        entities = metadata.get('entities', {})
+        technologies_raw = entities.get('technologies', [])
+        technologies = []
+        for tech in technologies_raw:
+            if isinstance(tech, dict):
+                # Extract label from EntityObject
+                tech_name = tech.get('label', tech.get('name', ''))
+                if tech_name:
+                    technologies.append(tech_name)
+            else:
+                # Simple string
+                technologies.append(tech)
+
         # Generate ID and filename
         date_str = created_at.strftime('%Y-%m-%d')
         slug = self.create_slug(title)
@@ -1260,6 +1277,7 @@ LIMIT 50
             projects=projects,
             topics=topics,
             organizations=organizations,
+            technologies=technologies,
             created_at=created_at,
             ingested_at=ingested_at,
             metadata=metadata
