@@ -102,10 +102,12 @@ class EntityEnrichmentService:
         for doc in docs:
             metadata = doc.get('metadata', {})
 
-            # Extract people
-            people_list = metadata.get('people', [])
-            if isinstance(people_list, str):
-                people_list = [people_list]
+            # Import adapter for parsing
+            from src.adapters.chroma_adapter import ChromaDBAdapter
+
+            # Parse entity fields using adapter (handles both string and list formats)
+            entities = ChromaDBAdapter.parse_entities_from_storage(metadata)
+            people_list = entities['people']
 
             # Get document date
             doc_date = metadata.get('created_at') or metadata.get('created_date')
@@ -157,10 +159,9 @@ class EntityEnrichmentService:
                                 if p_name == person_name and p_role:
                                     people[person_name]['roles'].add(p_role)
 
-                # Extract organizations
-                orgs = metadata.get('organizations', [])
-                if isinstance(orgs, str):
-                    orgs = [orgs]
+                # Extract organizations using already-parsed entities
+                orgs = entities['organizations']
+
                 for org in orgs:
                     if org:
                         people[person_name]['organizations'].add(org)
@@ -201,23 +202,18 @@ class EntityEnrichmentService:
         for doc in docs:
             metadata = doc.get('metadata', {})
 
-            orgs_list = metadata.get('organizations', [])
-            if isinstance(orgs_list, str):
-                orgs_list = [orgs_list]
+            # Import adapter for parsing
+            from src.adapters.chroma_adapter import ChromaDBAdapter
+
+            # Parse entity fields using adapter
+            entities = ChromaDBAdapter.parse_entities_from_storage(metadata)
+            orgs_list = entities['organizations']
+            people_list = entities['people']
+            locations = entities['locations']
 
             doc_date = metadata.get('created_at') or metadata.get('created_date')
             doc_title = metadata.get('title', 'Untitled')
             doc_id = metadata.get('doc_id', '')
-
-            # Get associated people
-            people_list = metadata.get('people', [])
-            if isinstance(people_list, str):
-                people_list = [people_list]
-
-            # Get locations
-            locations = metadata.get('locations', [])
-            if isinstance(locations, str):
-                locations = [locations]
 
             for org in orgs_list:
                 if not org or len(org.strip()) < 2:
@@ -279,21 +275,18 @@ class EntityEnrichmentService:
         for doc in docs:
             metadata = doc.get('metadata', {})
 
-            places_list = metadata.get('locations', [])
-            if isinstance(places_list, str):
-                places_list = [places_list]
+            # Import adapter for parsing
+            from src.adapters.chroma_adapter import ChromaDBAdapter
+
+            # Parse entity fields using adapter
+            entities = ChromaDBAdapter.parse_entities_from_storage(metadata)
+            places_list = entities['locations']
+            orgs_list = entities['organizations']
+            people_list = entities['people']
 
             doc_date = metadata.get('created_at') or metadata.get('created_date')
             doc_title = metadata.get('title', 'Untitled')
             doc_id = metadata.get('doc_id', '')
-
-            orgs_list = metadata.get('organizations', [])
-            if isinstance(orgs_list, str):
-                orgs_list = [orgs_list]
-
-            people_list = metadata.get('people', [])
-            if isinstance(people_list, str):
-                people_list = [people_list]
 
             for place in places_list:
                 if not place or len(place.strip()) < 2:
@@ -353,21 +346,18 @@ class EntityEnrichmentService:
         for doc in docs:
             metadata = doc.get('metadata', {})
 
-            tech_list = metadata.get('technologies', [])
-            if isinstance(tech_list, str):
-                tech_list = [tech_list]
+            # Import adapter for parsing
+            from src.adapters.chroma_adapter import ChromaDBAdapter
+
+            # Parse entity fields using adapter
+            entities = ChromaDBAdapter.parse_entities_from_storage(metadata)
+            tech_list = entities['technologies']
+            orgs_list = entities['organizations']
+            people_list = entities['people']
 
             doc_date = metadata.get('created_at') or metadata.get('created_date')
             doc_title = metadata.get('title', 'Untitled')
             doc_id = metadata.get('doc_id', '')
-
-            orgs_list = metadata.get('organizations', [])
-            if isinstance(orgs_list, str):
-                orgs_list = [orgs_list]
-
-            people_list = metadata.get('people', [])
-            if isinstance(people_list, str):
-                people_list = [people_list]
 
             for t in tech_list:
                 if not t or len(t.strip()) < 2:
@@ -518,7 +508,26 @@ class EntityEnrichmentService:
         # Insert enrichment section after frontmatter, before dataview queries
         body_lines = lines[frontmatter_end + 1:]
 
-        # Find where to insert (before dataview or at end of intro)
+        # Find existing enrichment section to replace it
+        enrichment_start = -1
+        enrichment_end = -1
+        for i, line in enumerate(body_lines):
+            if line.strip() == "## Enriched Information":
+                enrichment_start = i
+                # Find the next section or dataview to determine end
+                for j in range(i + 1, len(body_lines)):
+                    if body_lines[j].startswith('##') or '```dataview' in body_lines[j]:
+                        enrichment_end = j
+                        break
+                else:
+                    enrichment_end = len(body_lines)
+                break
+
+        # Remove old enrichment section if exists
+        if enrichment_start >= 0:
+            del body_lines[enrichment_start:enrichment_end]
+
+        # Find where to insert (before dataview or after intro)
         insert_pos = 0
         for i, line in enumerate(body_lines):
             if '```dataview' in line:

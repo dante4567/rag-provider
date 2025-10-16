@@ -849,15 +849,24 @@ class RAGService:
             chunk_metadatas = []
             chunk_contents = []
 
-            # Sanitize enriched metadata for ChromaDB (remove None values)
-            sanitized_enriched = {
-                k: v for k, v in enriched_metadata.items()
-                if v is not None and isinstance(v, (str, int, float, bool))
-            }
+            # Import adapter for format conversion
+            from src.adapters.chroma_adapter import ChromaDBAdapter
+
+            # Sanitize enriched metadata for ChromaDB (remove None values and non-scalars)
+            sanitized_enriched = ChromaDBAdapter.sanitize_for_chromadb(enriched_metadata)
+
+            # Flatten entity lists for ChromaDB using adapter
+            entity_metadata = ChromaDBAdapter.flatten_entities_for_storage(
+                people=people_list,
+                organizations=orgs_list,
+                locations=locs_list,
+                technologies=technologies_list
+            )
 
             # Use enriched metadata for ChromaDB (already flat key-value)
             base_metadata = {
                 **sanitized_enriched,  # All the LLM-enriched fields (sanitized)
+                **entity_metadata,     # Flattened entity lists (via adapter)
                 "doc_id": doc_id,
                 "filename": str(filename or f"document_{doc_id}"),
                 "chunks": int(len(chunks)),

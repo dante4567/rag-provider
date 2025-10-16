@@ -523,6 +523,11 @@ class ObsidianService:
 
             # Replace entity mentions with WikiLinks
             modified_line = line
+
+            # Track created WikiLinks to prevent nesting
+            wikilink_placeholders = {}
+            placeholder_counter = 0
+
             for entity_name in sorted_entities:
                 # Skip if already linked (in this session)
                 if not link_all_occurrences and entity_name in linked_entities:
@@ -543,6 +548,22 @@ class ObsidianService:
                     else:
                         modified_line = re.sub(pattern, wikilink, modified_line, count=1, flags=re.IGNORECASE)
                         linked_entities.add(entity_name)
+
+                    # Protect newly created WikiLinks from further replacements
+                    # Extract all WikiLinks and replace with placeholders
+                    wikilink_pattern = r'\[\[([^\]]+)\]\]'
+                    matches = list(re.finditer(wikilink_pattern, modified_line))
+
+                    # Replace from end to start to preserve positions
+                    for match in reversed(matches):
+                        placeholder = f"__WIKILINK_{placeholder_counter}__"
+                        wikilink_placeholders[placeholder] = match.group(0)
+                        modified_line = modified_line[:match.start()] + placeholder + modified_line[match.end():]
+                        placeholder_counter += 1
+
+            # Restore WikiLinks from placeholders
+            for placeholder, wikilink in wikilink_placeholders.items():
+                modified_line = modified_line.replace(placeholder, wikilink)
 
             result_lines.append(modified_line)
 

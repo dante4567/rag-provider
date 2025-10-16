@@ -39,34 +39,120 @@ src/models/                        # Data schemas
 
 ## Document Processing Pipeline
 
+**Architecture:** Stage-based pipeline with clear contracts (October 2025)
+
+The ingestion pipeline is implemented as a sequence of self-contained stages in `src/pipeline/`:
+
 ```
-1. INGESTION
-   ├── Extract text (13+ formats via document_service)
-   ├── OCR if needed (ocr_service)
-   └── Parse metadata
+src/pipeline/
+├── base.py           # Pipeline orchestrator + PipelineStage interface
+├── models.py         # Pydantic data contracts between stages
+├── __init__.py       # Factory: create_ingestion_pipeline()
+└── stages/
+    ├── enrichment.py      # Stage 1: LLM metadata extraction
+    ├── quality_gate.py    # Stage 2: Quality scoring & gating
+    ├── chunking.py        # Stage 3: Structure-aware splitting
+    ├── storage.py         # Stage 4: ChromaDB vector storage
+    └── export.py          # Stage 5: Obsidian markdown generation
+```
 
-2. ENRICHMENT (enrichment_service)
-   ├── Extract entities (people, places, orgs)
-   ├── Assign topics from controlled vocabulary
-   ├── Auto-match projects
-   ├── Calculate quality/recency scores
-   └── Generate summary
+### Pipeline Stages
 
-3. CHUNKING (chunking_service)
-   ├── Respect document structure (headings, tables, code)
-   ├── Preserve section context
-   ├── Target: 512 tokens/chunk
-   └── Output: chunks with rich metadata
+**1. EnrichmentStage** (`enrichment.py`)
+   - **Input:** RawDocument (content + filename)
+   - **Output:** EnrichedDocument (+ metadata, entities, tags)
+   - **Service:** enrichment_service
+   - **Logic:**
+     - Extract entities (people, orgs, locations, technologies)
+     - Assign tags from controlled vocabulary
+     - Auto-match projects
+     - Generate summary
+     - Calculate complexity
 
-4. VECTOR STORAGE (vector_service)
-   ├── Store in ChromaDB
-   └── Include full metadata
+**2. QualityGateStage** (`quality_gate.py`)
+   - **Input:** EnrichedDocument
+   - **Output:** EnrichedDocument (+ quality scores)
+   - **Service:** quality_service
+   - **Logic:**
+     - Score quality, novelty, actionability
+     - Return STOP if document fails threshold (gated)
+     - Return CONTINUE if passes (indexed)
+   - **Configurable:** `enable_gating=False` for score-only mode
 
-5. OBSIDIAN EXPORT (obsidian_service)
-   ├── Generate RAG-first markdown
-   ├── Create entity stub files
-   ├── Add wiki-links for graph
-   └── Output: immutable pipeline-owned files
+**3. ChunkingStage** (`chunking.py`)
+   - **Input:** EnrichedDocument
+   - **Output:** ChunkedDocument (list of Chunk objects)
+   - **Service:** chunking_service
+   - **Logic:**
+     - Structure-aware chunking (headings, tables, code)
+     - Preserve section context in metadata
+     - Special handling for chat logs (turn-based)
+
+**4. StorageStage** (`storage.py`)
+   - **Input:** ChunkedDocument
+   - **Output:** StoredDocument (chunk_ids, chunk_count)
+   - **Service:** vector_service
+   - **Logic:**
+     - Flatten entity lists via ChromaDBAdapter
+     - Sanitize metadata for ChromaDB
+     - Store chunks with embeddings
+     - Return chunk IDs for reference
+
+**5. ExportStage** (`export.py`)
+   - **Input:** StoredDocument
+   - **Output:** ExportedDocument (obsidian_path, entity_refs)
+   - **Service:** obsidian_service
+   - **Logic:**
+     - Convert to ObsidianMetadata format
+     - Generate markdown with frontmatter
+     - Create entity reference files
+     - Generate WikiLinks
+   - **Configurable:** `enable_export=False` to disable
+
+### Data Flow
+
+```
+RawDocument → EnrichedDocument → ChunkedDocument → StoredDocument → ExportedDocument
+   (text)         (+ metadata)      (+ chunks)        (+ IDs)        (+ path)
+```
+
+Each stage:
+- Has clear input/output types (Pydantic models)
+- Is testable in isolation
+- Can be skipped via `should_skip(context)`
+- Returns `(StageResult, output)` tuple
+- Updates shared `StageContext` for cross-stage communication
+
+**StageResult codes:**
+- `CONTINUE` - Proceed to next stage
+- `STOP` - Stop pipeline (e.g., document gated)
+- `ERROR` - Error occurred, stop pipeline
+
+### Usage
+
+```python
+from src.pipeline import create_ingestion_pipeline, StageContext, RawDocument
+
+# Create pipeline with service dependencies
+pipeline = create_ingestion_pipeline(
+    enrichment_service=enrichment_service,
+    quality_service=quality_service,
+    chunking_service=chunking_service,
+    vector_service=vector_service,
+    obsidian_service=obsidian_service,
+    enable_quality_gate=True,
+    enable_export=True
+)
+
+# Run pipeline
+context = StageContext(doc_id="doc_123", filename="test.pdf")
+raw_doc = RawDocument(content="...", filename="test.pdf")
+result, output = await pipeline.run(raw_doc, context)
+
+if result == StageResult.CONTINUE:
+    print(f"✅ Document ingested: {output.doc_id}")
+elif result == StageResult.STOP:
+    print(f"⛔ Document gated: {context.gate_reason}")
 ```
 
 ## Key Architectural Concepts
@@ -151,6 +237,40 @@ obsidian_vault/
 - XRef block (wiki-links in `<!-- RAG:IGNORE -->` so chunker excludes)
 
 **Benefit:** Rich Obsidian graphs + clean RAG embeddings.
+
+### 5. ChromaDBAdapter - Format Conversion Layer (src/adapters/)
+
+**Problem:** ChromaDB stores flat key-value metadata, but API/services use nested objects.
+
+**Solution:** Single source of truth for all format conversions.
+
+**Key Methods:**
+```python
+# Storage: nested → flat
+ChromaDBAdapter.flatten_entities_for_storage(
+    people=["Alice", "Bob"],
+    organizations=["ACME Corp"]
+)
+# → {"people": "Alice,Bob", "organizations": "ACME Corp"}
+
+# Retrieval: flat → nested
+ChromaDBAdapter.parse_entities_from_storage(metadata)
+# → {"people": ["Alice", "Bob"], "organizations": ["ACME Corp"]}
+
+# General sanitization
+ChromaDBAdapter.sanitize_for_chromadb(enriched_metadata)
+# → Removes None values, flattens nested dicts
+```
+
+**Used By:**
+- `storage.py` stage - Flattens entities before ChromaDB storage
+- `entity_enrichment_service.py` - Parses entities during retrieval
+
+**Test Coverage:**
+- `test_chroma_adapter.py` - 38 unit tests (round-trip, edge cases)
+- `test_entity_format_pipeline.py` - E2E format validation
+
+**Benefit:** Eliminates data format hell, prevents entity extraction bugs.
 
 ## What Changed (October 2025 Cleanup)
 
