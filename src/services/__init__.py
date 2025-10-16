@@ -13,6 +13,7 @@ from src.services.llm_service import LLMService, CostTracker
 from src.services.vector_service import VectorService
 from src.services.search_cache_service import SearchResultCache, get_search_cache, clear_search_cache
 from src.services.daily_note_service import DailyNoteService
+from src.services.entity_enrichment_service import EntityEnrichmentService
 
 __all__ = [
     "DocumentService",
@@ -28,6 +29,7 @@ __all__ = [
     "get_search_cache",
     "clear_search_cache",
     "DailyNoteService",
+    "EntityEnrichmentService",
 ]
 
 # Self-improvement loop services

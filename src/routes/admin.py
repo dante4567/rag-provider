@@ -3,6 +3,7 @@ Administrative endpoints for maintenance and cleanup
 """
 from fastapi import APIRouter, HTTPException
 import logging
+from src.services.entity_enrichment_service import EntityEnrichmentService
 
 logger = logging.getLogger(__name__)
 
@@ -177,3 +178,38 @@ async def _list_documents_impl(limit: int = 100, offset: int = 0):
     except Exception as e:
         logger.error(f"Failed to list documents: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/enrich-entities")
+async def enrich_entities():
+    """
+    Enrich entity reference files with aggregated information from all documents.
+
+    This endpoint:
+    - Reads all documents from ChromaDB
+    - Aggregates entity information (roles, organizations, contacts, dates)
+    - Updates entity reference files in refs/ directory
+
+    Enriches:
+    - People: roles, organizations, emails, first/last seen
+    - Organizations: locations, key people, first/last seen
+    - Places: related orgs and people
+    - Technologies: used by (orgs/people)
+    """
+    try:
+        from app import rag_service
+
+        # Initialize enrichment service
+        enrichment_service = EntityEnrichmentService()
+
+        # Run enrichment
+        enrichment_service.enrich_all_entities(rag_service.vector_service)
+
+        return {
+            "success": True,
+            "message": "Entity enrichment completed successfully"
+        }
+
+    except Exception as e:
+        logger.error(f"Entity enrichment failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Enrichment failed: {str(e)}")
