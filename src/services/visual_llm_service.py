@@ -1,7 +1,8 @@
 """
-Visual LLM Service - Extract text from images using Vision AI
+Visual LLM Service - Extract text from images using Vision AI via LiteLLM
 
 Automatically falls back to visual LLMs when OCR quality is poor.
+Supports: Gemini, GPT-4V, Claude Vision via LiteLLM unified API.
 """
 
 import os
@@ -11,12 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from PIL import Image
 import io
-
-try:
-    import google.generativeai as genai
-    GEMINI_AVAILABLE = True
-except ImportError:
-    GEMINI_AVAILABLE = False
+import litellm
 
 try:
     from pdf2image import convert_from_path
@@ -27,23 +23,27 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class VisualLLMService:
-    """Extract text from images using Visual LLMs (Gemini, GPT-4V, Claude Vision)"""
+    """Extract text from images using Visual LLMs via LiteLLM"""
 
     def __init__(self):
-        self.google_api_key = os.getenv('GOOGLE_API_KEY')
-        self.enabled = GEMINI_AVAILABLE and PDF2IMAGE_AVAILABLE and self.google_api_key
+        # Check for vision model API keys (LiteLLM will handle routing)
+        self.has_gemini = bool(os.getenv('GOOGLE_API_KEY'))
+        self.has_openai = bool(os.getenv('OPENAI_API_KEY'))
+        self.has_anthropic = bool(os.getenv('ANTHROPIC_API_KEY'))
+
+        self.enabled = PDF2IMAGE_AVAILABLE and (self.has_gemini or self.has_openai or self.has_anthropic)
 
         if self.enabled:
-            genai.configure(api_key=self.google_api_key)
-            logger.info("✅ Visual LLM Service initialized (Gemini)")
+            logger.info(f"✅ Visual LLM Service initialized via LiteLLM (providers: "
+                       f"{'Gemini ' if self.has_gemini else ''}"
+                       f"{'GPT-4V ' if self.has_openai else ''}"
+                       f"{'Claude ' if self.has_anthropic else ''})")
         else:
             reasons = []
-            if not GEMINI_AVAILABLE:
-                reasons.append("google-generativeai not installed")
             if not PDF2IMAGE_AVAILABLE:
                 reasons.append("pdf2image not installed")
-            if not self.google_api_key:
-                reasons.append("GOOGLE_API_KEY not set")
+            if not any([self.has_gemini, self.has_openai, self.has_anthropic]):
+                reasons.append("no vision model API keys set")
             logger.warning(f"⚠️ Visual LLM disabled: {', '.join(reasons)}")
 
     def is_available(self) -> bool:
@@ -143,18 +143,13 @@ class VisualLLMService:
         model: str,
         page_num: int = 1
     ) -> Dict:
-        """Analyze single image with Visual LLM"""
-
-        if "gemini" in model.lower():
-            return await self._gemini_vision(image, model, page_num)
-        else:
-            raise ValueError(f"Unsupported model: {model}")
-
-    async def _gemini_vision(self, image: Image.Image, model: str, page_num: int) -> Dict:
-        """Use Gemini Vision to analyze image"""
+        """Analyze single image with Visual LLM via LiteLLM"""
 
         try:
-            genai_model = genai.GenerativeModel(model)
+            # Convert image to base64 for LiteLLM
+            buffer = io.BytesIO()
+            image.save(buffer, format='PNG')
+            image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
             prompt = f"""Analyze this scanned document image (page {page_num}).
 
@@ -188,15 +183,31 @@ Respond in JSON format:
 If you cannot read something clearly, note it with [unclear].
 """
 
-            # Generate content
-            response = genai_model.generate_content([prompt, image])
+            # Call LiteLLM with vision support
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": f"data:image/png;base64,{image_base64}"
+                        }
+                    ]
+                }
+            ]
+
+            response = await litellm.acompletion(
+                model=model,
+                messages=messages,
+                temperature=0.1
+            )
 
             # Parse JSON response
             import json
             import re
 
-            # Try to extract JSON from response
-            text = response.text
+            text = response.choices[0].message.content
 
             # Look for JSON block (sometimes wrapped in ```json```)
             json_match = re.search(r'```json\s*(\{.*?\})\s*```', text, re.DOTALL)
@@ -205,8 +216,8 @@ If you cannot read something clearly, note it with [unclear].
 
             try:
                 result = json.loads(text)
-                result['cost'] = self._calculate_gemini_cost(image)
-                logger.info(f"✅ Gemini extracted: {result.get('title', 'Untitled')}")
+                result['cost'] = response._hidden_params.get('response_cost', 0.0) or 0.001  # Fallback estimate
+                logger.info(f"✅ Vision LLM extracted: {result.get('title', 'Untitled')}")
                 return result
             except json.JSONDecodeError:
                 # Fallback: use raw text
@@ -217,7 +228,7 @@ If you cannot read something clearly, note it with [unclear].
                     'document_type': 'scanned',
                     'key_info': {},
                     'full_text': text,
-                    'cost': self._calculate_gemini_cost(image)
+                    'cost': 0.001  # Fallback estimate
                 }
 
         except Exception as e:

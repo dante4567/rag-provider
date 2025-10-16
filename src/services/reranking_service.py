@@ -1,9 +1,10 @@
 """
-Reranking Service - Improve retrieval quality with Mixedbread AI
+Reranking Service - Improve retrieval quality
 
-Uses Mixedbread mxbai-rerank-large-v2 (self-hosted, SOTA open-source reranker).
-Outperforms Cohere Rerank 3.5 (BEIR 57.49 vs 55) with zero API costs.
-Supports 100+ languages and handles up to 8K token context (32K compatible).
+Supports multiple reranking providers:
+- Self-hosted: Mixedbread mxbai-rerank-large-v2 (BEIR 57.49, free after download)
+- Voyage Rerank: Cloud API ($0.05/1000, fast, no cold start)
+- Cohere Rerank: Cloud API ($2/1000, SOTA quality)
 """
 
 import logging
@@ -14,20 +15,29 @@ logger = logging.getLogger(__name__)
 
 
 class RerankingService:
-    """Rerank search results using Mixedbread mxbai-rerank-large-v2 (self-hosted)"""
+    """Rerank search results using self-hosted or cloud providers"""
 
-    def __init__(self, model_name: str = "mixedbread-ai/mxbai-rerank-large-v2"):
+    def __init__(self, provider: str = None, model_name: str = "mixedbread-ai/mxbai-rerank-large-v2"):
         """
-        Initialize reranking service with self-hosted cross-encoder
+        Initialize reranking service
 
         Args:
-            model_name: Hugging Face model path
-                - "mixedbread-ai/mxbai-rerank-large-v2" (BEIR 57.49, 1.5B params, Apache 2.0)
-                - "mixedbread-ai/mxbai-rerank-base-v2" (BEIR 55.57, 0.5B params, faster)
+            provider: "self-hosted", "voyage", or "cohere" (defaults to RERANKER_PROVIDER env or "self-hosted")
+            model_name: Model to use for self-hosted reranking
         """
+        self.provider = provider or os.getenv("RERANKER_PROVIDER", "self-hosted")
         self.model_name = model_name
         self.model = None
-        logger.info(f"🎯 Initializing self-hosted reranking with {model_name}")
+
+        if self.provider == "self-hosted":
+            logger.info(f"🎯 Initializing self-hosted reranking with {model_name}")
+        elif self.provider == "voyage":
+            logger.info("🎯 Initializing Voyage reranking (cloud)")
+        elif self.provider == "cohere":
+            logger.info("🎯 Initializing Cohere reranking (cloud)")
+        else:
+            logger.warning(f"Unknown provider {self.provider}, falling back to self-hosted")
+            self.provider = "self-hosted"
 
     def _ensure_model_loaded(self):
         """Lazy load the cross-encoder model on first use"""
@@ -61,6 +71,33 @@ class RerankingService:
                 logger.error(f"   PyTorch version: {torch.__version__ if 'torch' in locals() else 'unknown'}")
                 raise
 
+    def _rerank_with_voyage(self, query: str, results: List[Dict], top_k: int = None) -> List[Dict]:
+        """Rerank using Voyage AI API"""
+        try:
+            import voyageai
+            vo = voyageai.Client(api_key=os.getenv("VOYAGE_API_KEY"))
+
+            # Prepare documents
+            documents = [result.get('content', '') for result in results]
+
+            # Call Voyage reranking API
+            reranking = vo.rerank(query=query, documents=documents, model="rerank-2", top_k=top_k)
+
+            # Map back to results with scores
+            scored_results = []
+            for item in reranking.results:
+                result_copy = results[item.index].copy()
+                result_copy['rerank_score'] = item.relevance_score
+                scored_results.append(result_copy)
+
+            logger.info(f"✅ Voyage reranked {len(results)} → {len(scored_results)} results")
+            return scored_results
+
+        except Exception as e:
+            logger.error(f"❌ Voyage reranking failed: {e}")
+            logger.warning("⚠️ Falling back to original ranking")
+            return results[:top_k] if top_k else results
+
     def rerank(
         self,
         query: str,
@@ -68,7 +105,7 @@ class RerankingService:
         top_k: int = None
     ) -> List[Dict]:
         """
-        Rerank search results using self-hosted cross-encoder
+        Rerank search results using configured provider
 
         Args:
             query: User's search query
@@ -81,6 +118,14 @@ class RerankingService:
         if not results:
             return []
 
+        # Route to appropriate provider
+        if self.provider == "voyage":
+            return self._rerank_with_voyage(query, results, top_k)
+        elif self.provider == "cohere":
+            # TODO: Add Cohere support
+            logger.warning("Cohere reranking not yet implemented, falling back to self-hosted")
+
+        # Self-hosted reranking
         self._ensure_model_loaded()
 
         # Create query-document pairs for cross-encoder

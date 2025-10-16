@@ -107,7 +107,8 @@ services:
       # Enhanced Features
       - ENABLE_ENHANCED_SEARCH=true
       - ENABLE_HYBRID_RETRIEVAL=true
-      - ENABLE_RERANKING=false
+      - ENABLE_RERANKING=true
+      - RERANKER_PROVIDER=voyage
       - ENABLE_QUALITY_TRIAGE=true
       - ENABLE_CLOUD_OCR=true
 

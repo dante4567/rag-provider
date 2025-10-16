@@ -103,7 +103,8 @@ RUN mkdir -p \
 
 # Create non-root user and set permissions
 RUN useradd -m -u 1000 appuser \
-    && chown -R appuser:appuser /app /data /tmp/rag_processing
+    && mkdir -p /home/appuser/.cache/huggingface \
+    && chown -R appuser:appuser /app /data /tmp/rag_processing /home/appuser/.cache
 USER appuser
 
 # Expose port range (default 8001, can use alternatives)
