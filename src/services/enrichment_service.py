@@ -61,6 +61,86 @@ class EnrichmentService:
         """Generate SHA-256 hash for deduplication"""
         return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
+    def _determine_priority(self, existing_metadata: Dict) -> str:
+        """
+        Determine document priority based on existing flags.
+
+        Priority levels:
+        - "critical": Urgent AND action items
+        - "high": Urgent OR multiple action indicators
+        - "medium": Has action items OR mentioned deadlines
+        - "low": Standard document
+
+        Args:
+            existing_metadata: Metadata with flags like is_urgent, has_action_items
+
+        Returns:
+            Priority level: "critical", "high", "medium", "low"
+        """
+        is_urgent = existing_metadata.get('is_urgent', False)
+        has_action_items = existing_metadata.get('has_action_items', False)
+        has_questions = existing_metadata.get('has_questions', False)
+        has_todos = existing_metadata.get('has_todos', False)
+
+        # Critical: Urgent AND actionable
+        if is_urgent and has_action_items:
+            return "critical"
+
+        # High: Urgent OR multiple action indicators
+        if is_urgent:
+            return "high"
+
+        action_count = sum([
+            has_action_items,
+            has_questions,
+            has_todos
+        ])
+        if action_count >= 2:
+            return "high"
+
+        # Medium: Has any action indicators
+        if has_action_items or has_todos:
+            return "medium"
+
+        # Low: Standard document
+        return "low"
+
+    def _determine_status(self, existing_metadata: Dict, document_type: DocumentType) -> str:
+        """
+        Determine document workflow status based on context.
+
+        Status levels:
+        - "pending": Requires action (has action items, urgent, questions)
+        - "active": Currently relevant (recent, part of active project)
+        - "completed": Archived or resolved
+        - "reference": Informational only
+
+        Args:
+            existing_metadata: Metadata with flags and context
+            document_type: Type of document
+
+        Returns:
+            Status: "pending", "active", "completed", "reference"
+        """
+        has_action_items = existing_metadata.get('has_action_items', False)
+        is_urgent = existing_metadata.get('is_urgent', False)
+        has_questions = existing_metadata.get('has_questions', False)
+
+        # Pending: Requires action
+        if has_action_items or is_urgent or has_questions:
+            return "pending"
+
+        # Reference: Documentation, manuals, informational content
+        if document_type in [DocumentType.pdf, DocumentType.text]:
+            return "reference"
+
+        # Active: Recent communications (emails, chats)
+        if document_type in [DocumentType.email, DocumentType.llm_chat]:
+            return "active"
+
+        # Default: Active
+        return "active"
+
     def extract_dates_from_content(self, content: str) -> List[str]:
         """
         Extract dates from content using regex patterns
@@ -1159,6 +1239,10 @@ Return ONLY this JSON structure (no markdown, no explanations):
                 dates_list.append(d)
                 dates_detailed.append({"date": d})
 
+        # Determine workflow status and priority
+        priority = self._determine_priority(existing_metadata)
+        status = self._determine_status(existing_metadata, document_type)
+
         # Define keys we're setting (to avoid duplicates from existing_metadata)
         # NOTE: Threading fields (thread_id, message_id, etc.) NOT in this list - they pass through from existing_metadata
         known_keys = {
@@ -1167,7 +1251,8 @@ Return ONLY this JSON structure (no markdown, no explanations):
             "suggested_topics", "organizations", "people", "people_roles", "dates", "dates_detailed", "numbers", "contacts",
             "quality_score", "recency_score", "ocr_quality",
             "enrichment_version", "enrichment_date", "enrichment_cost",
-            "word_count", "char_count", "created_at", "enriched", "entities"
+            "word_count", "char_count", "created_at", "enriched", "entities",
+            "priority", "status"  # Workflow management fields
         }
 
         # EXPLICIT: Preserve email threading metadata from existing_metadata
@@ -1218,6 +1303,10 @@ Return ONLY this JSON structure (no markdown, no explanations):
             "quality_score": round(quality_score, 3),
             "recency_score": round(recency_score, 3),
             "ocr_quality": round(ocr_quality, 3),
+
+            # === WORKFLOW MANAGEMENT (for Obsidian Bases task tracking) ===
+            "status": status,  # pending, active, completed, reference
+            "priority": priority,  # critical, high, medium, low
 
             # === PROVENANCE ===
             "enrichment_version": "2.0",
