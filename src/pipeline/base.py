@@ -57,6 +57,13 @@ class StageContext(BaseModel):
     gated: bool = False
     gate_reason: Optional[str] = None
 
+    # Triage metadata (from TriageStage)
+    fingerprint: Optional[Any] = None
+    triage_category: Optional[str] = None
+    triage_confidence: Optional[float] = None
+    triage_reasoning: Optional[list] = None
+    knowledge_updates: Optional[list] = None
+
     class Config:
         arbitrary_types_allowed = True
 

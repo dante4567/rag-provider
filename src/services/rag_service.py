@@ -1106,12 +1106,22 @@ class RAGService:
             # Handle pipeline results
             if result == StageResult.STOP:
                 logger.warning(f"⛔ Document gated: {context.gate_reason}")
+                # Return minimal response for gated documents
                 return IngestResponse(
                     success=False,
                     doc_id=doc_id,
                     chunks=0,
-                    metadata={"gated": True, "gate_reason": context.gate_reason},
-                    obsidian_path=None
+                    metadata={
+                        "title": filename or "Unknown",
+                        "gated": True,
+                        "gate_reason": context.gate_reason,
+                        "triage_category": getattr(context, 'triage_category', None),
+                        "triage_confidence": getattr(context, 'triage_confidence', None),
+                        "keywords": {"tags": [], "topics": []},
+                        "entities": {"people": [], "organizations": [], "locations": [], "technologies": []}
+                    },
+                    obsidian_path=None,
+                    message=f"Document blocked by {context.gate_reason} filter"
                 )
             elif result == StageResult.ERROR:
                 raise HTTPException(status_code=500, detail="Pipeline processing failed")
