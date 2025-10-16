@@ -1297,6 +1297,7 @@ Return ONLY this JSON structure (no markdown, no explanations):
             "organizations": to_list(metadata.get("organizations", "")),
             "locations": to_list(metadata.get("places", "")),
             "dates": to_list(metadata.get("dates", "")),
+            "dates_detailed": metadata.get("dates_detailed", []),  # NEW: Detailed dates with context
             "technologies": technologies if isinstance(technologies, list) else []  # FIX: Add technologies!
         }
 

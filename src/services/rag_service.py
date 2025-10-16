@@ -809,8 +809,7 @@ class RAGService:
                     people=people_list,
                     organizations=orgs_list,
                     locations=locs_list,
-                    technologies=technologies_list,  # FIX: Add technologies!
-                    dates=dates_list
+                    technologies=technologies_list  # FIX: Add technologies!
                 ),
                 reading_time=f"{enriched_metadata.get('estimated_reading_time_min', 1)} min",
                 complexity=ComplexityLevel[enriched_metadata.get("complexity", "intermediate")],
@@ -818,6 +817,10 @@ class RAGService:
                 document_type=document_type,
                 source=filename or "",
                 created_at=datetime.now(),
+
+                # Add date entities (top-level for Obsidian queries)
+                dates=dates_list,
+                dates_detailed=enriched_lists.get("dates_detailed", []),
 
                 # Add enrichment quality metrics
                 domain=enriched_metadata.get("domain", "general"),

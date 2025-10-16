@@ -161,6 +161,10 @@ class ObsidianMetadata(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     enrichment_version: Optional[str] = Field(default="2.0", description="Enrichment system version")
 
+    # === Date Entities (from enrichment) ===
+    dates: List[str] = Field(default_factory=list, description="Important dates (YYYY-MM-DD)")
+    dates_detailed: List[Dict[str, Any]] = Field(default_factory=list, description="Dates with context")
+
     # === Email Threading Fields (optional, only for emails) ===
     thread_id: Optional[str] = Field(default=None, description="Email thread identifier")
     message_id: Optional[str] = Field(default=None, description="RFC 2822 Message-ID")
