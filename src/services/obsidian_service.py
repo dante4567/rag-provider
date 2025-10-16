@@ -474,6 +474,7 @@ class ObsidianService:
         chunks: List[Dict[str, Any]] = None,
         people_detailed: List[Dict[str, Any]] = None,
         dates_detailed: List[Dict[str, Any]] = None,
+        entities: Dict[str, Any] = None,
         is_attachment: bool = False,
         parent_doc_id: str = None
     ) -> str:
@@ -489,6 +490,7 @@ class ObsidianService:
         - Next Actions (optional)
         - Timeline (optional)
         """
+        entities = entities or {}
         body_parts = []
 
         # Title (added by caller)
@@ -549,6 +551,33 @@ class ObsidianService:
                         body_parts.append(f"- [[{date_str}]]: {context}")
                     else:
                         body_parts.append(f"- [[{date_str}]]")
+            body_parts.append("")
+
+        # Technologies section (with concept linking metadata)
+        technologies = entities.get('technologies', [])
+        if technologies:
+            body_parts.append("## Technologies")
+            body_parts.append("")
+            for tech in technologies:
+                if isinstance(tech, dict):
+                    tech_name = tech.get('label', tech.get('name', ''))
+                    tech_type = tech.get('type', 'Software')
+                    concept_id = tech.get('concept_id')
+                    category = tech.get('category')
+
+                    # Create wikilink to technology reference note
+                    tech_slug = slugify(tech_name)
+                    tech_link = f"[[refs/technologies/{tech_slug}|{tech_name}]]"
+
+                    # Format: - [[refs/technologies/pop-os|Pop!_OS]] (Software)
+                    if tech_type:
+                        body_parts.append(f"- {tech_link} ({tech_type})")
+                    else:
+                        body_parts.append(f"- {tech_link}")
+                else:
+                    # Simple string format
+                    tech_slug = slugify(tech)
+                    body_parts.append(f"- [[refs/technologies/{tech_slug}|{tech}]]")
             body_parts.append("")
 
         # Source link section - link to original in attachments/
@@ -659,8 +688,17 @@ class ObsidianService:
         extra_links = extra_links or {}
         person_data = person_data or {}
 
-        # Determine directory
-        entity_dir = self.refs_dir / f"{entity_type}s"
+        # Determine directory with correct pluralization
+        plurals = {
+            'person': 'persons',
+            'technology': 'technologies',
+            'org': 'orgs',
+            'place': 'places',
+            'project': 'projects',
+            'day': 'days'
+        }
+        dir_name = plurals.get(entity_type, f"{entity_type}s")
+        entity_dir = self.refs_dir / dir_name
         entity_dir.mkdir(parents=True, exist_ok=True)
 
         # Create cross-platform safe filename
@@ -709,6 +747,7 @@ class ObsidianService:
             'project': 'projects',
             'place': 'places',
             'org': 'organizations',
+            'technology': 'technologies',
             'day': 'dates'  # Daily notes query on 'dates' field
         }
         field_name = field_name_map.get(entity_type, f"{entity_type}s")
@@ -786,6 +825,51 @@ LIMIT 50
 ```dataview
 TABLE file.link as "Document", summary as "Summary", topics as "Topics"
 WHERE contains(people, "{name}")
+SORT file.mtime DESC
+LIMIT 50
+```
+
+"""
+        elif entity_type == 'technology':
+            # Technology stub with concept linking metadata
+            stub_body = f"""# {name}\n\n"""
+
+            # Show concept linking metadata if available
+            if person_data:  # Using person_data param to pass tech_data
+                tech_type = person_data.get('type')
+                if tech_type:
+                    stub_body += f"**Type:** {tech_type}\n\n"
+
+                concept_id = person_data.get('concept_id')
+                if concept_id:
+                    stub_body += f"**Concept ID:** `{concept_id}`\n"
+
+                prefLabel = person_data.get('prefLabel')
+                if prefLabel and prefLabel != name:
+                    stub_body += f"**Preferred Label:** {prefLabel}\n"
+
+                altLabels = person_data.get('altLabels', [])
+                if altLabels:
+                    labels_str = ", ".join(altLabels)
+                    stub_body += f"**Alternative Labels:** {labels_str}\n"
+
+                category = person_data.get('category')
+                if category:
+                    stub_body += f"**Category:** {category}\n"
+
+                suggested = person_data.get('suggested_for_vocab', False)
+                if suggested:
+                    stub_body += f"\n> 💡 **Suggested for Vocabulary:** This technology is not yet in the controlled vocabulary. Consider adding it.\n"
+
+                if any([tech_type, concept_id, prefLabel, altLabels, category]):
+                    stub_body += "\n"
+
+            # Related documents section
+            stub_body += f"""## Related Documents
+
+```dataview
+TABLE file.link as "Document", summary as "Summary", topics as "Topics"
+WHERE contains({field_name}, "{name}")
 SORT file.mtime DESC
 LIMIT 50
 ```
@@ -918,8 +1002,9 @@ LIMIT 50
         next_actions = []  # TODO: Extract from metadata
         timeline = []   # TODO: Extract from metadata
 
-        # Get dates_detailed from metadata
-        dates_detailed = metadata.get('entities', {}).get('dates_detailed', [])
+        # Get entities dict from metadata
+        entities = metadata.get('entities', {})
+        dates_detailed = entities.get('dates_detailed', [])
 
         # Get attachment context if applicable
         is_attachment = metadata.get('is_attachment', False)
@@ -935,6 +1020,7 @@ LIMIT 50
             timeline=timeline,
             people_detailed=people_objects,
             dates_detailed=dates_detailed,
+            entities=entities,
             is_attachment=is_attachment,
             parent_doc_id=parent_doc_id
         )
@@ -986,6 +1072,27 @@ LIMIT 50
         # Organization stubs
         for org in organizations:
             self.create_entity_stub('org', org)
+
+        # Technology stubs (from entities.technologies with concept linking)
+        technologies = entities.get('technologies', [])
+        for tech in technologies:
+            # Technology can be EntityObject dict or simple string
+            if isinstance(tech, dict):
+                tech_name = tech.get('label', tech.get('name', ''))
+                tech_data = {
+                    'type': tech.get('type', 'Software'),
+                    'concept_id': tech.get('concept_id'),
+                    'prefLabel': tech.get('prefLabel'),
+                    'altLabels': tech.get('altLabels', []),
+                    'category': tech.get('category'),
+                    'suggested_for_vocab': tech.get('suggested_for_vocab', False)
+                }
+            else:
+                tech_name = tech
+                tech_data = {}
+
+            if tech_name:
+                self.create_entity_stub('technology', tech_name, person_data=tech_data)
 
         # Daily notes for extracted dates with iCal links
         dates = metadata.get('dates', [])
