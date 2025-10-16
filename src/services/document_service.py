@@ -437,6 +437,20 @@ class DocumentService:
             with open(file_path, 'rb') as f:
                 msg = email.message_from_bytes(f.read())
 
+            # Define header decoder first (needed for metadata)
+            def decode_header_value(header_value):
+                """Decode email header, handling bytes and encoded-words"""
+                if not header_value:
+                    return 'Unknown'
+                decoded_parts = email.header.decode_header(header_value)
+                result = []
+                for part, charset in decoded_parts:
+                    if isinstance(part, bytes):
+                        result.append(part.decode(charset or 'utf-8', errors='replace'))
+                    else:
+                        result.append(str(part))
+                return ''.join(result).strip()
+
             # Parse email date for metadata
             metadata = {}
             date_str = msg.get('Date')
@@ -450,25 +464,33 @@ class DocumentService:
                 except Exception as e:
                     logger.warning(f"Failed to parse email date '{date_str}': {e}")
 
+            # Extract and clean message_id (strip whitespace/newlines)
+            raw_message_id = msg.get('Message-ID', f"<generated-{file_path.stem}>")
+            metadata['message_id'] = raw_message_id.strip().replace('\r', '').replace('\n', '')
+
             # Extract threading metadata
-            metadata['message_id'] = msg.get('Message-ID', f"<generated-{file_path.stem}>")
-            metadata['in_reply_to'] = msg.get('In-Reply-To', '')
-            metadata['references'] = msg.get('References', '')
+            metadata['in_reply_to'] = msg.get('In-Reply-To', '').strip()
+            metadata['references'] = msg.get('References', '').strip()
 
             # Extract thread topic/index if available
             thread_topic = msg.get('Thread-Topic', '')
             if thread_topic:
-                metadata['thread_topic'] = thread_topic
+                metadata['thread_topic'] = decode_header_value(thread_topic)
             thread_index = msg.get('Thread-Index', '')
             if thread_index:
-                metadata['thread_index'] = thread_index
+                metadata['thread_index'] = thread_index.strip()
 
-            # Extract sender and recipients for threading
-            metadata['sender'] = msg.get('From', 'Unknown')
-            metadata['recipients'] = ', '.join(msg.get_all('To', []) or ['Unknown'])
+            # Extract and decode sender, recipients, subject
+            metadata['sender'] = decode_header_value(msg.get('From', 'Unknown'))
 
-            # Subject for threading
-            subject = msg.get('Subject', '(No Subject)')
+            # Decode recipients
+            raw_recipients = msg.get_all('To', []) or ['Unknown']
+            decoded_recipients = [decode_header_value(r) for r in raw_recipients]
+            metadata['recipients'] = ', '.join(decoded_recipients)
+
+            # Subject for threading (decode before storing)
+            raw_subject = msg.get('Subject', '(No Subject)')
+            subject = decode_header_value(raw_subject)
             metadata['subject'] = subject
 
             # Generate thread_id from normalized subject
@@ -477,20 +499,6 @@ class DocumentService:
             metadata['thread_id'] = hashlib.md5(normalized_subject.encode()).hexdigest()[:12]
 
             logger.info(f"📧 Threading: thread_id={metadata['thread_id']}, message_id={metadata['message_id'][:50]}...")
-
-            # Extract headers with proper decoding
-            def decode_header_value(header_value):
-                """Decode email header, handling bytes and encoded-words"""
-                if not header_value:
-                    return 'Unknown'
-                decoded_parts = email.header.decode_header(header_value)
-                result = []
-                for part, charset in decoded_parts:
-                    if isinstance(part, bytes):
-                        result.append(part.decode(charset or 'utf-8', errors='replace'))
-                    else:
-                        result.append(str(part))
-                return ''.join(result)
 
             text = f"From: {decode_header_value(msg.get('From'))}\n"
             text += f"To: {decode_header_value(msg.get('To'))}\n"
