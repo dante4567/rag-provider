@@ -104,10 +104,10 @@ class ExportStage(PipelineStage[StoredDocument, ExportedDocument]):
                 except (ValueError, AttributeError):
                     self.logger.warning(f"Could not parse created_date: {created_date_str}, using now")
 
-            # Export to Obsidian - ObsidianService handles all the parsing internally
+            # Export to Obsidian with original content for auto-linking
             obsidian_path = self.obsidian_service.export_document(
                 title=title,
-                content="",  # Content already in ChromaDB
+                content=input_data.original_content,  # Pass content for entity auto-linking
                 metadata=metadata,  # Pass flat enriched_metadata dict
                 document_type=doc_type_enum,
                 created_at=doc_created_at,  # Use document's original date

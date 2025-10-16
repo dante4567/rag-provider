@@ -126,6 +126,7 @@ class StorageStage(PipelineStage[ChunkedDocument, StoredDocument]):
                 doc_id=input_data.doc_id,
                 chunk_ids=chunk_ids,
                 chunk_count=len(chunk_ids),
+                original_content=input_data.original_content,  # Pass through for Obsidian export
                 enriched_metadata=input_data.enriched_metadata
             )
 

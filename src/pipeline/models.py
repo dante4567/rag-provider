@@ -80,6 +80,9 @@ class ChunkedDocument(BaseModel):
     chunks: List[Chunk]
     enriched_metadata: Dict[str, Any]
 
+    # Original content (for Obsidian export with auto-linking)
+    original_content: str = ""
+
     # Carry forward from enrichment
     people: List[str] = Field(default_factory=list)
     organizations: List[str] = Field(default_factory=list)
@@ -97,6 +100,9 @@ class StoredDocument(BaseModel):
     doc_id: str
     chunk_ids: List[str]
     chunk_count: int
+
+    # Original content (for Obsidian export with auto-linking)
+    original_content: str = ""
 
     # Metadata for response
     enriched_metadata: Dict[str, Any]

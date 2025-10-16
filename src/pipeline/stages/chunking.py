@@ -110,6 +110,7 @@ class ChunkingStage(PipelineStage[EnrichedDocument, ChunkedDocument]):
                 doc_id=context.doc_id,
                 chunks=chunks,
                 enriched_metadata=input_data.enriched_metadata,
+                original_content=input_data.content,  # Pass through for Obsidian export
                 people=input_data.people,
                 organizations=input_data.organizations,
                 locations=input_data.locations,
