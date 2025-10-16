@@ -748,6 +748,7 @@ class RAGService:
             # Split into chunks using structure-aware chunking if available
             if self.chunking_service:
                 # Use specialized chunking for chat logs (turn-based)
+                logger.debug(f"   🔍 Chunking decision: document_type={document_type} (type: {type(document_type)}), DocumentType.llm_chat={DocumentType.llm_chat}, equal={document_type == DocumentType.llm_chat}")
                 if document_type == DocumentType.llm_chat:
                     logger.info("   💬 Using strategic turn-based chunking for chat log...")
                     chunk_dicts = self.chunking_service.chunk_chat_log(content, enriched_metadata)

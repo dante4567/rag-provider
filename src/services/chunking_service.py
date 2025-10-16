@@ -496,11 +496,11 @@ class ChunkingService:
         # Patterns for detecting role markers
         user_patterns = [
             r'^(User|Human|You):\s*',
-            r'^\*\*(User|Human|You)\*\*:\s*',
+            r'^\*\*(User|Human|You):\*\*\s*',  # **User:** format
         ]
         assistant_patterns = [
             r'^(Assistant|Claude|ChatGPT|AI):\s*',
-            r'^\*\*(Assistant|Claude|ChatGPT|AI)\*\*:\s*',
+            r'^\*\*(Assistant|Claude|ChatGPT|AI):\*\*\s*',  # **Assistant:** format
         ]
 
         for line in lines:

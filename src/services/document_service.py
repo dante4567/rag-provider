@@ -250,7 +250,7 @@ class DocumentService:
                     return content, DocumentType.whatsapp, metadata
 
             elif LLMChatParser.is_llm_export(content):
-                # Parse LLM chat export (ChatGPT, Claude, etc.)
+                # Parse LLM chat export (ChatGPT, Claude, markdown, etc.)
                 messages, summary, llm_metadata = LLMChatParser.parse_llm_export(content)
 
                 if messages:
@@ -269,8 +269,15 @@ class DocumentService:
                     # Return as LLM chat document type
                     return result, DocumentType.llm_chat, metadata
                 else:
-                    # Fallback if parsing fails
-                    return content, DocumentType.text, metadata
+                    # For markdown format, content is already formatted - just return with llm_chat type
+                    # The ChunkingService will handle parsing into turns
+                    if llm_metadata.get('export_type') == 'markdown':
+                        logger.info(f"LLM Chat (markdown): {llm_metadata.get('message_count', 0)} messages detected")
+                        metadata.update(llm_metadata)
+                        return content, DocumentType.llm_chat, metadata
+                    else:
+                        # Fallback if parsing fails for other formats
+                        return content, DocumentType.text, metadata
 
             elif file_extension in ['.py', '.js', '.java', '.cpp', '.c', '.cs', '.php', '.go', '.rs']:
                 return content, DocumentType.code, metadata

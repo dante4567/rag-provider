@@ -4,6 +4,7 @@ Health check and stats endpoints
 from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
 import logging
+import os
 from src.core.dependencies import get_rag_service, get_chroma_client
 
 logger = logging.getLogger(__name__)
@@ -60,18 +61,26 @@ async def health_check(
         }
 
         # Check reranking service
-        try:
-            from src.services.reranking_service import get_reranking_service
-            reranker = get_reranking_service()
-            reranking_status = {
-                "available": True,
-                "model": reranker.model_name,
-                "loaded": reranker.model is not None
-            }
-        except Exception as e:
+        enable_reranking = os.getenv("ENABLE_RERANKING", "true").lower() == "true"
+        if enable_reranking:
+            try:
+                from src.services.reranking_service import get_reranking_service
+                reranker = get_reranking_service()
+                reranking_status = {
+                    "available": True,
+                    "model": reranker.model_name,
+                    "loaded": reranker.model is not None
+                }
+            except Exception as e:
+                reranking_status = {
+                    "available": False,
+                    "error": str(e)
+                }
+        else:
             reranking_status = {
                 "available": False,
-                "error": str(e)
+                "disabled": True,
+                "reason": "ENABLE_RERANKING=false"
             }
 
         # Determine overall health status

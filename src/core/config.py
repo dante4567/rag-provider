@@ -104,6 +104,7 @@ class Settings(BaseSettings):
     # ===== Platform Detection =====
     docker_container: bool = Field(default=False, description="Running in Docker container")
     platform_system: str = Field(default_factory=lambda: platform.system().lower())
+    testing: bool = Field(default=False, description="Enable test mode")
 
     @field_validator("allowed_origins")
     @classmethod
@@ -111,6 +112,17 @@ class Settings(BaseSettings):
         """Parse comma-separated origins into list"""
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
+        return v
+
+    @field_validator("collection_name", "obsidian_path")
+    @classmethod
+    def adjust_for_testing(cls, v, info):
+        """Adjust paths and names for testing environment"""
+        if info.data.get("testing"):
+            if info.field_name == "collection_name":
+                return "test_" + v
+            if info.field_name == "obsidian_path":
+                return "/data/test_obsidian_vault"
         return v
 
     @field_validator("supported_formats")

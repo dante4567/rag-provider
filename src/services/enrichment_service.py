@@ -1062,6 +1062,24 @@ Extract the following (return as JSON):
    - ocr_quality: How clean is the text? (1.0 = perfect, 0.5 = some issues, 0.0 = gibberish)
    - content_completeness: Is content complete? (1.0 = complete, 0.5 = partial, 0.0 = fragment)
 
+BEFORE RETURNING, SELF-VALIDATE YOUR EXTRACTION:
+
+For each item in "people" array, ask yourself:
+- "Is this a human being's actual name?"
+- Examples of NOT people: "Virtual Machine", "Native Install", "Linux Mint", "Internet Recovery", "Docker", "User", "Assistant"
+- If NO → move to "topics" or "technologies" instead
+
+For each item in "technologies", ask yourself:
+- "Is this a tool/software/platform/technology?"
+- If it's a person's name → move to "people" instead
+
+This metadata creates Obsidian WikiLinks:
+- people → [[Alice Smith]] (links to person note)
+- technologies → [[Docker]] (links to technology note)
+- topics → #technology/linux (becomes tag)
+
+Make sure your WikiLinks make sense!
+
 Return ONLY this JSON structure (no markdown, no explanations):
 {{
   "title": "Clear Descriptive Title (10-80 chars)",
@@ -1361,13 +1379,24 @@ Return ONLY this JSON structure (no markdown, no explanations):
             "suggested_topics": ",".join(validated_data.get("suggested_topics", [])),
 
             # === EXTRACTED ENTITIES (not controlled) ===
-            "organizations": ",".join(entities.get("organizations", [])[:10]),
+            # After concept linking, entities are dicts with 'label', 'type', 'concept_id', etc.
+            # Extract 'label' field for comma-separated legacy fields
+            "organizations": ",".join([
+                org.get('label', org) if isinstance(org, dict) else org
+                for org in entities.get("organizations", [])[:10]
+            ]),
             "people": entities.get("people", [])[:20],  # NEW: list of person objects (not comma-separated)
             "people_roles": ",".join(entities.get("people_roles", [])[:10]),  # Legacy field
             "dates": dates_list[:30],  # NEW: list of date strings for frontmatter
             "dates_detailed": dates_detailed[:30],  # NEW: full date objects with context
-            "numbers": ",".join(entities.get("numbers", [])[:50]),  # NEW: numbers
-            "contacts": ",".join(entities.get("contacts", [])[:5]),
+            "numbers": ",".join([
+                str(num.get('label', num)) if isinstance(num, dict) else str(num)
+                for num in entities.get("numbers", [])[:50]
+            ]),
+            "contacts": ",".join([
+                contact.get('label', contact) if isinstance(contact, dict) else contact
+                for contact in entities.get("contacts", [])[:5]
+            ]),
 
             # === ENTITIES DICT (for Obsidian frontmatter) ===
             "entities": {

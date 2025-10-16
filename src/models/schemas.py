@@ -118,12 +118,30 @@ class Keywords(BaseModel):
     related: List[str] = Field(default_factory=list, description="Related terms")
 
 
+class EntityObject(BaseModel):
+    """Entity with concept linking metadata"""
+    label: str = Field(..., description="Entity display name")
+    type: Optional[str] = Field(None, description="Entity type (e.g., 'Person', 'Software', 'Organization')")
+    concept_id: Optional[str] = Field(None, description="Linked concept ID from controlled vocabulary")
+    prefLabel: Optional[str] = Field(None, description="Preferred label from controlled vocabulary")
+    altLabels: Optional[List[str]] = Field(default_factory=list, description="Alternative labels/synonyms")
+    category: Optional[str] = Field(None, description="Category/domain (e.g., 'technology/linux')")
+    suggested_for_vocab: Optional[bool] = Field(False, description="Suggested for addition to controlled vocabulary")
+
+    class Config:
+        # Allow extra fields for flexibility
+        extra = "allow"
+
+
 class Entities(BaseModel):
-    """Named entities extracted from document"""
-    people: List[str] = Field(default_factory=list, description="Person names")
-    organizations: List[str] = Field(default_factory=list, description="Organization names")
-    locations: List[str] = Field(default_factory=list, description="Geographic locations")
-    technologies: List[str] = Field(default_factory=list, description="Technologies and tools")
+    """Named entities extracted from document
+
+    Supports both simple strings (legacy) and EntityObject dictionaries (with concept linking)
+    """
+    people: List[Any] = Field(default_factory=list, description="Person names (str or EntityObject)")
+    organizations: List[Any] = Field(default_factory=list, description="Organization names (str or EntityObject)")
+    locations: List[Any] = Field(default_factory=list, description="Geographic locations (str or EntityObject)")
+    technologies: List[Any] = Field(default_factory=list, description="Technologies and tools (str or EntityObject)")
 
 
 class ObsidianMetadata(BaseModel):

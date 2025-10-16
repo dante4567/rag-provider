@@ -335,24 +335,28 @@ async def lifespan(app: FastAPI):
     # Startup: Pre-load models and initialize services
     logger.info("🚀 Starting up RAG service...")
 
-    # Pre-load reranking model in background to avoid blocking startup
-    def preload_reranking_model():
-        try:
-            from src.services.reranking_service import get_reranking_service
-            logger.info("📥 Pre-loading reranking model (mixedbread-ai/mxbai-rerank-large-v2, ~3GB) in background...")
-            reranking_service = get_reranking_service()
-            # Force model load
-            reranking_service._ensure_model_loaded()
-            logger.info("✅ Reranking model pre-loaded successfully")
-        except Exception as e:
-            logger.warning(f"⚠️ Failed to pre-load reranking model: {e}")
-            logger.warning("   Model will be loaded on first search (may cause delay)")
+    # Pre-load reranking model in background to avoid blocking startup (if enabled)
+    enable_reranking = os.getenv("ENABLE_RERANKING", "true").lower() == "true"
+    if enable_reranking:
+        def preload_reranking_model():
+            try:
+                from src.services.reranking_service import get_reranking_service
+                logger.info("📥 Pre-loading reranking model (mixedbread-ai/mxbai-rerank-large-v2, ~3GB) in background...")
+                reranking_service = get_reranking_service()
+                # Force model load
+                reranking_service._ensure_model_loaded()
+                logger.info("✅ Reranking model pre-loaded successfully")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to pre-load reranking model: {e}")
+                logger.warning("   Model will be loaded on first search (may cause delay)")
 
-    # Start model pre-loading in background thread
-    import threading
-    preload_thread = threading.Thread(target=preload_reranking_model, daemon=True)
-    preload_thread.start()
-    logger.info("🔄 Reranking model pre-loading started in background")
+        # Start model pre-loading in background thread
+        import threading
+        preload_thread = threading.Thread(target=preload_reranking_model, daemon=True)
+        preload_thread.start()
+        logger.info("🔄 Reranking model pre-loading started in background")
+    else:
+        logger.info("ℹ️  Reranking disabled (ENABLE_RERANKING=false)")
 
     yield  # Application runs
 

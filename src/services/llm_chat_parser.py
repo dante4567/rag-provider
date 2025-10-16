@@ -209,8 +209,9 @@ class LLMChatParser:
         Detect which LLM export format the content is
 
         Returns:
-            "chatgpt", "claude", or None
+            "chatgpt", "claude", "markdown", or None
         """
+        # Try JSON format first
         try:
             data = json.loads(content)
 
@@ -224,7 +225,41 @@ class LLMChatParser:
 
             return None
         except:
-            return None
+            pass
+
+        # Check for markdown chat format
+        # Look for conversational patterns: User/Assistant exchanges
+        import re
+
+        # Common LLM chat role markers
+        user_patterns = [
+            r'\*\*User\*\*:',      # **User:**
+            r'User:',               # User:
+            r'\*\*Human\*\*:',     # **Human:**
+            r'Human:',              # Human:
+        ]
+
+        assistant_patterns = [
+            r'\*\*Assistant\*\*:', # **Assistant:**
+            r'Assistant:',          # Assistant:
+            r'\*\*ChatGPT\*\*:',   # **ChatGPT:**
+            r'ChatGPT:',            # ChatGPT:
+            r'\*\*Claude\*\*:',    # **Claude:**
+            r'Claude:',             # Claude:
+            r'\*\*AI\*\*:',        # **AI:**
+            r'AI:',                 # AI:
+        ]
+
+        # Count matches
+        user_matches = sum(len(re.findall(pattern, content, re.IGNORECASE)) for pattern in user_patterns)
+        assistant_matches = sum(len(re.findall(pattern, content, re.IGNORECASE)) for pattern in assistant_patterns)
+
+        # If we have multiple exchanges (at least 2 user messages and 2 assistant messages),
+        # it's likely a chat conversation
+        if user_matches >= 2 and assistant_matches >= 2:
+            return "markdown"
+
+        return None
 
     @staticmethod
     def parse_llm_export(content: str) -> Tuple[List[Dict], str, Dict]:
@@ -245,6 +280,31 @@ class LLMChatParser:
         elif format_type == "claude":
             logger.info("Detected Claude export format")
             return LLMChatParser.parse_claude_export(content)
+        elif format_type == "markdown":
+            logger.info("Detected markdown chat format")
+            # For markdown format, return minimal parsed data
+            # The content will be chunked by ChunkingService.chunk_chat_log()
+            import re
+
+            # Count message exchanges for metadata
+            user_count = len(re.findall(r'(\*\*User\*\*:|User:|\*\*Human\*\*:|Human:)', content, re.IGNORECASE))
+            assistant_count = len(re.findall(r'(\*\*Assistant\*\*:|Assistant:|\*\*ChatGPT\*\*:|ChatGPT:|\*\*Claude\*\*:|Claude:|\*\*AI\*\*:|AI:)', content, re.IGNORECASE))
+
+            # Extract title if present (look for # heading or title in YAML frontmatter)
+            title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+            title = title_match.group(1) if title_match else "LLM Chat Conversation"
+
+            summary = f"Markdown chat conversation with {user_count} user messages and {assistant_count} assistant responses"
+            metadata = {
+                "export_type": "markdown",
+                "conversation_title": title,
+                "message_count": user_count + assistant_count,
+                "user_message_count": user_count,
+                "assistant_message_count": assistant_count
+            }
+
+            # Return empty messages list - content will be parsed by chunking service
+            return [], summary, metadata
         else:
             logger.warning("Unknown LLM export format")
             return [], "Unknown or unsupported LLM export format", {}
