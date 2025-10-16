@@ -739,6 +739,21 @@ class ObsidianService:
             has_contact = person_data.get('email') or person_data.get('phone') or person_data.get('address')
             stub_frontmatter['contact_type'] = 'personal' if has_contact else 'reference'
 
+        # Add place-specific fields to frontmatter
+        if entity_type == 'place' and person_data:
+            if person_data.get('address'):
+                stub_frontmatter['address'] = person_data['address']
+            if person_data.get('latitude'):
+                stub_frontmatter['latitude'] = person_data['latitude']
+            if person_data.get('longitude'):
+                stub_frontmatter['longitude'] = person_data['longitude']
+            if person_data.get('category'):
+                stub_frontmatter['category'] = person_data['category']
+            if person_data.get('type'):
+                stub_frontmatter['place_type'] = person_data['type']
+            if person_data.get('contacts'):
+                stub_frontmatter['related_contacts'] = person_data['contacts']
+
         stub_yaml = yaml.dump(stub_frontmatter, default_flow_style=False, allow_unicode=True)
 
         # Map entity types to correct frontmatter field names
@@ -870,6 +885,75 @@ LIMIT 50
 ```dataview
 TABLE file.link as "Document", summary as "Summary", topics as "Topics"
 WHERE contains({field_name}, "{name}")
+SORT file.mtime DESC
+LIMIT 50
+```
+
+"""
+        elif entity_type == 'place':
+            # Place stub with location details
+            stub_body = f"""# {name}\n\n"""
+
+            # Show place metadata if available
+            if person_data:  # Using person_data param to pass place_data
+                place_type = person_data.get('type', 'Location')
+                if place_type:
+                    stub_body += f"**Type:** {place_type}\n\n"
+
+                # Address information
+                address = person_data.get('address')
+                if address:
+                    stub_body += f"**Address:** {address}\n"
+
+                # GPS coordinates
+                latitude = person_data.get('latitude')
+                longitude = person_data.get('longitude')
+                if latitude and longitude:
+                    stub_body += f"**GPS:** {latitude}, {longitude}\n"
+                    # Add OpenStreetMap link
+                    stub_body += f"**Map:** [OpenStreetMap](https://www.openstreetmap.org/?mlat={latitude}&mlon={longitude}#map=15/{latitude}/{longitude})\n"
+
+                # Related contacts
+                contacts = person_data.get('contacts', [])
+                if contacts:
+                    stub_body += f"\n**Related Contacts:**\n"
+                    for contact in contacts:
+                        contact_slug = slugify(contact)
+                        stub_body += f"- [[refs/persons/{contact_slug}|{contact}]]\n"
+
+                # Description
+                description = person_data.get('description')
+                if description:
+                    stub_body += f"\n> {description}\n"
+
+                # Category (e.g., home, school, business, medical)
+                category = person_data.get('category')
+                if category:
+                    stub_body += f"\n**Category:** {category}\n"
+
+                # Visit history or notes
+                notes = person_data.get('notes')
+                if notes:
+                    stub_body += f"\n**Notes:** {notes}\n"
+
+                if any([address, latitude, longitude, contacts, description, category, notes]):
+                    stub_body += "\n"
+
+            # Related documents section
+            stub_body += f"""## Related Documents
+
+```dataview
+TABLE file.link as "Document", summary as "Summary", topics as "Topics", dates as "Dates"
+WHERE contains({field_name}, "{name}")
+SORT file.mtime DESC
+LIMIT 50
+```
+
+## Documents Mentioning This Place
+
+```dataview
+TABLE file.link as "Document", summary as "Summary"
+WHERE contains(file.outlinks, this.file.link)
 SORT file.mtime DESC
 LIMIT 50
 ```
@@ -1065,9 +1149,44 @@ LIMIT 50
         for project in projects:
             self.create_entity_stub('project', project)
 
-        # Place stubs
+        # Place stubs (can include location metadata)
+        places_from_entities = entities.get('places', [])
         for place in places:
-            self.create_entity_stub('place', place)
+            # Check if we have enhanced place data from entities
+            place_data = {}
+            if isinstance(place, dict):
+                # Place is already an EntityObject with metadata
+                place_name = place.get('label', place.get('name', ''))
+                place_data = {
+                    'type': place.get('type', 'Location'),
+                    'address': place.get('address'),
+                    'latitude': place.get('latitude'),
+                    'longitude': place.get('longitude'),
+                    'contacts': place.get('contacts', []),
+                    'description': place.get('description'),
+                    'category': place.get('category'),
+                    'notes': place.get('notes')
+                }
+            else:
+                place_name = place
+                # Try to find enhanced data in entities.places if it's there
+                for enhanced_place in places_from_entities:
+                    if isinstance(enhanced_place, dict):
+                        if enhanced_place.get('label') == place or enhanced_place.get('name') == place:
+                            place_data = {
+                                'type': enhanced_place.get('type', 'Location'),
+                                'address': enhanced_place.get('address'),
+                                'latitude': enhanced_place.get('latitude'),
+                                'longitude': enhanced_place.get('longitude'),
+                                'contacts': enhanced_place.get('contacts', []),
+                                'description': enhanced_place.get('description'),
+                                'category': enhanced_place.get('category'),
+                                'notes': enhanced_place.get('notes')
+                            }
+                            break
+
+            if place_name:
+                self.create_entity_stub('place', place_name, person_data=place_data)
 
         # Organization stubs
         for org in organizations:
