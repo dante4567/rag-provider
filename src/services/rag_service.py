@@ -747,13 +747,23 @@ class RAGService:
 
             # Split into chunks using structure-aware chunking if available
             if self.chunking_service:
-                logger.info("   📐 Using structure-aware chunking...")
-                chunk_dicts = self.chunking_service.chunk_text(content, preserve_structure=True)
-                # Extract just the content strings for backward compatibility
-                chunks = [c['content'] for c in chunk_dicts]
-                # Store full chunk metadata for later use
-                chunk_metadata_list = chunk_dicts
-                logger.info(f"   ✅ Created {len(chunks)} structure-aware chunks")
+                # Use specialized chunking for chat logs (turn-based)
+                if document_type == DocumentType.llm_chat:
+                    logger.info("   💬 Using strategic turn-based chunking for chat log...")
+                    chunk_dicts = self.chunking_service.chunk_chat_log(content, enriched_metadata)
+                    # Extract just the content strings for backward compatibility
+                    chunks = [c['content'] for c in chunk_dicts]
+                    # Store full chunk metadata for later use
+                    chunk_metadata_list = chunk_dicts
+                    logger.info(f"   ✅ Created {len(chunks)} turn-based chunks (was {enriched_metadata.get('turn_count', 0)} turns)")
+                else:
+                    logger.info("   📐 Using structure-aware chunking...")
+                    chunk_dicts = self.chunking_service.chunk_text(content, preserve_structure=True)
+                    # Extract just the content strings for backward compatibility
+                    chunks = [c['content'] for c in chunk_dicts]
+                    # Store full chunk metadata for later use
+                    chunk_metadata_list = chunk_dicts
+                    logger.info(f"   ✅ Created {len(chunks)} structure-aware chunks")
             else:
                 logger.info("   Using standard text splitting...")
                 chunks = self.document_service.chunk_text(content)

@@ -400,6 +400,291 @@ class ChunkingService:
         else:
             return ChunkType.MIXED
 
+    def chunk_chat_log(
+        self,
+        content: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Strategic turn-based chunking for chat logs
+
+        Breaks conversations into semantic chunks based on Q&A pairs (turns).
+        Each chunk includes 1-3 related turns with context headers.
+
+        Args:
+            content: Chat log content with User/Assistant turns
+            metadata: Optional metadata from chat_log_handler
+
+        Returns:
+            List of chunk dictionaries optimized for RAG retrieval
+        """
+        # Parse turns (user/assistant pairs)
+        turns = self._parse_chat_turns(content)
+
+        if not turns:
+            # Fallback to simple chunking
+            logger.warning("No turns detected in chat log, using simple chunking")
+            return self._simple_chunk(content)
+
+        # Group turns into semantic chunks
+        chunks = []
+        sequence = 0
+        current_chunk_turns = []
+        current_tokens = 0
+
+        for i, turn in enumerate(turns):
+            turn_tokens = self.estimate_tokens(turn['user'] + turn.get('assistant', ''))
+
+            # Check if we should start a new chunk
+            should_split = (
+                # Chunk would exceed max size
+                (current_tokens + turn_tokens > self.max_size) or
+                # Detected topic shift (compare with previous turn)
+                (current_chunk_turns and self._is_topic_shift(turn, current_chunk_turns[-1])) or
+                # Chunk has enough turns (1-3 is optimal)
+                (len(current_chunk_turns) >= 3 and current_tokens >= self.min_size)
+            )
+
+            if should_split and current_chunk_turns:
+                # Save current chunk
+                chunk = self._create_chat_chunk(
+                    current_chunk_turns,
+                    sequence,
+                    metadata
+                )
+                chunks.append(chunk)
+                sequence += 1
+                current_chunk_turns = []
+                current_tokens = 0
+
+            # Add turn to current chunk
+            current_chunk_turns.append(turn)
+            current_tokens += turn_tokens
+
+        # Save final chunk
+        if current_chunk_turns:
+            chunk = self._create_chat_chunk(
+                current_chunk_turns,
+                sequence,
+                metadata
+            )
+            chunks.append(chunk)
+
+        logger.info(
+            f"💬 Chat log chunked: {len(turns)} turns → {len(chunks)} semantic chunks "
+            f"(avg {len(turns)//len(chunks) if chunks else 0} turns/chunk)"
+        )
+
+        return chunks
+
+    def _parse_chat_turns(self, content: str) -> List[Dict[str, Any]]:
+        """
+        Parse chat log into user/assistant turn pairs
+
+        Detects patterns like:
+        - User: ...
+        - Assistant: ...
+        - **User**: ...
+        - **Assistant**: ...
+        """
+        turns = []
+        lines = content.split('\n')
+        current_turn = None
+        current_role = None
+        current_content = []
+
+        # Patterns for detecting role markers
+        user_patterns = [
+            r'^(User|Human|You):\s*',
+            r'^\*\*(User|Human|You)\*\*:\s*',
+        ]
+        assistant_patterns = [
+            r'^(Assistant|Claude|ChatGPT|AI):\s*',
+            r'^\*\*(Assistant|Claude|ChatGPT|AI)\*\*:\s*',
+        ]
+
+        for line in lines:
+            line_stripped = line.strip()
+
+            # Check for user marker
+            is_user = any(re.match(pattern, line, re.IGNORECASE) for pattern in user_patterns)
+            # Check for assistant marker
+            is_assistant = any(re.match(pattern, line, re.IGNORECASE) for pattern in assistant_patterns)
+
+            if is_user or is_assistant:
+                # Save previous turn content
+                if current_role and current_content:
+                    content_text = '\n'.join(current_content).strip()
+                    if current_role == 'user':
+                        current_turn = {'user': content_text}
+                    elif current_role == 'assistant':
+                        if current_turn:
+                            current_turn['assistant'] = content_text
+                            turns.append(current_turn)
+                            current_turn = None
+
+                # Start new turn
+                current_role = 'user' if is_user else 'assistant'
+                current_content = []
+
+                # Add content after marker (if any)
+                marker_content = re.sub(
+                    '|'.join(user_patterns + assistant_patterns),
+                    '',
+                    line,
+                    flags=re.IGNORECASE
+                ).strip()
+                if marker_content:
+                    current_content.append(marker_content)
+            else:
+                # Add line to current turn content
+                if line_stripped:
+                    current_content.append(line)
+
+        # Save final turn
+        if current_role and current_content:
+            content_text = '\n'.join(current_content).strip()
+            if current_role == 'user':
+                turns.append({'user': content_text})
+            elif current_role == 'assistant' and current_turn:
+                current_turn['assistant'] = content_text
+                turns.append(current_turn)
+
+        return turns
+
+    def _is_topic_shift(self, turn1: Dict[str, Any], turn2: Dict[str, Any]) -> bool:
+        """
+        Detect if there's a topic shift between two turns
+
+        Uses simple heuristics:
+        - Question word changes (what/how/why)
+        - Key nouns overlap < 20%
+        - Explicit topic markers ("moving on", "new question", etc.)
+        """
+        user1 = turn1.get('user', '').lower()
+        user2 = turn2.get('user', '').lower()
+
+        # Explicit topic shift markers
+        shift_markers = [
+            'moving on', 'new question', 'different topic',
+            'another question', 'switching to', 'next question'
+        ]
+        if any(marker in user2 for marker in shift_markers):
+            return True
+
+        # Question word changes
+        question_words = ['what', 'how', 'why', 'when', 'where', 'which', 'who']
+        q1_words = [w for w in question_words if w in user1]
+        q2_words = [w for w in question_words if w in user2]
+
+        # Different question types suggest topic shift
+        if q1_words and q2_words and set(q1_words) != set(q2_words):
+            return True
+
+        # Extract key nouns (very basic - words >4 chars, capitalized or technical)
+        def extract_key_terms(text):
+            words = re.findall(r'\b[A-Z][a-z]+\b|\b[a-z]{5,}\b', text)
+            return set(words[:10])  # Limit to 10 terms
+
+        terms1 = extract_key_terms(user1)
+        terms2 = extract_key_terms(user2)
+
+        if not terms1 or not terms2:
+            return False
+
+        # Calculate overlap
+        overlap = len(terms1 & terms2) / len(terms1 | terms2)
+
+        # < 20% overlap suggests topic shift
+        return overlap < 0.2
+
+    def _create_chat_chunk(
+        self,
+        turns: List[Dict[str, Any]],
+        sequence: int,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Create a chunk from a list of turns with context headers
+
+        Format:
+        ### Chunk 1: {extracted_topic}
+
+        **Turn 1/3**
+        **User:** {question}
+        **Assistant:** {answer}
+
+        **Turn 2/3**
+        ...
+        """
+        # Extract topic from first user question
+        first_question = turns[0].get('user', '')
+        topic = self._extract_topic_from_question(first_question)
+
+        # Build chunk content with context headers
+        chunk_lines = [
+            f"### Chat Chunk {sequence + 1}: {topic}",
+            "",
+            f"**Context:** {len(turns)} conversation turn(s)",
+            ""
+        ]
+
+        for i, turn in enumerate(turns):
+            chunk_lines.append(f"**Turn {i + 1}/{len(turns)}**")
+            chunk_lines.append(f"**User:** {turn.get('user', '(no user message)')}")
+            chunk_lines.append("")
+
+            if 'assistant' in turn:
+                chunk_lines.append(f"**Assistant:** {turn['assistant']}")
+                chunk_lines.append("")
+
+        content = '\n'.join(chunk_lines)
+
+        return {
+            'content': content,
+            'metadata': {
+                'chunk_type': 'chat_turn',
+                'section_title': topic,
+                'turn_count': len(turns),
+                'sequence': sequence,
+                'parent_sections': []
+            },
+            'sequence': sequence,
+            'char_count': len(content),
+            'estimated_tokens': self.estimate_tokens(content)
+        }
+
+    def _extract_topic_from_question(self, question: str) -> str:
+        """
+        Extract concise topic from user question
+
+        Examples:
+        - "How do I create a bootable USB for Fedora?" → "Bootable USB Creation"
+        - "what's the best linux distro?" → "Linux Distribution Selection"
+        """
+        question = question.strip()
+
+        # Remove question words
+        topic = re.sub(
+            r'\b(how|what|why|when|where|which|who|can|should|do|does|is|are)\b',
+            '',
+            question,
+            flags=re.IGNORECASE
+        ).strip()
+
+        # Take first 5-8 words
+        words = topic.split()[:8]
+        topic = ' '.join(words)
+
+        # Title case
+        topic = topic.title()
+
+        # Limit length
+        if len(topic) > 60:
+            topic = topic[:57] + "..."
+
+        return topic if topic else "Conversation"
+
     def _simple_chunk(self, content: str) -> List[Dict[str, Any]]:
         """
         Fallback: Simple text splitting (like old SimpleTextSplitter)
