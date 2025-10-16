@@ -15,11 +15,56 @@ school:
 
 kita:
   - kita/admin
+  - kita/admin/notice
+  - kita/admin/announcement
   - kita/handover
   - kita/schedule
+  - kita/schedule/closure
+  - kita/schedule/hours
+  - kita/schedule/holiday
   - kita/pickup
+  - kita/pickup/late-care
   - kita/events
+  - kita/events/parent-evening
+  - kita/events/celebration
+  - kita/events/excursion
+  - kita/events/project
   - kita/transition
+  - kita/transition/settling-in
+  - kita/transition/eingewohnung
+  - kita/contract
+  - kita/contract/betreuungsvertrag
+  - kita/contract/fees
+  - kita/contract/elternbeitrag
+  - kita/registration
+  - kita/registration/anmeldung
+  - kita/registration/application
+  - kita/health
+  - kita/health/illness
+  - kita/health/covid
+  - kita/health/testing
+  - kita/health/quarantine
+  - kita/health/lollitest
+  - kita/staff
+  - kita/staff/absence
+  - kita/staff/personalausfall
+  - kita/staff/new-hire
+  - kita/staff/leave
+  - kita/communication
+  - kita/communication/parent-info
+  - kita/communication/elterninfo
+  - kita/communication/newsletter
+  - kita/group
+  - kita/group/assignment
+  - kita/group/gruppengestaltung
+  - kita/group/activities
+  - kita/emergency
+  - kita/emergency/notbetreuung
+  - kita/emergency/closure
+  - kita/policy
+  - kita/policy/rules
+  - kita/policy/maskenpflicht
+  - kita/policy/hygiene
 
 legal:
   - legal/custody
