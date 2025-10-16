@@ -141,7 +141,7 @@ class EnrichmentService:
         # Default: Active
         return "active"
 
-    def extract_dates_from_content(self, content: str) -> List[str]:
+    def extract_dates_from_content(self, content: str, reference_date: datetime = None) -> List[str]:
         """
         Extract dates from content using regex patterns + relative date parsing
 
@@ -186,6 +186,9 @@ class EnrichmentService:
         # Relative date parsing (e.g., "next Monday", "nächste Woche", "am Montag")
         try:
             import dateparser
+            # Use reference date (email sent date) or current time as fallback
+            base_date = reference_date or datetime.now()
+
             # Split content into sentences to avoid parsing entire text
             sentences = re.split(r'[.!?\n]', content[:3000])  # First 3000 chars only
             for sentence in sentences[:50]:  # Max 50 sentences
@@ -207,10 +210,11 @@ class EnrichmentService:
                     for match in matches:
                         date_phrase = match.group(1)
                         # Parse with dateparser (supports multiple languages)
+                        # Use reference_date as base for relative calculations
                         parsed = dateparser.parse(
                             date_phrase,
                             languages=['en', 'de', 'fr', 'es'],
-                            settings={'PREFER_DATES_FROM': 'future', 'RELATIVE_BASE': datetime.now()}
+                            settings={'PREFER_DATES_FROM': 'future', 'RELATIVE_BASE': base_date}
                         )
                         if parsed:
                             dates.add(parsed.strftime('%Y-%m-%d'))
@@ -793,7 +797,22 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
             logger.debug(f"  - Empty? {len(llm_data) == 0}")
 
             # Extract dates, numbers, and people using regex (in addition to LLM extraction)
-            regex_dates = self.extract_dates_from_content(content)
+            # Use email sent date or document creation date as reference for relative dates
+            reference_date = None
+            if existing_metadata.get('sent_date'):
+                try:
+                    from dateutil import parser
+                    reference_date = parser.parse(existing_metadata['sent_date'])
+                except:
+                    pass
+            elif existing_metadata.get('created_at'):
+                try:
+                    from dateutil import parser
+                    reference_date = parser.parse(existing_metadata['created_at'])
+                except:
+                    pass
+
+            regex_dates = self.extract_dates_from_content(content, reference_date=reference_date)
             regex_numbers = self.extract_numbers_from_content(content)
             regex_people = self.extract_people_from_content(content)
 

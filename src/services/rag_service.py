@@ -1022,7 +1022,26 @@ class RAGService:
 
             filename = Path(file_path).name
 
-            # Process main document
+            # For emails with attachments: extract attachment summaries FIRST
+            attachment_summaries = []
+            if process_attachments and metadata.get('has_attachments', False):
+                attachment_paths = metadata.get('attachment_paths', [])
+                if attachment_paths:
+                    logger.info(f"📎 Extracting summaries from {len(attachment_paths)} attachments for email context...")
+                    attachment_summaries = await self._extract_attachment_summaries(
+                        attachment_paths=attachment_paths,
+                        process_ocr=process_ocr
+                    )
+
+                    # Add attachment context to email content
+                    if attachment_summaries:
+                        attachment_context = "\n\n--- ATTACHMENT SUMMARIES (for context) ---\n"
+                        for att in attachment_summaries:
+                            attachment_context += f"\n📎 {att['filename']}:\n{att['summary']}\n"
+                        content += attachment_context
+                        logger.info(f"✅ Added {len(attachment_summaries)} attachment summaries to email enrichment context")
+
+            # Process main document (now with attachment context if applicable)
             result = await self.process_document(
                 content=content,
                 filename=filename,
@@ -1034,7 +1053,7 @@ class RAGService:
                 use_iteration=use_iteration
             )
 
-            # Process email attachments if present
+            # Process email attachments as full documents (now that parent is enriched)
             if process_attachments and metadata.get('has_attachments', False):
                 attachment_paths = metadata.get('attachment_paths', [])
                 if attachment_paths:
@@ -1137,6 +1156,59 @@ class RAGService:
             await self._update_parent_with_attachment_links(parent_doc_id, attachment_doc_ids)
 
         logger.info(f"📎 Attachment processing complete: {success_count} processed, {skip_count} skipped")
+
+    async def _extract_attachment_summaries(
+        self,
+        attachment_paths: List[str],
+        process_ocr: bool = False
+    ) -> List[Dict[str, str]]:
+        """
+        Extract quick summaries from attachments for email enrichment context
+
+        Args:
+            attachment_paths: List of paths to attachment files
+            process_ocr: Enable OCR for image attachments
+
+        Returns:
+            List of dicts with filename and summary
+        """
+        summaries = []
+
+        for att_path in attachment_paths:
+            att_path_obj = Path(att_path)
+
+            # Skip non-document attachments (logos, icons, etc.)
+            if att_path_obj.suffix.lower() in ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico']:
+                if att_path_obj.exists() and att_path_obj.stat().st_size < 50000:  # < 50KB
+                    continue
+
+            try:
+                # Extract content from attachment
+                content, doc_type, att_metadata = await self.document_service.extract_text_from_file(
+                    att_path,
+                    process_ocr=process_ocr
+                )
+
+                # Skip if no meaningful content
+                if not content or len(content.strip()) < 20:
+                    continue
+
+                # Generate quick summary (first 500 chars)
+                summary = content[:500].strip()
+                if len(content) > 500:
+                    summary += "..."
+
+                summaries.append({
+                    'filename': att_path_obj.name,
+                    'summary': summary,
+                    'doc_type': str(doc_type)
+                })
+
+            except Exception as e:
+                logger.warning(f"   ⚠️  Failed to extract summary from {att_path_obj.name}: {e}")
+                continue
+
+        return summaries
 
     async def _update_parent_with_attachment_links(
         self,
