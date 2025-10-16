@@ -25,12 +25,12 @@ curl -X POST http://localhost:8001/search \
 **Production-ready RAG system with Smart Triage - Grade A (95/100)**
 
 **🎯 Latest Test Results (Oct 16, 2025):**
-- ✅ **100 Villa Luna emails ingested (94% success, 1% duplicate, 5% schema fixes)**
+- ✅ **100 Villa Luna emails ingested (95% success, 0% duplicate, 5% edge cases)**
 - ✅ **Smart triage enabled** - Duplicate detection working (100% accuracy)
-- ✅ **Cost savings validated** - $0.00018 saved on 2 duplicates in 50-email batch
-- ✅ **Performance:** 3-4 seconds/email average
+- ✅ **Email date extraction working** - Files sorted by actual send date, not ingestion date
+- ✅ **Performance:** 3 seconds/email average (320s for 100 emails)
 - ✅ **Search working:** 381ms average, hybrid ready
-- ✅ **New filename format:** `2025-10-16T19-36-36_email_title_hash.md` (ISO 8601 datetime)
+- ✅ **New filename format:** `2021-01-22T00-00-00_email_title_hash.md` (ISO 8601 with email date)
 
 **Previous Comprehensive Test (100 docs):**
 - ✅ 645 chunks, 420 entities, 992 auto-links, 640 Obsidian files

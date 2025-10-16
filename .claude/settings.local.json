@@ -42,7 +42,12 @@
       "Bash(awk:*)",
       "Bash(/tmp/ingest_50_emails.sh:*)",
       "Bash(echo:*)",
-      "Bash(docker volume rm:*)"
+      "Bash(docker volume rm:*)",
+      "Bash(docker container prune:*)",
+      "Bash(docker image prune:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
