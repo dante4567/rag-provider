@@ -360,6 +360,134 @@ class ObsidianService:
 
         return content
 
+    def _auto_link_entities(
+        self,
+        content: str,
+        entities: Dict[str, Any],
+        link_all_occurrences: bool = False
+    ) -> str:
+        """
+        Automatically create WikiLinks for entity mentions in content
+
+        Args:
+            content: Document content
+            entities: Dict of entity types (people, places, organizations, technologies)
+            link_all_occurrences: If True, link every mention. If False, only link first mention.
+
+        Returns:
+            Content with entity mentions replaced by WikiLinks
+        """
+        if not content or not entities:
+            return content
+
+        import re
+
+        # Track linked entities to avoid double-linking
+        linked_entities = set()
+
+        # Build entity map: {name: (type, slug)}
+        entity_map = {}
+
+        # People
+        for person in entities.get('people', []):
+            if isinstance(person, dict):
+                name = person.get('label', person.get('name', ''))
+            else:
+                name = person
+            if name:
+                entity_map[name] = ('persons', slugify(name))
+
+        # Places
+        for place in entities.get('places', []):
+            if isinstance(place, dict):
+                name = place.get('label', place.get('name', ''))
+            else:
+                name = place
+            if name:
+                entity_map[name] = ('places', slugify(name))
+
+        # Organizations
+        for org in entities.get('organizations', []):
+            if isinstance(org, dict):
+                name = org.get('label', org.get('name', ''))
+            else:
+                name = org
+            if name:
+                entity_map[name] = ('orgs', slugify(name))
+
+        # Technologies
+        for tech in entities.get('technologies', []):
+            if isinstance(tech, dict):
+                name = tech.get('label', tech.get('name', ''))
+            else:
+                name = tech
+            if name:
+                entity_map[name] = ('technologies', slugify(name))
+
+        # Sort by length (longest first) to avoid partial matches
+        # e.g., "Daniel Teckentrup" should be matched before "Daniel"
+        sorted_entities = sorted(entity_map.keys(), key=len, reverse=True)
+
+        # Split content into lines to preserve structure
+        lines = content.split('\n')
+        result_lines = []
+
+        in_code_block = False
+        in_yaml_frontmatter = False
+
+        for line in lines:
+            # Track code blocks
+            if line.strip().startswith('```'):
+                in_code_block = not in_code_block
+                result_lines.append(line)
+                continue
+
+            # Track YAML frontmatter
+            if line.strip() == '---':
+                if not in_yaml_frontmatter:
+                    in_yaml_frontmatter = True
+                else:
+                    in_yaml_frontmatter = False
+                result_lines.append(line)
+                continue
+
+            # Skip linking in code blocks and frontmatter
+            if in_code_block or in_yaml_frontmatter:
+                result_lines.append(line)
+                continue
+
+            # Skip if line already has WikiLinks (don't double-link)
+            if '[[' in line:
+                result_lines.append(line)
+                continue
+
+            # Replace entity mentions with WikiLinks
+            modified_line = line
+            for entity_name in sorted_entities:
+                # Skip if already linked (in this session)
+                if not link_all_occurrences and entity_name in linked_entities:
+                    continue
+
+                # Word boundary regex for case-insensitive matching
+                # \b ensures we match whole words only
+                pattern = r'\b(' + re.escape(entity_name) + r')\b'
+
+                entity_type, entity_slug = entity_map[entity_name]
+                wikilink = f"[[refs/{entity_type}/{entity_slug}|{entity_name}]]"
+
+                # Check if entity exists in this line
+                if re.search(pattern, modified_line, re.IGNORECASE):
+                    # Replace first occurrence (or all if link_all_occurrences=True)
+                    if link_all_occurrences:
+                        modified_line = re.sub(pattern, wikilink, modified_line, flags=re.IGNORECASE)
+                    else:
+                        modified_line = re.sub(pattern, wikilink, modified_line, count=1, flags=re.IGNORECASE)
+                        linked_entities.add(entity_name)
+
+            result_lines.append(modified_line)
+
+        return '\n'.join(result_lines)
+
     def _format_paragraphs(self, content: str) -> str:
         """
         Ensure proper paragraph spacing in markdown content
@@ -508,6 +636,84 @@ class ObsidianService:
             body_parts.append("")
             body_parts.append(f"📎 This file was attached to: [[{parent_doc_id}]]")
             body_parts.append("")
+
+        # Source link section - link to original in attachments/
+        # Extract original filename (remove upload_UUID_ prefix)
+        import re
+        import os
+        original_filename = re.sub(r'^upload_[a-f0-9-]+_', '', source)
+
+        # Check if original exists in Obsidian attachments
+        obsidian_base = Path(os.environ.get('OBSIDIAN_VAULT_PATH', '/data/obsidian'))
+        attachment_path = obsidian_base / 'attachments' / original_filename
+
+        body_parts.append("## Source")
+        body_parts.append("")
+        # Show source filename with wiki-link to attachment if exists
+        # Extract base filename without upload ID prefix
+        base_filename = original_filename
+        if '_' in original_filename and original_filename.startswith('upload_'):
+            # Remove upload_<uuid>_ prefix
+            parts = original_filename.split('_', 2)
+            if len(parts) >= 3:
+                base_filename = parts[2]
+        body_parts.append(f"📄 [[attachments/{original_filename}|{base_filename}]]")
+        body_parts.append("")
+
+        # Evidence/Excerpts (main content) - NOW COMES EARLY
+        # Strip frontmatter to avoid nesting conflicts
+        clean_content = self._strip_frontmatter(content)
+        # Auto-link entities in content
+        linked_content = self._auto_link_entities(clean_content, entities, link_all_occurrences=False)
+        # Ensure proper paragraph spacing
+        formatted_content = self._format_paragraphs(linked_content)
+        body_parts.append("## Content\n")
+
+        # Show chunking information if available
+        if chunks:
+            chunk_count = len(chunks)
+            body_parts.append(f"_This document was split into {chunk_count} chunks for vector search:_\n")
+            for i, chunk in enumerate(chunks, 1):
+                chunk_preview = chunk.get('content', '')[:100].replace('\n', ' ')
+                if len(chunk.get('content', '')) > 100:
+                    chunk_preview += "..."
+                body_parts.append(f"- **Chunk {i}**: {chunk_preview}")
+            body_parts.append("")
+
+        body_parts.append(formatted_content)
+        body_parts.append("")
+
+        # Key Facts
+        if key_facts:
+            body_parts.append("## Key Facts\n")
+            for fact in key_facts:
+                body_parts.append(f"- {fact}")
+            body_parts.append("")
+
+        # Outcomes/Decisions
+        if outcomes:
+            body_parts.append("## Outcomes / Decisions\n")
+            for outcome in outcomes:
+                body_parts.append(f"- {outcome}")
+            body_parts.append("")
+
+        # Next Actions
+        if next_actions:
+            body_parts.append("## Next Actions\n")
+            for action in next_actions:
+                body_parts.append(f"- [ ] {action}")
+            body_parts.append("")
+
+        # Timeline
+        if timeline:
+            body_parts.append("## Timeline\n")
+            for event in timeline:
+                timestamp = event.get('timestamp', '')
+                description = event.get('description', '')
+                body_parts.append(f"- {timestamp} -- {description}")
+            body_parts.append("")
+
+        # === ENTITY SECTIONS (now come after content) ===
 
         # People Details (Dataview-queryable format)
         if people_detailed:
@@ -664,80 +870,6 @@ class ObsidianService:
                     # Simple string format
                     project_slug = slugify(project)
                     body_parts.append(f"- [[refs/projects/{project_slug}|{project}]]")
-            body_parts.append("")
-
-        # Source link section - link to original in attachments/
-        # Extract original filename (remove upload_UUID_ prefix)
-        import re
-        import os
-        original_filename = re.sub(r'^upload_[a-f0-9-]+_', '', source)
-
-        # Check if original exists in Obsidian attachments
-        obsidian_base = Path(os.environ.get('OBSIDIAN_VAULT_PATH', '/data/obsidian'))
-        attachment_path = obsidian_base / 'attachments' / original_filename
-
-        body_parts.append("## Source")
-        body_parts.append("")
-        # Show source filename with wiki-link to attachment if exists
-        # Extract base filename without upload ID prefix
-        base_filename = original_filename
-        if '_' in original_filename and original_filename.startswith('upload_'):
-            # Remove upload_<uuid>_ prefix
-            parts = original_filename.split('_', 2)
-            if len(parts) >= 3:
-                base_filename = parts[2]
-        body_parts.append(f"📄 [[attachments/{original_filename}|{base_filename}]]")
-        body_parts.append("")
-
-        # Key Facts
-        if key_facts:
-            body_parts.append("## Key Facts\n")
-            for fact in key_facts:
-                body_parts.append(f"- {fact}")
-            body_parts.append("")
-
-        # Evidence/Excerpts (main content)
-        # Strip frontmatter to avoid nesting conflicts
-        clean_content = self._strip_frontmatter(content)
-        # Ensure proper paragraph spacing
-        formatted_content = self._format_paragraphs(clean_content)
-        body_parts.append("## Content\n")
-
-        # Show chunking information if available
-        if chunks:
-            chunk_count = len(chunks)
-            body_parts.append(f"_This document was split into {chunk_count} chunks for vector search:_\n")
-            for i, chunk in enumerate(chunks, 1):
-                chunk_preview = chunk.get('content', '')[:100].replace('\n', ' ')
-                if len(chunk.get('content', '')) > 100:
-                    chunk_preview += "..."
-                body_parts.append(f"- **Chunk {i}**: {chunk_preview}")
-            body_parts.append("")
-
-        body_parts.append(formatted_content)
-        body_parts.append("")
-
-        # Outcomes/Decisions
-        if outcomes:
-            body_parts.append("## Outcomes / Decisions\n")
-            for outcome in outcomes:
-                body_parts.append(f"- {outcome}")
-            body_parts.append("")
-
-        # Next Actions
-        if next_actions:
-            body_parts.append("## Next Actions\n")
-            for action in next_actions:
-                body_parts.append(f"- [ ] {action}")
-            body_parts.append("")
-
-        # Timeline
-        if timeline:
-            body_parts.append("## Timeline\n")
-            for event in timeline:
-                timestamp = event.get('timestamp', '')
-                description = event.get('description', '')
-                body_parts.append(f"- {timestamp} -- {description}")
             body_parts.append("")
 
         return "\n".join(body_parts)
