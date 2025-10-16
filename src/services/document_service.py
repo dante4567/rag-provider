@@ -3,6 +3,7 @@ Document processing service
 
 Handles document extraction, processing, and chunking for various file formats
 """
+import asyncio
 import logging
 import magic
 import aiofiles
@@ -30,11 +31,7 @@ from src.services.email_threading_service import EmailThreadingService, EmailMes
 from src.services.document_type_handlers import (
     EmailHandler,
     ChatLogHandler,
-    ScannedDocHandler,
-    InvoiceHandler,
-    ManualHandler,
 )
-from src.services.pii_filter_service import get_pii_filter_service, PIIType
 
 logger = logging.getLogger(__name__)
 
@@ -76,12 +73,13 @@ class DocumentService:
         # Initialize email threading service
         self.email_threading = EmailThreadingService()
 
-        # Initialize document type handlers
+        # Initialize document type handlers (only tested ones)
         self.email_handler = EmailHandler()
         self.chat_log_handler = ChatLogHandler()
-        self.scanned_doc_handler = ScannedDocHandler()
-        self.invoice_handler = InvoiceHandler()
-        self.manual_handler = ManualHandler()
+
+        # Rate limiting: Max 5 concurrent document processing operations
+        # Prevents OOM crashes from parallel enrichment calls
+        self._processing_semaphore = asyncio.Semaphore(5)
 
     async def process_upload(
         self,
@@ -107,24 +105,23 @@ class DocumentService:
                 content = await file.read()
                 await f.write(content)
 
-            # Process the file
-            text, doc_type, metadata = await self.extract_text_from_file(
-                file_path=temp_path,
-                process_ocr=process_ocr if process_ocr is not None else self.settings.use_ocr
-            )
+            # Rate-limited processing: max 5 concurrent operations
+            async with self._processing_semaphore:
+                # Process the file
+                text, doc_type, metadata = await self.extract_text_from_file(
+                    file_path=temp_path,
+                    process_ocr=process_ocr if process_ocr is not None else self.settings.use_ocr
+                )
 
-            # Apply document type-specific handler for preprocessing
-            text, metadata = self._apply_document_type_handler(text, doc_type, metadata, temp_path)
+                # Apply document type-specific handler for preprocessing
+                text, metadata = self._apply_document_type_handler(text, doc_type, metadata, temp_path)
 
-            # Apply PII filtering (privacy protection)
-            text, metadata = self._apply_pii_filtering(text, metadata)
-
-            # Add file metadata
-            metadata.update({
-                "original_filename": file.filename,
-                "content_type": file.content_type,
-                "file_size_bytes": len(content)
-            })
+                # Add file metadata
+                metadata.update({
+                    "original_filename": file.filename,
+                    "content_type": file.content_type,
+                    "file_size_bytes": len(content)
+                })
 
             return {
                 "text": text,
@@ -755,10 +752,9 @@ class DocumentService:
         """
         Apply type-specific document handler for preprocessing and metadata extraction.
 
-        Routes to appropriate handler based on:
-        1. Explicit document type (email, scanned, llm_chat)
-        2. Content detection (invoice, manual keywords)
-        3. Fallback to no preprocessing
+        Currently supports only TESTED handlers:
+        - Email handler (German emails validated)
+        - Chat log handler (ChatGPT format validated)
 
         Args:
             text: Extracted text
@@ -777,7 +773,7 @@ class DocumentService:
             # Email preprocessing already done in _process_email
             handler_used = "email"
 
-        # Chat log handler
+        # Chat log handler (ChatGPT exports)
         elif doc_type == DocumentType.llm_chat:
             metadata['original_length'] = original_length
             text = self.chat_log_handler.preprocess(text, metadata)
@@ -785,43 +781,8 @@ class DocumentService:
             metadata.update(handler_metadata)
             handler_used = "chat_log"
 
-        # Scanned document handler
-        elif doc_type == DocumentType.scanned:
-            metadata['original_length'] = original_length
-            text = self.scanned_doc_handler.preprocess(text, metadata)
-            handler_metadata = self.scanned_doc_handler.extract_metadata(text, metadata)
-            metadata.update(handler_metadata)
-            handler_used = "scanned_doc"
-
-        # Content-based detection for invoices and manuals
-        else:
-            # Detect invoice (check first 2000 chars for invoice indicators)
-            text_sample = text[:2000].lower()
-            invoice_keywords = ['invoice', 'rechnung', 'facture', 'total', 'amount due', 'payment',
-                               'bill to', 'invoice number', 'invoice date']
-            invoice_score = sum(1 for kw in invoice_keywords if kw in text_sample)
-
-            # Detect manual/documentation
-            manual_keywords = ['table of contents', 'chapter', 'section', 'introduction',
-                              'installation', 'configuration', 'user guide', 'manual',
-                              'documentation', 'reference', 'appendix']
-            manual_score = sum(1 for kw in manual_keywords if kw in text_sample)
-
-            # Apply invoice handler if confident
-            if invoice_score >= 3:
-                metadata['original_length'] = original_length
-                text = self.invoice_handler.preprocess(text, metadata)
-                handler_metadata = self.invoice_handler.extract_metadata(text, metadata)
-                metadata.update(handler_metadata)
-                handler_used = "invoice"
-
-            # Apply manual handler if confident
-            elif manual_score >= 3:
-                metadata['original_length'] = original_length
-                text = self.manual_handler.preprocess(text, metadata)
-                handler_metadata = self.manual_handler.extract_metadata(text, metadata)
-                metadata.update(handler_metadata)
-                handler_used = "manual"
+        # Note: Invoice, scanned, and manual handlers moved to src/services/experimental/
+        # These are untested and should not be used in production
 
         if handler_used:
             cleaned_length = len(text)
@@ -830,61 +791,6 @@ class DocumentService:
             metadata['handler_applied'] = handler_used
 
         return text, metadata
-
-    def _apply_pii_filtering(
-        self,
-        text: str,
-        metadata: Dict[str, Any]
-    ) -> Tuple[str, Dict[str, Any]]:
-        """
-        Apply PII filtering for privacy protection.
-
-        Detects and redacts:
-        - Email addresses
-        - Phone numbers
-        - SSNs
-        - Credit card numbers
-        - IP addresses
-        - IBANs
-
-        Args:
-            text: Document text
-            metadata: Existing metadata
-
-        Returns:
-            Tuple of (filtered_text, updated_metadata)
-        """
-        pii_filter = get_pii_filter_service(redaction_mode="mask")
-
-        # Detect PII
-        detected_pii = pii_filter.detect(text)
-
-        if not detected_pii:
-            metadata['has_pii'] = False
-            return text, metadata
-
-        # Get summary of what was found
-        pii_summary = pii_filter.get_pii_summary(text)
-
-        # Redact PII
-        filtered_text, redacted_instances = pii_filter.redact(text)
-
-        # Update metadata
-        metadata['has_pii'] = True
-        metadata['pii_detected'] = pii_summary
-        metadata['pii_redacted_count'] = len(redacted_instances)
-        metadata['pii_types_found'] = [m.pii_type.value for m in redacted_instances]
-
-        original_length = len(text)
-        filtered_length = len(filtered_text)
-
-        logger.info(
-            f"🔒 PII filtering: {len(redacted_instances)} instances redacted "
-            f"({', '.join(set(m.pii_type.value for m in redacted_instances))}), "
-            f"{original_length} → {filtered_length} chars"
-        )
-
-        return filtered_text, metadata
 
     def chunk_text(self, text: str) -> List[str]:
         """

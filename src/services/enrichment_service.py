@@ -25,9 +25,6 @@ from src.models.schemas import DocumentType, SemanticDocumentType
 from src.services.document_type_handlers import (
     EmailHandler,
     ChatLogHandler,
-    ScannedDocHandler,
-    InvoiceHandler,
-    ManualHandler,
 )
 
 # Self-improvement loop imports
@@ -56,12 +53,9 @@ class EnrichmentService:
         # Load entity deduplication service
         self.entity_dedup = get_entity_deduplication_service(similarity_threshold=0.85)
 
-        # Initialize document type handlers for type-specific processing
+        # Initialize document type handlers (only tested ones)
         self.email_handler = EmailHandler()
         self.chat_log_handler = ChatLogHandler()
-        self.scanned_doc_handler = ScannedDocHandler()
-        self.invoice_handler = InvoiceHandler()
-        self.manual_handler = ManualHandler()
 
     def generate_content_hash(self, content: str) -> str:
         """Generate SHA-256 hash for deduplication"""
@@ -807,12 +801,7 @@ Return ONLY the document type string (e.g., "legal/court-decision"), nothing els
                 return self.email_handler.get_summary_prompt("", metadata)
             elif handler_type == 'chat_log':
                 return self.chat_log_handler.get_summary_prompt("", metadata)
-            elif handler_type == 'scanned_doc':
-                return self.scanned_doc_handler.get_summary_prompt("", metadata)
-            elif handler_type == 'invoice':
-                return self.invoice_handler.get_summary_prompt("", metadata)
-            elif handler_type == 'manual':
-                return self.manual_handler.get_summary_prompt("", metadata)
+            # Note: scanned_doc, invoice, and manual handlers moved to experimental/
 
         # Fallback to document type-based instructions
         if document_type == DocumentType.email:
