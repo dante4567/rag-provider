@@ -1110,6 +1110,82 @@ Return ONLY this JSON structure (no markdown, no explanations):
                     pass
             return {}
 
+    def _link_entities_to_concepts(self, entities: Dict) -> Dict:
+        """
+        Link entities to vocabulary concepts with type classification
+
+        Processes:
+        - technologies: Classify type (Software/Hardware/Platform) + link to vocab
+        - organizations: Classify as Company if in vocab
+        - Adds concept metadata: concept_id, type, prefLabel, altLabels
+
+        Returns:
+            Enhanced entities dict with concept_metadata for each technology
+        """
+        if not self.vocab:
+            return entities
+
+        # Process technologies (most important for concept linking)
+        technologies_raw = entities.get("technologies", [])
+        technologies_linked = []
+
+        for tech in technologies_raw:
+            if isinstance(tech, str):
+                # Link to vocabulary concept
+                concept_info = self.vocab.link_entity_to_concept(tech)
+
+                technologies_linked.append({
+                    "label": tech,
+                    "type": concept_info.get("type"),
+                    "concept_id": concept_info.get("concept_id"),
+                    "prefLabel": concept_info.get("prefLabel"),
+                    "category": concept_info.get("category"),
+                    "suggested_for_vocab": concept_info.get("suggested_for_vocab", False)
+                })
+            elif isinstance(tech, dict):
+                # Already structured, preserve
+                technologies_linked.append(tech)
+
+        entities["technologies"] = technologies_linked
+
+        # Also classify organizations (might be companies in tech vocab)
+        organizations_raw = entities.get("organizations", [])
+        organizations_linked = []
+
+        for org in organizations_raw:
+            if isinstance(org, str):
+                # Try to link to company concepts
+                concept_info = self.vocab.link_entity_to_concept(org, entity_type="Company")
+
+                organizations_linked.append({
+                    "label": org,
+                    "type": concept_info.get("type"),
+                    "concept_id": concept_info.get("concept_id"),
+                    "prefLabel": concept_info.get("prefLabel"),
+                    "category": concept_info.get("category"),
+                    "suggested_for_vocab": concept_info.get("suggested_for_vocab", False)
+                })
+            elif isinstance(org, dict):
+                organizations_linked.append(org)
+
+        entities["organizations"] = organizations_linked
+
+        logger.info(
+            f"🔗 Concept linking: {len(technologies_linked)} technologies, "
+            f"{len(organizations_linked)} organizations"
+        )
+
+        # Log concept matches
+        tech_with_concepts = sum(1 for t in technologies_linked if t.get("concept_id"))
+        org_with_concepts = sum(1 for o in organizations_linked if o.get("concept_id"))
+
+        logger.info(
+            f"  📌 Linked to vocabulary: {tech_with_concepts}/{len(technologies_linked)} technologies, "
+            f"{org_with_concepts}/{len(organizations_linked)} organizations"
+        )
+
+        return entities
+
     def _validate_with_vocabulary(self, llm_data: Dict, created_at: Optional[date]) -> Dict:
         """Validate extracted data against vocabulary, match projects"""
 
@@ -1159,9 +1235,14 @@ Return ONLY this JSON structure (no markdown, no explanations):
 
         validated["projects"] = matched_projects
 
+        # Link entities to concepts (NEW: type classification + concept IDs)
+        entities = llm_data.get("entities", {})
+        if self.vocab:
+            entities = self._link_entities_to_concepts(entities)
+
         # Pass through other fields
         validated["summary"] = llm_data.get("summary", "")
-        validated["entities"] = llm_data.get("entities", {})
+        validated["entities"] = entities
         validated["quality_indicators"] = llm_data.get("quality_indicators", {})
 
         return validated
