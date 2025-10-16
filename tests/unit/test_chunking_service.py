@@ -251,3 +251,70 @@ Paragraph 2
 
         # Should detect and use markdown structure
         assert len(chunks) >= 1
+
+
+# =============================================================================
+# Chat Log Chunking Tests
+# =============================================================================
+
+class TestChatLogChunking:
+    """Test strategic turn-based chunking for chat logs"""
+
+    @pytest.fixture
+    def service(self):
+        return ChunkingService(target_size=512, min_size=100, max_size=800)
+
+    def test_parse_chat_turns_basic(self, service):
+        """Test parsing of simple user/assistant turns"""
+        content = "User: First question\n\nAssistant: First answer\n\nUser: Second question\n\nAssistant: Second answer"
+
+        turns = service._parse_chat_turns(content)
+
+        assert len(turns) == 2
+        assert turns[0]['user'] == "First question"
+        assert turns[0]['assistant'] == "First answer"
+        assert turns[1]['user'] == "Second question"
+        assert turns[1]['assistant'] == "Second answer"
+
+    def test_chunk_chat_log_creates_chunks(self, service):
+        """Test that chat logs are chunked into turn-based chunks"""
+        content = "User: How do I use Python?\n\nAssistant: Python is a programming language.\n\nUser: Show me an example\n\nAssistant: Here is an example: print('hello')"
+
+        chunks = service.chunk_chat_log(content)
+
+        assert len(chunks) >= 1
+        assert 'content' in chunks[0]
+        assert 'metadata' in chunks[0]
+        assert chunks[0]['metadata']['chunk_type'] == 'chat_turn'
+
+    def test_extract_topic_from_question(self, service):
+        """Test topic extraction from user questions"""
+        question = "How do I create a bootable USB for Fedora?"
+
+        topic = service._extract_topic_from_question(question)
+
+        assert len(topic) > 0
+        assert "bootable" in topic.lower() or "usb" in topic.lower() or "fedora" in topic.lower()
+
+    def test_is_topic_shift_detects_explicit_markers(self, service):
+        """Test that explicit topic shift markers are detected"""
+        turn1 = {'user': 'What is Python?', 'assistant': 'Python is a language'}
+        turn2 = {'user': 'Moving on to a different topic, what is Java?', 'assistant': 'Java is...'}
+
+        is_shift = service._is_topic_shift(turn1, turn2)
+
+        assert is_shift is True
+
+    def test_chunk_chat_log_includes_context_headers(self, service):
+        """Test that chunks include context headers"""
+        content = "User: Question 1\n\nAssistant: Answer 1"
+
+        chunks = service.chunk_chat_log(content)
+
+        assert len(chunks) >= 1
+        chunk_content = chunks[0]['content']
+        assert '###' in chunk_content  # Has heading
+        assert 'Chat Chunk' in chunk_content
+        assert 'Turn' in chunk_content
+        assert 'User:' in chunk_content
+        assert 'Assistant:' in chunk_content
