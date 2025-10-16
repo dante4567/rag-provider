@@ -419,7 +419,7 @@ class RAGService:
                 vector_service=self.vector_service,
                 obsidian_service=self.obsidian_service,
                 enable_quality_gate=False,  # Disabled by default (set ENABLE_QUALITY_GATE=true to enable)
-                enable_export=True
+                enable_export=False  # Disabled - export stage needs API update to match ObsidianService
             )
 
             self.using_new_services = True
@@ -1112,16 +1112,98 @@ class RAGService:
                 raise HTTPException(status_code=500, detail="Pipeline processing failed")
 
             # Success - extract response data from output
-            # Get chunk count from metadata (stored by storage stage)
-            chunk_count = output.metadata.get('chunks', 0)
+            # With export disabled, output is StoredDocument (has chunk_count)
+            # With export enabled, output is ExportedDocument (need to get from metadata)
+            logger.info(f"Output type: {type(output).__name__}, has chunk_count: {hasattr(output, 'chunk_count')}")
+            if hasattr(output, 'chunk_count'):
+                chunk_count = output.chunk_count
+                enriched_metadata = output.enriched_metadata
+                logger.info(f"Using StoredDocument: chunk_count={chunk_count}")
+            else:
+                chunk_count = output.metadata.get('chunks', 0)
+                enriched_metadata = output.metadata
+                logger.info(f"Using ExportedDocument: chunk_count={chunk_count}")
+
             logger.info(f"✅ Pipeline complete: {doc_id} ({chunk_count} chunks)")
+
+            # Convert enriched_metadata to ObsidianMetadata for IngestResponse
+            # Extract and format fields from flat enriched_metadata dict
+            tags_list = enriched_metadata.get("tags", [])
+            if isinstance(tags_list, str):
+                tags_list = [t.strip() for t in tags_list.split(',') if t.strip()]
+
+            people_list = enriched_metadata.get("people", [])
+            if isinstance(people_list, str):
+                people_list = [p.strip() for p in people_list.split(',') if p.strip()]
+
+            orgs_list = enriched_metadata.get("organizations", [])
+            if isinstance(orgs_list, str):
+                orgs_list = [o.strip() for o in orgs_list.split(',') if o.strip()]
+
+            locs_list = enriched_metadata.get("locations", [])
+            if isinstance(locs_list, str):
+                locs_list = [l.strip() for l in locs_list.split(',') if l.strip()]
+
+            tech_list = enriched_metadata.get("technologies", [])
+            if isinstance(tech_list, str):
+                tech_list = [t.strip() for t in tech_list.split(',') if t.strip()]
+
+            dates_list = enriched_metadata.get("dates", [])
+            if isinstance(dates_list, str):
+                dates_list = [d.strip() for d in dates_list.split(',') if d.strip()]
+
+            # Extract summary
+            summary_value = enriched_metadata.get("summary", "")
+            if isinstance(summary_value, dict):
+                summary_str = summary_value.get("tl_dr", "") or summary_value.get("text", "") or str(summary_value)
+            else:
+                summary_str = str(summary_value) if summary_value else ""
+
+            # Convert document_type string to enum
+            doc_type_str = enriched_metadata.get("document_type", "text")
+            if isinstance(doc_type_str, str) and doc_type_str.startswith("DocumentType."):
+                doc_type_str = doc_type_str.replace("DocumentType.", "")
+            try:
+                doc_type_enum = DocumentType[doc_type_str]
+            except (KeyError, TypeError):
+                doc_type_enum = DocumentType.text
+
+            # Create ObsidianMetadata
+            response_metadata = ObsidianMetadata(
+                title=enriched_metadata.get("title", filename or "Untitled"),
+                keywords=Keywords(
+                    primary=tags_list[:3] if tags_list else [],
+                    secondary=tags_list[3:] if len(tags_list) > 3 else []
+                ),
+                tags=[f"#{tag}" if not tag.startswith("#") else tag for tag in tags_list],
+                summary=summary_str,
+                abstract=summary_str,
+                key_points=enriched_metadata.get("key_points", []),
+                entities=Entities(
+                    people=people_list,
+                    organizations=orgs_list,
+                    locations=locs_list,
+                    technologies=tech_list
+                ),
+                reading_time=f"{enriched_metadata.get('estimated_reading_time_min', 1)} min",
+                complexity=ComplexityLevel[enriched_metadata.get("complexity", "intermediate")],
+                links=[],
+                document_type=doc_type_enum,
+                source=filename or "",
+                created_at=datetime.now(),
+                dates=dates_list,
+                dates_detailed=enriched_metadata.get("dates_detailed", [])
+            )
+
+            # Get obsidian_path from output if available (ExportedDocument has it, StoredDocument doesn't)
+            obsidian_path = getattr(output, 'obsidian_path', None)
 
             return IngestResponse(
                 success=True,
                 doc_id=doc_id,
                 chunks=chunk_count,
-                metadata=output.metadata,
-                obsidian_path=output.obsidian_path
+                metadata=response_metadata,
+                obsidian_path=obsidian_path
             )
 
         except Exception as e:
