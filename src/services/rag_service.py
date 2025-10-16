@@ -1177,6 +1177,16 @@ class RAGService:
         for att_path in attachment_paths:
             att_path_obj = Path(att_path)
 
+            # Check file size first to avoid OOM on large attachments
+            if att_path_obj.exists():
+                file_size = att_path_obj.stat().st_size
+
+                # Skip very large attachments (>1MB) for summary extraction
+                # They will still be processed as separate documents later
+                if file_size > 1_000_000:  # 1MB
+                    logger.info(f"   ⏭️  Skipping large attachment for summary: {att_path_obj.name} ({file_size / 1_000_000:.1f}MB)")
+                    continue
+
             # Skip non-document attachments (logos, icons, etc.)
             if att_path_obj.suffix.lower() in ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico']:
                 if att_path_obj.exists() and att_path_obj.stat().st_size < 50000:  # < 50KB

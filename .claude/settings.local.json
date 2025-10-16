@@ -28,7 +28,8 @@
       "Bash(jq:*)",
       "Bash(xargs:*)",
       "Bash(cat:*)",
-      "Read(///**)"
+      "Read(///**)",
+      "Bash(for:*)"
     ],
     "deny": [],
     "ask": []
