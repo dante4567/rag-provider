@@ -1,0 +1,268 @@
+# Technology Concepts Vocabulary
+# Structured entity types for software, hardware, platforms, and tools
+# Used for entity type enforcement and concept linking
+
+# Operating Systems
+operating_systems:
+  - id: vocab:Fedora
+    prefLabel: Fedora Workstation
+    altLabels: [Fedora, Fedora Linux]
+    type: Software
+    category: Operating System
+    subcategory: Linux Distribution
+    broader: [Linux, Open Source]
+
+  - id: vocab:LinuxMint
+    prefLabel: Linux Mint
+    altLabels: [Mint]
+    type: Software
+    category: Operating System
+    subcategory: Linux Distribution
+    editions: [Cinnamon, MATE, Xfce]
+    broader: [Linux, Ubuntu Derivatives]
+
+  - id: vocab:Ubuntu
+    prefLabel: Ubuntu
+    altLabels: [Ubuntu Linux]
+    type: Software
+    category: Operating System
+    subcategory: Linux Distribution
+    broader: [Linux, Debian Derivatives]
+
+  - id: vocab:PopOS
+    prefLabel: Pop!_OS
+    altLabels: [Pop OS, PopOS]
+    type: Software
+    category: Operating System
+    subcategory: Linux Distribution
+    broader: [Linux, Ubuntu Derivatives]
+
+  - id: vocab:macOS
+    prefLabel: macOS
+    altLabels: [Mac OS, Mac OS X, OSX]
+    type: Software
+    category: Operating System
+    vendor: Apple
+
+  - id: vocab:Windows
+    prefLabel: Windows
+    altLabels: [Microsoft Windows, MS Windows]
+    type: Software
+    category: Operating System
+    vendor: Microsoft
+
+# Utilities & Tools
+utilities:
+  - id: vocab:BalenaEtcher
+    prefLabel: Balena Etcher
+    altLabels: [Etcher]
+    type: Software
+    category: Disk Utility
+    purpose: USB Flasher
+    platforms: [Windows, macOS, Linux]
+
+  - id: vocab:QEMU
+    prefLabel: QEMU
+    altLabels: [qemu]
+    type: Software
+    category: Virtualization
+    purpose: Hardware Emulator
+    platforms: [Windows, macOS, Linux]
+
+  - id: vocab:Parallels
+    prefLabel: Parallels Desktop
+    altLabels: [Parallels]
+    type: Software
+    category: Virtualization
+    platform: macOS
+
+  - id: vocab:VMware
+    prefLabel: VMware
+    altLabels: [VMWare, VM Ware]
+    type: Software
+    category: Virtualization
+
+# Hardware
+hardware:
+  - id: vocab:MacBookAir
+    prefLabel: MacBook Air
+    altLabels: [Macbook Air, MBA]
+    type: Hardware
+    category: Laptop
+    vendor: Apple
+
+  - id: vocab:MacBookPro
+    prefLabel: MacBook Pro
+    altLabels: [Macbook Pro, MBP]
+    type: Hardware
+    category: Laptop
+    vendor: Apple
+
+  - id: vocab:IntelProcessor
+    prefLabel: Intel Processor
+    altLabels: [Intel, Intel CPU]
+    type: Hardware
+    category: Processor
+    vendor: Intel
+
+  - id: vocab:AMDProcessor
+    prefLabel: AMD Processor
+    altLabels: [AMD, AMD CPU, Ryzen]
+    type: Hardware
+    category: Processor
+    vendor: AMD
+
+# Development Tools
+development:
+  - id: vocab:Python
+    prefLabel: Python
+    altLabels: [python]
+    type: Software
+    category: Programming Language
+
+  - id: vocab:JavaScript
+    prefLabel: JavaScript
+    altLabels: [Javascript, JS, javascript]
+    type: Software
+    category: Programming Language
+
+  - id: vocab:TypeScript
+    prefLabel: TypeScript
+    altLabels: [Typescript, TS, typescript]
+    type: Software
+    category: Programming Language
+    broader: [JavaScript]
+
+  - id: vocab:Docker
+    prefLabel: Docker
+    altLabels: [docker]
+    type: Software
+    category: Containerization
+
+  - id: vocab:Kubernetes
+    prefLabel: Kubernetes
+    altLabels: [K8s, k8s, kubernetes]
+    type: Software
+    category: Container Orchestration
+
+  - id: vocab:FastAPI
+    prefLabel: FastAPI
+    altLabels: [fastapi]
+    type: Software
+    category: Web Framework
+    language: Python
+
+# Cloud Platforms
+cloud:
+  - id: vocab:AWS
+    prefLabel: Amazon Web Services
+    altLabels: [AWS, aws]
+    type: Platform
+    category: Cloud Provider
+    vendor: Amazon
+
+  - id: vocab:Azure
+    prefLabel: Microsoft Azure
+    altLabels: [Azure, azure]
+    type: Platform
+    category: Cloud Provider
+    vendor: Microsoft
+
+  - id: vocab:GCP
+    prefLabel: Google Cloud Platform
+    altLabels: [GCP, Google Cloud, gcp]
+    type: Platform
+    category: Cloud Provider
+    vendor: Google
+
+# AI/ML Tools
+ai_ml:
+  - id: vocab:OpenAI
+    prefLabel: OpenAI
+    altLabels: [openai]
+    type: Platform
+    category: AI Provider
+
+  - id: vocab:Anthropic
+    prefLabel: Anthropic
+    altLabels: [anthropic]
+    type: Platform
+    category: AI Provider
+
+  - id: vocab:Claude
+    prefLabel: Claude
+    altLabels: [claude, Claude AI]
+    type: Software
+    category: AI Assistant
+    vendor: Anthropic
+
+  - id: vocab:ChatGPT
+    prefLabel: ChatGPT
+    altLabels: [Chat GPT, chatgpt]
+    type: Software
+    category: AI Assistant
+    vendor: OpenAI
+
+# System Features (not software/hardware, but concepts)
+features:
+  - id: vocab:InternetRecovery
+    prefLabel: Internet Recovery
+    altLabels: [macOS Internet Recovery]
+    type: Feature
+    category: System Utility
+    platform: macOS
+
+  - id: vocab:DualBoot
+    prefLabel: Dual Boot
+    altLabels: [Dual-boot, dual boot, dualboot]
+    type: Feature
+    category: Boot Configuration
+
+  - id: vocab:Partition
+    prefLabel: Disk Partition
+    altLabels: [Partition, partition, partitioning]
+    type: Feature
+    category: Storage Management
+
+# Companies
+companies:
+  - id: vocab:Apple
+    prefLabel: Apple Inc.
+    altLabels: [Apple]
+    type: Company
+    category: Technology
+
+  - id: vocab:Microsoft
+    prefLabel: Microsoft Corporation
+    altLabels: [Microsoft, MS]
+    type: Company
+    category: Technology
+
+  - id: vocab:Google
+    prefLabel: Google LLC
+    altLabels: [Google]
+    type: Company
+    category: Technology
+    parent: Alphabet
+
+  - id: vocab:Canonical
+    prefLabel: Canonical Ltd.
+    altLabels: [Canonical]
+    type: Company
+    category: Technology
+    products: [Ubuntu]
+
+  - id: vocab:RedHat
+    prefLabel: Red Hat
+    altLabels: [RedHat, Red Hat Inc]
+    type: Company
+    category: Technology
+    products: [RHEL, Fedora]
+    parent: IBM
+
+  - id: vocab:System76
+    prefLabel: System76
+    altLabels: [system76]
+    type: Company
+    category: Hardware Vendor
+    products: [Pop!_OS]

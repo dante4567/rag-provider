@@ -44,7 +44,8 @@ class VocabularyService:
             "projects": "projects.yaml",
             "places": "places.yaml",
             "people": "people.yaml",
-            "document_types": "document_types.yaml"
+            "document_types": "document_types.yaml",
+            "technologies": "technologies.yaml"
         }
 
         for name, filename in vocab_files.items():
@@ -259,6 +260,179 @@ class VocabularyService:
         """Check if person exists in vocabulary"""
         return person in self.get_all_people()
 
+    # ===== TECHNOLOGIES & CONCEPT LINKING =====
+
+    def find_concept(self, label: str, entity_type: Optional[str] = None) -> Optional[Dict]:
+        """
+        Find concept in technologies vocabulary by label or altLabel
+
+        Args:
+            label: Entity label to search for
+            entity_type: Optional filter by type (Software, Hardware, Platform, Company, Feature)
+
+        Returns:
+            Concept dictionary with id, prefLabel, altLabels, type, category, etc.
+            None if not found
+        """
+        tech_data = self.vocabularies.get("technologies", {})
+        label_lower = label.lower()
+
+        # Search all categories
+        for category, concepts in tech_data.items():
+            if not isinstance(concepts, list):
+                continue
+
+            for concept in concepts:
+                if not isinstance(concept, dict):
+                    continue
+
+                # Match by prefLabel
+                pref_label = concept.get("prefLabel", "")
+                if pref_label.lower() == label_lower:
+                    if not entity_type or concept.get("type") == entity_type:
+                        return concept
+
+                # Match by altLabels
+                alt_labels = concept.get("altLabels", [])
+                for alt in alt_labels:
+                    if alt.lower() == label_lower:
+                        if not entity_type or concept.get("type") == entity_type:
+                            return concept
+
+        return None
+
+    def classify_entity_type(self, label: str) -> Optional[str]:
+        """
+        Classify entity type using keyword matching + vocabulary lookup
+
+        Returns:
+            Entity type (Software, Hardware, Platform, Company, Feature) or None
+        """
+        # First, try exact vocabulary match
+        concept = self.find_concept(label)
+        if concept:
+            return concept.get("type")
+
+        # Fallback: keyword-based classification
+        label_lower = label.lower()
+
+        # Type keywords (ordered by specificity)
+        type_keywords = {
+            "Software": [
+                "linux", "ubuntu", "fedora", "mint", "debian", "arch", "manjaro",
+                "windows", "macos", "os", "operating system",
+                "python", "javascript", "java", "go", "rust", "ruby", "php",
+                "docker", "kubernetes", "k8s",
+                "react", "vue", "angular", "django", "flask", "fastapi",
+                "qemu", "vmware", "parallels", "virtualbox",
+                "etcher", "balena"
+            ],
+            "Hardware": [
+                "macbook", "laptop", "desktop", "server", "computer",
+                "intel", "amd", "nvidia", "cpu", "gpu", "processor",
+                "disk", "ssd", "hdd", "memory", "ram"
+            ],
+            "Platform": [
+                "aws", "azure", "gcp", "cloud",
+                "github", "gitlab", "bitbucket",
+                "openai", "anthropic"
+            ],
+            "Company": [
+                "apple", "microsoft", "google", "amazon",
+                "canonical", "red hat", "system76",
+                "meta", "facebook", "twitter"
+            ],
+            "Feature": [
+                "recovery", "dual-boot", "dual boot", "partition",
+                "bootloader", "firmware", "bios", "uefi"
+            ]
+        }
+
+        # Check keywords
+        for entity_type, keywords in type_keywords.items():
+            if any(kw in label_lower for kw in keywords):
+                return entity_type
+
+        # Default: if ends with typical software suffixes
+        if any(label_lower.endswith(suffix) for suffix in [".js", ".py", ".app", "os", " ide", " editor"]):
+            return "Software"
+
+        return None
+
+    def link_entity_to_concept(self, label: str, entity_type: Optional[str] = None) -> Dict:
+        """
+        Link entity to vocabulary concept with synonym resolution
+
+        Args:
+            label: Entity label (e.g., "Fedora", "Linux Mint")
+            entity_type: Optional entity type hint
+
+        Returns:
+            Dictionary with:
+            - label: Original label
+            - type: Entity type (Software/Hardware/etc.)
+            - concept_id: Vocabulary ID (e.g., vocab:Fedora) or None
+            - prefLabel: Canonical name from vocabulary
+            - altLabels: List of synonyms
+            - suggested_for_vocab: True if not in vocabulary yet
+        """
+        # Try to find in vocabulary
+        concept = self.find_concept(label, entity_type)
+
+        if concept:
+            return {
+                "label": label,
+                "type": concept.get("type"),
+                "concept_id": concept.get("id"),
+                "prefLabel": concept.get("prefLabel"),
+                "altLabels": concept.get("altLabels", []),
+                "category": concept.get("category"),
+                "suggested_for_vocab": False
+            }
+
+        # Not found - classify and suggest for vocabulary
+        classified_type = self.classify_entity_type(label)
+
+        return {
+            "label": label,
+            "type": classified_type or entity_type or "Unknown",
+            "concept_id": None,
+            "prefLabel": label,
+            "altLabels": [],
+            "category": None,
+            "suggested_for_vocab": True
+        }
+
+    def get_technologies_stats(self) -> Dict:
+        """Get statistics about technologies vocabulary"""
+        tech_data = self.vocabularies.get("technologies", {})
+
+        stats = {
+            "total_concepts": 0,
+            "by_type": {},
+            "by_category": {}
+        }
+
+        for category, concepts in tech_data.items():
+            if not isinstance(concepts, list):
+                continue
+
+            for concept in concepts:
+                if not isinstance(concept, dict):
+                    continue
+
+                stats["total_concepts"] += 1
+
+                # Count by type
+                entity_type = concept.get("type", "Unknown")
+                stats["by_type"][entity_type] = stats["by_type"].get(entity_type, 0) + 1
+
+                # Count by category
+                cat = concept.get("category", "Unknown")
+                stats["by_category"][cat] = stats["by_category"].get(cat, 0) + 1
+
+        return stats
+
     # ===== SUGGESTED TAGS =====
 
     def track_suggestion(self, tag: str):
@@ -371,11 +545,15 @@ class VocabularyService:
 
     def get_stats(self) -> Dict:
         """Get vocabulary statistics"""
+        tech_stats = self.get_technologies_stats()
+
         return {
             "topics_count": len(self.get_all_topics()),
             "active_projects_count": len(self.get_active_projects()),
             "places_count": len(self.get_all_places()),
             "people_count": len(self.get_all_people()),
+            "technologies_count": tech_stats.get("total_concepts", 0),
+            "technologies_by_type": tech_stats.get("by_type", {}),
             "suggested_tags_tracked": len(self.suggested_tags_count),
             "frequent_suggestions": len(self.get_frequent_suggestions()),
             "vocabularies_loaded": list(self.vocabularies.keys())
