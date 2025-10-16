@@ -258,6 +258,7 @@ class ObsidianService:
             'semantic_document_type': metadata.get('semantic_document_type', 'unknown/uncategorized'),
             'created_at': created_at.strftime('%Y-%m-%d'),
             'ingested_at': ingested_at.strftime('%Y-%m-%d'),
+            'status': 'pending',
 
             # === Email Threading (for conversation grouping) ===
             'thread_id': metadata.get('thread_id', ''),
@@ -472,13 +473,16 @@ class ObsidianService:
         timeline: List[Dict[str, str]],
         chunks: List[Dict[str, Any]] = None,
         people_detailed: List[Dict[str, Any]] = None,
-        dates_detailed: List[Dict[str, Any]] = None
+        dates_detailed: List[Dict[str, Any]] = None,
+        is_attachment: bool = False,
+        parent_doc_id: str = None
     ) -> str:
         """
         Build structured body (helps both humans and RAG)
 
         Sections:
         - Summary
+        - Context (for attachments - shows parent document)
         - Key Facts
         - Evidence/Excerpts
         - Outcomes/Decisions
@@ -493,6 +497,13 @@ class ObsidianService:
         # Summary
         if summary:
             body_parts.append(f"> **Summary:** {summary}\n")
+
+        # Context section for attachments - show parent document relationship
+        if is_attachment and parent_doc_id:
+            body_parts.append("## Context")
+            body_parts.append("")
+            body_parts.append(f"📎 This file was attached to: [[{parent_doc_id}]]")
+            body_parts.append("")
 
         # People Details (Dataview-queryable format)
         if people_detailed:
@@ -515,11 +526,13 @@ class ObsidianService:
                 if phone:
                     body_parts.append(f"Phone:: {phone}")
                 if organization:
-                    body_parts.append(f"Organization:: {organization}")
+                    # Make organization queryable with wikilink
+                    body_parts.append(f"Organization:: [[{organization}]]")
                 if aliases:
                     body_parts.append(f"Aliases:: {', '.join(aliases)}")
                 if relationships:
-                    rel_strs = [f"{r.get('type', '')}: {r.get('person', '')}" for r in relationships]
+                    # Make relationship persons queryable with wikilinks
+                    rel_strs = [f"{r.get('type', '')}: [[{r.get('person', '')}]]" for r in relationships]
                     body_parts.append(f"Relationships:: {'; '.join(rel_strs)}")
                 body_parts.append("")
 
@@ -908,6 +921,10 @@ LIMIT 50
         # Get dates_detailed from metadata
         dates_detailed = metadata.get('entities', {}).get('dates_detailed', [])
 
+        # Get attachment context if applicable
+        is_attachment = metadata.get('is_attachment', False)
+        parent_doc_id = metadata.get('parent_doc_id', '')
+
         body = self.build_body(
             content=content,
             summary=summary,
@@ -917,7 +934,9 @@ LIMIT 50
             next_actions=next_actions,
             timeline=timeline,
             people_detailed=people_objects,
-            dates_detailed=dates_detailed
+            dates_detailed=dates_detailed,
+            is_attachment=is_attachment,
+            parent_doc_id=parent_doc_id
         )
 
         # Build xref block

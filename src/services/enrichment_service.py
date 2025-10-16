@@ -916,12 +916,36 @@ Extract the following (return as JSON):
 
 5. **entities**: Extract ONLY entities that are EXPLICITLY mentioned in the text:
    - organizations: Company/organization names that EXPLICITLY APPEAR in the document text above
-   - people: Extract people as STRUCTURED OBJECTS ONLY if they are EXPLICITLY named in the document above.
+   - people: Extract people as STRUCTURED OBJECTS ONLY if they are HUMAN NAMES EXPLICITLY named in the document.
 
-     ⚠️ CRITICAL: DO NOT invent, hallucinate, or copy people from examples! ⚠️
-     ⚠️ If NO people are mentioned by name, return an EMPTY people array [] ⚠️
+     ⚠️ CRITICAL RULES FOR PERSON CLASSIFICATION ⚠️
 
-     For each person EXPLICITLY named in the document, extract:
+     ✅ EXTRACT AS PEOPLE (human individuals):
+     - "Alice Smith" - Full names of humans
+     - "Dr. Johnson" - Professional titles + surnames
+     - "Maria González" - Names with accents/international characters
+     - "John from IT" - First names with contextual roles
+
+     ❌ DO NOT EXTRACT AS PEOPLE (products, software, concepts):
+     - "Linux Mint" - Operating system / software product
+     - "Internet Recovery" - Software feature / tool
+     - "macOS" - Operating system
+     - "ChatGPT" - AI assistant / software
+     - "Claude" - AI assistant (unless clearly a person's name in context)
+     - "Docker" - Software platform
+     - "Villa Luna" - Organization / place name
+     - "User" / "Assistant" - Generic roles
+     - "the teacher" / "a lawyer" - Indefinite roles
+
+     CLASSIFICATION TEST:
+     Ask: "Could this be a human being's actual name?"
+     - "Alice Johnson" → YES (human name)
+     - "Linux Mint" → NO (software product, not a person)
+     - "Internet Recovery" → NO (feature, not a person)
+
+     ⚠️ If NO human names are mentioned, return EMPTY people array [] ⚠️
+
+     For each HUMAN person EXPLICITLY named in the document, extract:
      * name: Full name EXACTLY as it appears in the document (REQUIRED)
      * role: Their role/function ONLY if stated in document
      * email: Email address ONLY if stated in document
@@ -931,8 +955,6 @@ Extract the following (return as JSON):
      * birth_date: Date of birth in YYYY-MM-DD ONLY if stated in document
      * relationships: Family/professional connections ONLY if stated in document
        Format: [{{"type": "father/mother/son/daughter/colleague/manager", "person": "Name"}}]
-
-     Skip generic roles without specific names: "the lawyer", "a teacher", "User", "Assistant"
 
    - dates: Extract dates as STRUCTURED OBJECTS ONLY if EXPLICITLY mentioned in the document:
      * date: Date in ISO format YYYY-MM-DD (REQUIRED)
