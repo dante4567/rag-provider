@@ -10,7 +10,8 @@
       "Bash(/usr/bin/curl -s -X POST http://localhost:8001/ingest/file -F \"file=@/tmp/test_dates_doc.md\" -F \"generate_obsidian=true\" -o /tmp/test_dates_result.json)",
       "Bash(/usr/bin/curl -s -X POST http://localhost:8001/ingest/file -F \"file=@/tmp/test_dates_doc.md\" -F \"generate_obsidian=true\" -o /tmp/test_dates_fixed.json)",
       "Bash(/usr/bin/curl -s -X POST http://localhost:8001/ingest/file -F \"file=@/tmp/test_dates_doc.md\" -F \"generate_obsidian=true\" -o /tmp/test_dates_working.json)",
-      "Bash(/usr/bin/curl -s -X POST http://localhost:8001/ingest/file -F \"file=@/tmp/test_dates_doc.md\" -F \"generate_obsidian=true\")"
+      "Bash(/usr/bin/curl -s -X POST http://localhost:8001/ingest/file -F \"file=@/tmp/test_dates_doc.md\" -F \"generate_obsidian=true\")",
+      "Bash(/tmp/test_60_docs.sh:*)"
     ],
     "deny": [],
     "ask": []

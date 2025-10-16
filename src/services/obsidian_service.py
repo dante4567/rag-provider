@@ -994,7 +994,7 @@ class ObsidianService:
 
 ```dataview
 TABLE file.link as "Document", summary as "Summary", topics as "Topics"
-WHERE dates AND contains(dates, "{name}")
+WHERE contains(dates, "{name}")
 SORT file.mtime DESC
 LIMIT 50
 ```
