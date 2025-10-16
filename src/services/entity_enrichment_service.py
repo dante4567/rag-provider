@@ -125,12 +125,13 @@ class EntityEnrichmentService:
 
                 person_name = person.strip()
 
-                # Track document
+                # Track document (store metadata for WikiLink generation)
                 people[person_name]['doc_count'] += 1
                 people[person_name]['documents'].append({
                     'title': doc_title,
                     'doc_id': doc_id,
-                    'date': doc_date
+                    'date': doc_date,
+                    'metadata': metadata  # Store full metadata for WikiLink generation
                 })
 
                 # Track dates
@@ -228,7 +229,8 @@ class EntityEnrichmentService:
                 orgs[org_name]['documents'].append({
                     'title': doc_title,
                     'doc_id': doc_id,
-                    'date': doc_date
+                    'date': doc_date,
+                    'metadata': metadata
                 })
 
                 if doc_date:
@@ -303,7 +305,8 @@ class EntityEnrichmentService:
                 places[place_name]['documents'].append({
                     'title': doc_title,
                     'doc_id': doc_id,
-                    'date': doc_date
+                    'date': doc_date,
+                    'metadata': metadata
                 })
 
                 if doc_date:
@@ -376,7 +379,8 @@ class EntityEnrichmentService:
                 tech[tech_name]['documents'].append({
                     'title': doc_title,
                     'doc_id': doc_id,
-                    'date': doc_date
+                    'date': doc_date,
+                    'metadata': metadata
                 })
 
                 if doc_date:
@@ -609,15 +613,25 @@ class EntityEnrichmentService:
                     lines.append(f"- [[refs/orgs/{org_slug}|{org}]]")
                 lines.append("")
 
-        # Recent documents
+        # Recent documents with proper WikiLinks
         if data.get('documents'):
             lines.append("### Recent Documents")
             for doc in data['documents'][:5]:
-                doc_id = doc.get('doc_id', '')
                 title = doc.get('title', 'Untitled')
                 date = doc.get('date', '')
-                # For now use doc_id, will fix later with proper filename lookup
-                lines.append(f"- {date}: [[{doc_id}|{title}]]")
+
+                # Get metadata to generate proper WikiLink filename
+                doc_metadata = doc.get('metadata', {})
+                if doc_metadata:
+                    # Import here to avoid circular dependency
+                    from src.services.obsidian_service import ObsidianService
+                    obs_service = ObsidianService()
+                    wikilink_name = obs_service.get_wikilink_name(doc_metadata)
+                    lines.append(f"- {date}: [[{wikilink_name}|{title}]]")
+                else:
+                    # Fallback to doc_id if no metadata
+                    doc_id = doc.get('doc_id', '')
+                    lines.append(f"- {date}: [[{doc_id}|{title}]]")
             lines.append("")
 
         return '\n'.join(lines)

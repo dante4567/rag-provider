@@ -106,6 +106,66 @@ class ObsidianService:
 
         return filename
 
+    def get_wikilink_name(self, metadata: Dict[str, Any]) -> str:
+        """
+        Generate WikiLink-ready filename (without .md) from metadata
+
+        Used for creating [[wikilinks]] to other documents.
+        Returns the filename stem that Obsidian will recognize.
+
+        Args:
+            metadata: Document metadata dict containing:
+                - title: Document title
+                - document_type: DocumentType or string
+                - created_at or created_date: ISO date string
+                - doc_id: Document ID (for short hash)
+
+        Returns:
+            Filename stem like "2021-08-31__email__einladung-elternabend__211d"
+        """
+        try:
+            # Get date
+            date_str = metadata.get('created_at', metadata.get('created_date', ''))
+            if date_str:
+                # Parse ISO format and extract date part
+                if 'T' in date_str:
+                    date_str = date_str.split('T')[0]
+                # Already in YYYY-MM-DD format
+            else:
+                date_str = datetime.now().strftime('%Y-%m-%d')
+
+            # Get document type
+            doc_type = metadata.get('document_type', 'text')
+            if isinstance(doc_type, DocumentType):
+                type_str = str(doc_type).replace('DocumentType.', '')
+            else:
+                type_str = str(doc_type).replace('DocumentType.', '')
+            type_str = slugify(type_str) or 'text'
+
+            # Get title slug
+            title = metadata.get('title', 'untitled')
+            slug = self.create_slug(title)
+
+            # Get short hash from doc_id
+            doc_id = metadata.get('doc_id', '')
+            if doc_id and len(doc_id) >= 8:
+                # Use first 4 chars of doc_id as short hash
+                short_id = doc_id[:4]
+            else:
+                # Fallback: hash the title
+                short_id = self.generate_short_id(title)
+
+            # Generate filename stem (without .md)
+            filename_stem = f"{date_str}__{type_str}__{slug}__{short_id}"
+            filename_stem = filename_stem.replace('/', '_').replace('\\', '_').replace('\x00', '')
+
+            return filename_stem
+
+        except Exception as e:
+            logger.error(f"Failed to generate wikilink name from metadata: {e}")
+            # Fallback to doc_id
+            return metadata.get('doc_id', 'unknown')
+
     def derive_tags(
         self,
         doc_type: DocumentType,
@@ -634,8 +694,10 @@ class ObsidianService:
         if is_attachment and parent_doc_id:
             body_parts.append("## Context")
             body_parts.append("")
+            # Get parent filename for WikiLink (will be updated by entity enrichment if available)
             body_parts.append(f"📎 This file was attached to: [[{parent_doc_id}]]")
             body_parts.append("")
+            # Note: This will be updated to proper filename after parent is indexed
 
         # Source link section - link to original in attachments/
         # Extract original filename (remove upload_UUID_ prefix)
@@ -755,10 +817,11 @@ class ObsidianService:
                 context = date_info.get('context', '')
                 if date_str:
                     # Link dates as daily notes for Obsidian timeline navigation
+                    # Use refs/days/ prefix so Obsidian can find the date stub files
                     if context:
-                        body_parts.append(f"- [[{date_str}]]: {context}")
+                        body_parts.append(f"- [[refs/days/{date_str}|{date_str}]]: {context}")
                     else:
-                        body_parts.append(f"- [[{date_str}]]")
+                        body_parts.append(f"- [[refs/days/{date_str}|{date_str}]]")
             body_parts.append("")
 
         # Technologies section (with concept linking metadata)
