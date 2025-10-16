@@ -115,6 +115,15 @@ class ExportStage(PipelineStage[StoredDocument, ExportedDocument]):
             else:
                 summary_str = str(summary_value) if summary_value else ""
 
+            # Convert document_type string to enum
+            doc_type_str = metadata.get("document_type", "text")
+            if isinstance(doc_type_str, str) and doc_type_str.startswith("DocumentType."):
+                doc_type_str = doc_type_str.replace("DocumentType.", "")
+            try:
+                doc_type_enum = DocumentType[doc_type_str]
+            except (KeyError, TypeError):
+                doc_type_enum = DocumentType.text
+
             # Create ObsidianMetadata
             obsidian_metadata = ObsidianMetadata(
                 title=metadata.get("title", "Untitled"),
@@ -135,7 +144,7 @@ class ExportStage(PipelineStage[StoredDocument, ExportedDocument]):
                 reading_time=f"{metadata.get('estimated_reading_time_min', 1)} min",
                 complexity=ComplexityLevel[metadata.get("complexity", "intermediate")],
                 links=[],
-                document_type=DocumentType[metadata.get("document_type", "text")],
+                document_type=doc_type_enum,
                 source=context.filename or "",
                 created_at=datetime.now(),
                 dates=dates_list,
@@ -143,7 +152,7 @@ class ExportStage(PipelineStage[StoredDocument, ExportedDocument]):
             )
 
             # Export to Obsidian
-            obsidian_path = self.obsidian_service.create_obsidian_note(
+            obsidian_path = self.obsidian_service.export_document(
                 doc_id=input_data.doc_id,
                 content="",  # Content already in ChromaDB
                 metadata=obsidian_metadata,
@@ -153,11 +162,17 @@ class ExportStage(PipelineStage[StoredDocument, ExportedDocument]):
             self.logger.info(f"✅ Exported to: {obsidian_path}")
 
             # Create exported document
+            # Add chunk_count to metadata for response
+            response_metadata = {
+                **input_data.enriched_metadata,
+                "chunks": input_data.chunk_count
+            }
+
             exported_doc = ExportedDocument(
                 doc_id=input_data.doc_id,
                 obsidian_path=obsidian_path,
                 entity_refs_created=len(people_list) + len(orgs_list) + len(locs_list) + len(tech_list),
-                metadata=input_data.enriched_metadata
+                metadata=response_metadata
             )
 
             return StageResult.CONTINUE, exported_doc

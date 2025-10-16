@@ -1344,7 +1344,12 @@ Return ONLY this JSON structure (no markdown, no explanations):
 
         # Extract technologies from entities dict (new field!)
         entities = metadata.get("entities", {})
-        technologies = entities.get("technologies", []) if isinstance(entities, dict) else []
+        technologies_raw = entities.get("technologies", []) if isinstance(entities, dict) else []
+        # Technologies can be list of dicts (with 'label' field) or list of strings
+        technologies = [
+            tech.get("label") if isinstance(tech, dict) else str(tech)
+            for tech in technologies_raw
+        ] if isinstance(technologies_raw, list) else []
 
         return {
             "tags": to_list(metadata.get("topics", "")),
@@ -1354,7 +1359,7 @@ Return ONLY this JSON structure (no markdown, no explanations):
             "locations": to_list(metadata.get("places", "")),
             "dates": to_list(metadata.get("dates", "")),
             "dates_detailed": metadata.get("dates_detailed", []),  # NEW: Detailed dates with context
-            "technologies": technologies if isinstance(technologies, list) else []  # FIX: Add technologies!
+            "technologies": technologies
         }
 
     def _build_enriched_metadata(

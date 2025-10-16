@@ -29,7 +29,11 @@
       "Bash(xargs:*)",
       "Bash(cat:*)",
       "Read(///**)",
-      "Bash(for:*)"
+      "Bash(for:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker cp:*)",
+      "Bash(do echo \"Ingesting: $file\" curl -s -X POST http://localhost:8001/ingest/file -F \"file=@$file\" --max-time 30)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []
