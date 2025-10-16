@@ -17,8 +17,13 @@ class PersonRelationship(BaseModel):
 
 
 class Person(BaseModel):
-    """A person entity extracted from the document"""
-    name: str = Field(description="Full name with titles/roles")
+    """
+    A person entity extracted from the document.
+
+    IMPORTANT: Only extract actual human beings.
+    DO NOT extract: software, applications, tools, products, services, systems, platforms, or technologies.
+    """
+    name: str = Field(description="Full name of an actual person (not software/tools/products)")
     role: Optional[str] = Field(default=None, description="Their role or function")
     email: Optional[str] = Field(default=None, description="Email address if mentioned")
     phone: Optional[str] = Field(default=None, description="Phone number if mentioned")
@@ -30,6 +35,37 @@ class Person(BaseModel):
         description="Relationships to other people mentioned in the document"
     )
 
+    @field_validator('name')
+    @classmethod
+    def validate_not_software(cls, v: str) -> str:
+        """Validate that this is not a software/tool/technology name"""
+        # Common software/tool keywords that indicate this is NOT a person
+        software_indicators = [
+            'code', 'studio', 'visual', 'machine', 'virtual', 'notebook',
+            'calendar', 'install', 'native', 'browser', 'app', 'application',
+            'software', 'tool', 'platform', 'system', 'service', 'program',
+            'docker', 'python', 'java', 'linux', 'windows', 'mac', 'ios',
+            'android', 'chrome', 'firefox', 'safari', 'edge', 'server',
+            'database', 'api', 'sdk', 'ide', 'email', 'chat', 'messenger',
+            'storage', 'drive', 'cloud', 'backup', 'sync', 'dropbox',
+            'google', 'microsoft', 'apple', 'amazon', 'meta', 'facebook',
+            'twitter', 'instagram', 'whatsapp', 'telegram', 'slack',
+            'zoom', 'teams', 'meet', 'skype', 'discord'
+        ]
+
+        name_lower = v.lower()
+
+        # Check if name contains software indicators
+        for indicator in software_indicators:
+            if indicator in name_lower:
+                raise ValueError(f"'{v}' appears to be software/tool, not a person. Use 'technologies' field instead.")
+
+        # Check for common patterns
+        if any(pattern in name_lower for pattern in ['v1', 'v2', 'v3', '2.0', '3.0', 'pro', 'plus', 'premium', 'enterprise']):
+            raise ValueError(f"'{v}' appears to be a product/version, not a person")
+
+        return v
+
 
 class DateEntity(BaseModel):
     """A date mentioned in the document"""
@@ -38,34 +74,41 @@ class DateEntity(BaseModel):
 
 
 class Entities(BaseModel):
-    """All entities extracted from the document"""
+    """
+    All entities extracted from the document.
+
+    IMPORTANT DISTINCTIONS:
+    - people: ONLY actual human beings (not software, apps, tools)
+    - technologies: Software, apps, tools, platforms, programming languages, frameworks
+    - organizations: Companies, institutions, groups (can include software companies)
+    """
     people: List[Person] = Field(
         default_factory=list,
-        description="People mentioned in the document (max 20)",
+        description="ONLY actual human beings mentioned (NOT software/tools/apps). Max 20.",
         max_length=20
     )
     organizations: List[str] = Field(
         default_factory=list,
-        description="Organizations/companies mentioned (max 20)",
+        description="Organizations/companies/institutions mentioned (can include software companies like Google, Microsoft). Max 20.",
         max_length=20  # Increased from 10 to handle complex documents
     )
     places: List[str] = Field(
         default_factory=list,
-        description="Places/locations mentioned (max 10)",
+        description="Physical locations, cities, countries, buildings mentioned. Max 10.",
         max_length=10
     )
     dates: List[DateEntity] = Field(
         default_factory=list,
-        description="Important dates mentioned",
+        description="Important dates, deadlines, events mentioned. Max 20.",
         max_length=20
     )
     numbers: List[str] = Field(
         default_factory=list,
-        description="Important numbers/amounts mentioned"
+        description="Important numbers, amounts, statistics mentioned."
     )
     technologies: List[str] = Field(
         default_factory=list,
-        description="Technologies/tools/platforms mentioned (e.g., Python, ChromaDB, OpenAI, RAG, embeddings) (max 20)",
+        description="Software, applications, tools, platforms, programming languages, frameworks, systems (e.g., Python, Docker, Visual Studio Code, Jupyter Notebook, ChromaDB, Linux, macOS). Max 20.",
         max_length=20
     )
 
