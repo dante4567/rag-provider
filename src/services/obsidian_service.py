@@ -610,6 +610,40 @@ class ObsidianService:
                     body_parts.append(f"- [[refs/orgs/{org_slug}|{org}]]")
             body_parts.append("")
 
+        # Places section
+        places = entities.get('places', [])
+        if places:
+            body_parts.append("## Places")
+            body_parts.append("")
+            for place in places:
+                if isinstance(place, dict):
+                    place_name = place.get('label', place.get('name', ''))
+                    place_type = place.get('type', 'Location')
+                    address = place.get('address')
+                    category = place.get('category')
+
+                    # Create wikilink to place reference note
+                    place_slug = slugify(place_name)
+                    place_link = f"[[refs/places/{place_slug}|{place_name}]]"
+
+                    # Format: - [[refs/places/berlin|Berlin]] (City)
+                    # Or: - [[refs/places/villa-luna-kita|Villa Luna Kita]] (Educational Institution)
+                    if category:
+                        body_parts.append(f"- {place_link} ({category})")
+                    elif place_type and place_type != 'Location':
+                        body_parts.append(f"- {place_link} ({place_type})")
+                    else:
+                        body_parts.append(f"- {place_link}")
+
+                    # Optionally show address if available
+                    if address:
+                        body_parts.append(f"  - 📍 {address}")
+                else:
+                    # Simple string format
+                    place_slug = slugify(place)
+                    body_parts.append(f"- [[refs/places/{place_slug}|{place}]]")
+            body_parts.append("")
+
         # Projects section
         projects_list = entities.get('projects', [])
         if projects_list:
@@ -1293,6 +1327,48 @@ LIMIT 50
         # Get entities dict from metadata
         entities = metadata.get('entities', {})
         dates_detailed = entities.get('dates_detailed', [])
+
+        # Ensure places from frontmatter are in entities dict for document body
+        if places and 'places' not in entities:
+            entities['places'] = places
+        elif places and 'places' in entities:
+            # Merge frontmatter places with entities places
+            existing_place_names = set()
+            for p in entities.get('places', []):
+                if isinstance(p, dict):
+                    existing_place_names.add(p.get('label', p.get('name', '')))
+                else:
+                    existing_place_names.add(p)
+
+            for place_name in places:
+                if place_name and place_name not in existing_place_names:
+                    entities['places'].append(place_name)
+
+        # Map locations to places for document body display
+        # Enrichment returns "locations" but we use "places" in templates
+        if 'locations' in entities:
+            if 'places' not in entities:
+                entities['places'] = entities['locations']
+            else:
+                # Both exist - merge them (places takes precedence)
+                locations_to_add = []
+                existing_place_names = set()
+
+                # Collect existing place names
+                for p in entities.get('places', []):
+                    if isinstance(p, dict):
+                        existing_place_names.add(p.get('label', p.get('name', '')))
+                    else:
+                        existing_place_names.add(p)
+
+                # Add locations that aren't already in places
+                for loc in entities.get('locations', []):
+                    loc_name = loc.get('label', loc.get('name', loc)) if isinstance(loc, dict) else loc
+                    if loc_name and loc_name not in existing_place_names:
+                        locations_to_add.append(loc)
+
+                if locations_to_add:
+                    entities['places'] = entities['places'] + locations_to_add
 
         # Get attachment context if applicable
         is_attachment = metadata.get('is_attachment', False)
