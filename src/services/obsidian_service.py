@@ -580,6 +580,56 @@ class ObsidianService:
                     body_parts.append(f"- [[refs/technologies/{tech_slug}|{tech}]]")
             body_parts.append("")
 
+        # Organizations section
+        organizations = entities.get('organizations', [])
+        if organizations:
+            body_parts.append("## Organizations")
+            body_parts.append("")
+            for org in organizations:
+                if isinstance(org, dict):
+                    org_name = org.get('label', org.get('name', ''))
+                    org_type = org.get('type', 'Organization')
+                    industry = org.get('industry')
+
+                    # Create wikilink to organization reference note
+                    org_slug = slugify(org_name)
+                    org_link = f"[[refs/orgs/{org_slug}|{org_name}]]"
+
+                    # Format: - [[refs/orgs/system76|System76]] (Technology Company)
+                    if industry:
+                        body_parts.append(f"- {org_link} ({industry})")
+                    elif org_type and org_type != 'Organization':
+                        body_parts.append(f"- {org_link} ({org_type})")
+                    else:
+                        body_parts.append(f"- {org_link}")
+                else:
+                    # Simple string format
+                    org_slug = slugify(org)
+                    body_parts.append(f"- [[refs/orgs/{org_slug}|{org}]]")
+            body_parts.append("")
+
+        # Projects section
+        projects_list = entities.get('projects', [])
+        if projects_list:
+            body_parts.append("## Projects")
+            body_parts.append("")
+            for project in projects_list:
+                if isinstance(project, dict):
+                    project_name = project.get('label', project.get('name', ''))
+                    status = project.get('status', 'Active')
+
+                    # Create wikilink to project reference note
+                    project_slug = slugify(project_name)
+                    project_link = f"[[refs/projects/{project_slug}|{project_name}]]"
+
+                    # Format: - [[refs/projects/school-2026|School 2026]] (Active)
+                    body_parts.append(f"- {project_link} ({status})")
+                else:
+                    # Simple string format
+                    project_slug = slugify(project)
+                    body_parts.append(f"- [[refs/projects/{project_slug}|{project}]]")
+            body_parts.append("")
+
         # Source link section - link to original in attachments/
         # Extract original filename (remove upload_UUID_ prefix)
         import re
@@ -956,6 +1006,142 @@ TABLE file.link as "Document", summary as "Summary"
 WHERE contains(file.outlinks, this.file.link)
 SORT file.mtime DESC
 LIMIT 50
+```
+
+"""
+        elif entity_type == 'org':
+            # Organization stub with business details
+            stub_body = f"""# {name}\n\n"""
+
+            # Show organization metadata if available
+            if person_data:  # Using person_data param to pass org_data
+                org_type = person_data.get('type', 'Organization')
+                if org_type:
+                    stub_body += f"**Type:** {org_type}\n\n"
+
+                # Industry/sector
+                industry = person_data.get('industry')
+                if industry:
+                    stub_body += f"**Industry:** {industry}\n"
+
+                # Headquarters/location
+                headquarters = person_data.get('headquarters')
+                if headquarters:
+                    stub_body += f"**Headquarters:** {headquarters}\n"
+
+                # Website
+                website = person_data.get('website')
+                if website:
+                    stub_body += f"**Website:** [{website}]({website})\n"
+
+                # Key contacts
+                contacts = person_data.get('contacts', [])
+                if contacts:
+                    stub_body += f"\n**Key Contacts:**\n"
+                    for contact in contacts:
+                        contact_slug = slugify(contact)
+                        stub_body += f"- [[refs/persons/{contact_slug}|{contact}]]\n"
+
+                # Description
+                description = person_data.get('description')
+                if description:
+                    stub_body += f"\n> {description}\n"
+
+                # Related projects
+                projects = person_data.get('projects', [])
+                if projects:
+                    stub_body += f"\n**Related Projects:**\n"
+                    for project in projects:
+                        project_slug = slugify(project)
+                        stub_body += f"- [[refs/projects/{project_slug}|{project}]]\n"
+
+                if any([industry, headquarters, website, contacts, description, projects]):
+                    stub_body += "\n"
+
+            # Related documents section
+            stub_body += f"""## Related Documents
+
+```dataview
+TABLE file.link as "Document", summary as "Summary", topics as "Topics", dates as "Dates"
+WHERE contains({field_name}, "{name}")
+SORT file.mtime DESC
+LIMIT 50
+```
+
+"""
+        elif entity_type == 'project':
+            # Project stub with timeline and stakeholders
+            stub_body = f"""# {name}\n\n"""
+
+            # Show project metadata if available
+            if person_data:  # Using person_data param to pass project_data
+                status = person_data.get('status', 'Active')
+                if status:
+                    stub_body += f"**Status:** {status}\n\n"
+
+                # Timeline
+                start_date = person_data.get('start_date')
+                end_date = person_data.get('end_date')
+                if start_date or end_date:
+                    stub_body += f"**Timeline:**\n"
+                    if start_date:
+                        stub_body += f"- Start: [[{start_date}]]\n"
+                    if end_date:
+                        stub_body += f"- End: [[{end_date}]]\n"
+
+                # Stakeholders
+                stakeholders = person_data.get('stakeholders', [])
+                if stakeholders:
+                    stub_body += f"\n**Stakeholders:**\n"
+                    for stakeholder in stakeholders:
+                        stakeholder_slug = slugify(stakeholder)
+                        stub_body += f"- [[refs/persons/{stakeholder_slug}|{stakeholder}]]\n"
+
+                # Organizations involved
+                organizations = person_data.get('organizations', [])
+                if organizations:
+                    stub_body += f"\n**Organizations:**\n"
+                    for org in organizations:
+                        org_slug = slugify(org)
+                        stub_body += f"- [[refs/orgs/{org_slug}|{org}]]\n"
+
+                # Description
+                description = person_data.get('description')
+                if description:
+                    stub_body += f"\n> {description}\n"
+
+                # Category (e.g., research, business, personal)
+                category = person_data.get('category')
+                if category:
+                    stub_body += f"\n**Category:** {category}\n"
+
+                # Goals/objectives
+                goals = person_data.get('goals', [])
+                if goals:
+                    stub_body += f"\n**Goals:**\n"
+                    for goal in goals:
+                        stub_body += f"- {goal}\n"
+
+                if any([start_date, end_date, stakeholders, organizations, description, category, goals]):
+                    stub_body += "\n"
+
+            # Related documents section
+            stub_body += f"""## Related Documents
+
+```dataview
+TABLE file.link as "Document", summary as "Summary", topics as "Topics", dates as "Dates"
+WHERE contains({field_name}, "{name}")
+SORT file.mtime DESC
+LIMIT 50
+```
+
+## Project Timeline
+
+```dataview
+TABLE dates as "Date", summary as "Summary"
+WHERE contains({field_name}, "{name}")
+SORT dates ASC
+LIMIT 100
 ```
 
 """
