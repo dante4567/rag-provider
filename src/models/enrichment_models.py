@@ -84,8 +84,8 @@ class Entities(BaseModel):
     """
     people: List[Person] = Field(
         default_factory=list,
-        description="ONLY actual human beings mentioned (NOT software/tools/apps). Max 20.",
-        max_length=20
+        description="ONLY actual human beings mentioned (NOT software/tools/apps). Max 50 for recipient lists.",
+        max_length=50
     )
     organizations: List[str] = Field(
         default_factory=list,

@@ -352,6 +352,7 @@ class RAGService:
         try:
             logger.info("✅ Using new service layer architecture")
             settings = get_settings()
+            self.settings = settings  # Store settings for attachment linking
             self.llm_service = LLMService(settings)
             self.vector_service = VectorService(collection, settings)
             self.document_service = DocumentService(settings)

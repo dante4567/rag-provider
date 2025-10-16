@@ -37,7 +37,11 @@
       "Bash(chmod:*)",
       "Bash(while IFS= read -r file)",
       "Bash(tee:*)",
-      "Bash(timeout 30 curl -s -X POST http://localhost:8001/ingest/file -F \"file=@/tmp/triage_test.md\")"
+      "Bash(timeout 30 curl -s -X POST http://localhost:8001/ingest/file -F \"file=@/tmp/triage_test.md\")",
+      "Bash(/tmp/ingest_10_emails.sh:*)",
+      "Bash(awk:*)",
+      "Bash(/tmp/ingest_50_emails.sh:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
