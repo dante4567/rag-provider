@@ -9,7 +9,7 @@ FLOW:
 """
 
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from datetime import datetime
 from src.models.schemas import DocumentType
 
@@ -25,8 +25,8 @@ class RawDocument(BaseModel):
 class EnrichedDocument(BaseModel):
     """Output from enrichment stage - document with extracted metadata"""
     content: str
-    filename: Optional[str]
-    document_type: DocumentType
+    filename: Optional[str] = None
+    document_type: DocumentType = DocumentType.text
 
     # Enriched metadata (flat dict for ChromaDB compatibility)
     enriched_metadata: Dict[str, Any]
@@ -64,6 +64,14 @@ class Chunk(BaseModel):
     section_title: Optional[str] = None
     parent_sections: List[str] = Field(default_factory=list)
     estimated_tokens: int = 0
+
+    @model_validator(mode='after')
+    def calculate_tokens_if_zero(self):
+        """Auto-calculate estimated_tokens from content if not provided"""
+        if self.estimated_tokens == 0:
+            # Rough estimate: 1 token ≈ 4 characters
+            self.estimated_tokens = max(1, len(self.content) // 4)
+        return self
 
 
 class ChunkedDocument(BaseModel):

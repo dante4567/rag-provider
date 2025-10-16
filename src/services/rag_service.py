@@ -31,7 +31,7 @@ try:
         ComplexityLevel
     )
     from fastapi import HTTPException
-    
+
     from src.services import (
         DocumentService,
         LLMService,
@@ -48,6 +48,9 @@ try:
     from src.services.quality_scoring_service import QualityScoringService
     from src.services.contact_service import ContactService
     from src.services.calendar_service import CalendarService
+
+    # Pipeline architecture
+    from src.pipeline import create_ingestion_pipeline, StageContext, RawDocument, StageResult
     from src.services.entity_name_filter_service import EntityNameFilterService
 except ImportError as e:
     raise ImportError(f"Failed to import required services: {e}")
@@ -408,6 +411,17 @@ class RAGService:
             # Initialize quality scoring service (blueprint do_index gates)
             self.quality_scoring_service = QualityScoringService()
 
+            # Initialize ingestion pipeline (modular architecture)
+            self.pipeline = create_ingestion_pipeline(
+                enrichment_service=self.enrichment_service,
+                quality_service=self.quality_scoring_service,
+                chunking_service=self.chunking_service,
+                vector_service=self.vector_service,
+                obsidian_service=self.obsidian_service,
+                enable_quality_gate=False,  # Disabled by default (set ENABLE_QUALITY_GATE=true to enable)
+                enable_export=True
+            )
+
             self.using_new_services = True
             logger.info("✅ EnrichmentService initialized with controlled vocabulary")
             logger.info(f"   📚 Topics: {len(self.vocabulary_service.get_all_topics())}")
@@ -415,6 +429,7 @@ class RAGService:
             logger.info(f"   📍 Places: {len(self.vocabulary_service.get_all_places())}")
             logger.info("✅ Structure-aware chunking enabled (ignores RAG:IGNORE blocks)")
             logger.info(f"✅ ObsidianService initialized (RAG-first format) → {obsidian_output_dir}")
+            logger.info("✅ Pipeline architecture initialized (5 stages: enrichment → quality → chunking → storage → export)")
             if enable_vcf_ics:
                 logger.info(f"✅ ContactService enabled → {contacts_output_dir}")
                 logger.info(f"✅ CalendarService enabled → {calendar_output_dir}")
@@ -1007,6 +1022,108 @@ class RAGService:
 
         except Exception as e:
             logger.error(f"Document processing failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
+    async def process_document_pipeline(self,
+                                        content: str,
+                                        filename: str = None,
+                                        document_type: DocumentType = DocumentType.text) -> IngestResponse:
+        """
+        Process document using modular pipeline architecture.
+
+        This is the new pipeline-based implementation that replaces the monolithic
+        process_document() method. Uses the stage-based pipeline:
+          RawDocument → Enrichment → QualityGate → Chunking → Storage → Export
+
+        Args:
+            content: Document content
+            filename: Optional filename
+            document_type: Type of document
+
+        Returns:
+            IngestResponse with ingestion results
+        """
+        # Validate content
+        if not content or not content.strip():
+            raise ValueError("Document content cannot be empty")
+
+        if len(content.strip()) < 10:
+            raise ValueError("Document content must be at least 10 characters long")
+
+        # Clean content
+        content = self._clean_content(content)
+
+        doc_id = str(uuid.uuid4())
+
+        # Check for duplicate content
+        content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+        try:
+            existing_docs = collection.get(
+                where={"content_hash": content_hash},
+                limit=1
+            )
+            if existing_docs and existing_docs['ids']:
+                first_id = existing_docs['ids'][0]
+                if isinstance(first_id, list):
+                    first_id = first_id[0] if first_id else ""
+                existing_doc_id = first_id.split('_chunk_')[0] if isinstance(first_id, str) else str(first_id)
+                logger.info(f"Duplicate content detected for {filename}. Existing doc: {existing_doc_id}")
+                return IngestResponse(
+                    success=True,
+                    doc_id=existing_doc_id,
+                    chunks=len(existing_docs['ids']),
+                    metadata={"duplicate": True, "original_filename": filename},
+                    obsidian_path=None
+                )
+        except Exception as e:
+            logger.debug(f"Duplicate check failed, proceeding with ingestion: {e}")
+
+        try:
+            logger.info(f"▶️  Starting pipeline ingestion: {filename or doc_id}")
+
+            # Create raw document
+            raw_doc = RawDocument(
+                content=content,
+                filename=filename,
+                document_type=document_type
+            )
+
+            # Create pipeline context
+            context = StageContext(
+                doc_id=doc_id,
+                filename=filename
+            )
+
+            # Run pipeline
+            result, output = await self.pipeline.run(raw_doc, context)
+
+            # Handle pipeline results
+            if result == StageResult.STOP:
+                logger.warning(f"⛔ Document gated: {context.gate_reason}")
+                return IngestResponse(
+                    success=False,
+                    doc_id=doc_id,
+                    chunks=0,
+                    metadata={"gated": True, "gate_reason": context.gate_reason},
+                    obsidian_path=None
+                )
+            elif result == StageResult.ERROR:
+                raise HTTPException(status_code=500, detail="Pipeline processing failed")
+
+            # Success - extract response data from output
+            logger.info(f"✅ Pipeline complete: {doc_id} ({output.chunk_count} chunks)")
+
+            return IngestResponse(
+                success=True,
+                doc_id=doc_id,
+                chunks=output.chunk_count,
+                metadata=output.metadata,
+                obsidian_path=output.obsidian_path
+            )
+
+        except Exception as e:
+            logger.error(f"Pipeline processing failed: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
     async def process_file(self, file_path: str, process_ocr: bool = False, generate_obsidian: bool = True, use_critic: bool = False, use_iteration: bool = False, process_attachments: bool = True) -> IngestResponse:

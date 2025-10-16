@@ -23,7 +23,7 @@ Each stage can:
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, TypeVar, Generic
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 import logging
 
@@ -45,13 +45,13 @@ class StageContext(BaseModel):
     """
     doc_id: str
     filename: Optional[str] = None
-    request_metadata: Dict[str, Any] = {}
+    request_metadata: Dict[str, Any] = Field(default_factory=dict)
 
     # Performance tracking
-    stage_timings: Dict[str, float] = {}
+    stage_timings: Dict[str, float] = Field(default_factory=dict)
 
     # Quality metrics
-    quality_scores: Dict[str, float] = {}
+    quality_scores: Optional[Dict[str, float]] = None
 
     # Decisions made
     gated: bool = False
@@ -160,15 +160,17 @@ class Pipeline:
         result = await pipeline.run(document, context)
     """
 
-    def __init__(self, stages: list[PipelineStage]):
+    def __init__(self, stages: list[PipelineStage], name: str = "pipeline"):
         """
         Initialize pipeline with stages.
 
         Args:
             stages: List of pipeline stages to execute in order
+            name: Pipeline name for logging (default: "pipeline")
         """
         self.stages = stages
-        self.logger = logging.getLogger("pipeline")
+        self.name = name
+        self.logger = logging.getLogger(name)
 
     async def run(
         self,

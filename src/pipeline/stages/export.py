@@ -11,8 +11,7 @@ from typing import Optional
 from src.pipeline.base import PipelineStage, StageResult, StageContext
 from src.pipeline.models import StoredDocument, ExportedDocument
 from src.services.obsidian_service import ObsidianService
-from src.models.enrichment_models import ObsidianMetadata, Keywords, Entities
-from src.models.schemas import DocumentType, ComplexityLevel
+from src.models.schemas import ObsidianMetadata, Keywords, Entities, DocumentType, ComplexityLevel
 from datetime import datetime
 import logging
 
