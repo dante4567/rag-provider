@@ -21,39 +21,47 @@ async def search_documents(
     rag_service = Depends(get_rag_service)
 ):
     """
-    Hybrid search endpoint - combines BM25 + dense embeddings + MMR + reranking
+    Hybrid search endpoint - combines BM25 + dense embeddings + MMR + optional reranking
 
     Uses the full hybrid retrieval pipeline:
     1. BM25 keyword search (exact term matching)
     2. Dense vector search (semantic similarity)
     3. Score fusion with weighted combination
     4. MMR for diversity
-    5. Cross-encoder reranking for final ordering
+    5. Cross-encoder reranking for final ordering (if ENABLE_RERANKING=true)
 
     This is the recommended search endpoint for best results.
     """
     import time
+    import os
     start_time = time.time()
 
     try:
-        from src.services.reranking_service import get_reranking_service
+        # Check if reranking is enabled
+        enable_reranking = os.getenv("ENABLE_RERANKING", "true").lower() == "true"
 
         # Get hybrid search results (BM25 + dense + MMR)
-        # Fetch more results for reranking (4x to improve recall)
+        # Fetch more results if reranking enabled (4x to improve recall)
+        multiplier = 4 if enable_reranking else 1
         hybrid_results = await rag_service.vector_service.hybrid_search(
             query=query.text,
-            top_k=query.top_k * 4,  # Get 4x for reranking (improved from 2x)
+            top_k=query.top_k * multiplier,
             filter=query.filter,
             apply_mmr=True  # Always use MMR for diversity
         )
 
-        # Apply cross-encoder reranking for final ordering
-        reranker = get_reranking_service()
-        reranked_results = reranker.rerank(
-            query=query.text,
-            results=hybrid_results,
-            top_k=query.top_k
-        )
+        # Apply cross-encoder reranking for final ordering (if enabled)
+        if enable_reranking:
+            from src.services.reranking_service import get_reranking_service
+            reranker = get_reranking_service()
+            reranked_results = reranker.rerank(
+                query=query.text,
+                results=hybrid_results,
+                top_k=query.top_k
+            )
+        else:
+            # Skip reranking, just take top_k from hybrid results
+            reranked_results = hybrid_results[:query.top_k]
 
         search_time_ms = (time.time() - start_time) * 1000
 

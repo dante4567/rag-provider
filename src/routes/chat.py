@@ -22,13 +22,17 @@ async def chat_with_rag(
     start_time = time.time()
 
     try:
-        from src.services.reranking_service import get_reranking_service
+        import os
         # Import search_documents from search routes
         from src.routes.search import search_documents
 
-        # Step 1: Search for relevant context (retrieve more for reranking)
-        # Retrieve 3x more results for reranking
-        initial_results_count = request.max_context_chunks * 3
+        # Check if reranking is enabled
+        enable_reranking = os.getenv("ENABLE_RERANKING", "true").lower() == "true"
+
+        # Step 1: Search for relevant context
+        # Retrieve more results if reranking enabled (search endpoint handles this)
+        multiplier = 3 if enable_reranking else 1
+        initial_results_count = request.max_context_chunks * multiplier
         search_query = Query(
             text=request.question,
             top_k=initial_results_count
@@ -47,27 +51,39 @@ async def chat_with_rag(
                 response_time_ms=round((time.time() - start_time) * 1000, 2)
             )
 
-        # Step 1.5: Rerank results for better relevance
-        reranker = get_reranking_service()
+        # Step 1.5: Rerank results for better relevance (if enabled)
+        if enable_reranking:
+            from src.services.reranking_service import get_reranking_service
+            reranker = get_reranking_service()
 
-        # Convert SearchResult objects to dicts for reranking
-        results_for_reranking = []
-        for result in search_response.results:
-            results_for_reranking.append({
-                'content': result.content,
-                'metadata': result.metadata,
-                'relevance_score': result.relevance_score,
-                'chunk_id': result.chunk_id
-            })
+            # Convert SearchResult objects to dicts for reranking
+            results_for_reranking = []
+            for result in search_response.results:
+                results_for_reranking.append({
+                    'content': result.content,
+                    'metadata': result.metadata,
+                    'relevance_score': result.relevance_score,
+                    'chunk_id': result.chunk_id
+                })
 
-        # Rerank and take top K
-        reranked_results = reranker.rerank(
-            query=request.question,
-            results=results_for_reranking,
-            top_k=request.max_context_chunks
-        )
+            # Rerank and take top K
+            reranked_results = reranker.rerank(
+                query=request.question,
+                results=results_for_reranking,
+                top_k=request.max_context_chunks
+            )
 
-        logger.info(f"🎯 Reranking: {len(results_for_reranking)} → {len(reranked_results)} results")
+            logger.info(f"🎯 Reranking: {len(results_for_reranking)} → {len(reranked_results)} results")
+        else:
+            # Skip reranking, convert SearchResult objects to dicts
+            reranked_results = []
+            for result in search_response.results[:request.max_context_chunks]:
+                reranked_results.append({
+                    'content': result.content,
+                    'metadata': result.metadata,
+                    'relevance_score': result.relevance_score,
+                    'chunk_id': result.chunk_id
+                })
 
         # Step 2: Prepare context from reranked results with chunk IDs
         context_chunks = []
