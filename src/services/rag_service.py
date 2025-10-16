@@ -1072,6 +1072,7 @@ class RAGService:
         """
         success_count = 0
         skip_count = 0
+        attachment_doc_ids = []  # Collect attachment doc IDs for WikiLinks
 
         for att_path in attachment_paths:
             att_path_obj = Path(att_path)
@@ -1105,7 +1106,7 @@ class RAGService:
                 att_metadata['parent_sender'] = parent_metadata.get('sender', 'Unknown')
 
                 # Process as regular document
-                await self.process_document(
+                result = await self.process_document(
                     content=content,
                     filename=f"[Attachment] {att_path_obj.name}",
                     document_type=doc_type,
@@ -1116,6 +1117,14 @@ class RAGService:
                     use_iteration=False
                 )
 
+                # Collect attachment doc ID and filename for WikiLinks
+                if result.success and result.doc_id:
+                    attachment_doc_ids.append({
+                        'doc_id': result.doc_id,
+                        'filename': att_path_obj.name,
+                        'obsidian_path': result.obsidian_path
+                    })
+
                 success_count += 1
                 logger.info(f"   ✅ Processed attachment: {att_path_obj.name}")
 
@@ -1123,7 +1132,74 @@ class RAGService:
                 logger.warning(f"   ⚠️  Failed to process attachment {att_path_obj.name}: {e}")
                 continue
 
+        # Update parent email with WikiLinks to attachments
+        if attachment_doc_ids and generate_obsidian:
+            await self._update_parent_with_attachment_links(parent_doc_id, attachment_doc_ids)
+
         logger.info(f"📎 Attachment processing complete: {success_count} processed, {skip_count} skipped")
+
+    async def _update_parent_with_attachment_links(
+        self,
+        parent_doc_id: str,
+        attachment_info: List[Dict[str, str]]
+    ):
+        """
+        Update parent email's Obsidian file with WikiLinks to attachments
+
+        Args:
+            parent_doc_id: Document ID of parent email
+            attachment_info: List of dicts with doc_id, filename, obsidian_path
+        """
+        try:
+            # Find parent Obsidian file
+            obsidian_path = Path(self.settings.obsidian_path)
+            parent_files = list(obsidian_path.glob(f"*{parent_doc_id[:8]}*.md"))
+
+            if not parent_files:
+                logger.warning(f"Could not find parent Obsidian file for {parent_doc_id}")
+                return
+
+            parent_file = parent_files[0]
+
+            # Read current content
+            with open(parent_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # Replace file path listings with WikiLinks
+            if "--- Attachments ---" in content:
+                # Find the attachments section and replace with WikiLinks
+                lines = content.split('\n')
+                new_lines = []
+                in_attachments = False
+
+                for line in lines:
+                    if "--- Attachments ---" in line:
+                        in_attachments = True
+                        new_lines.append(line)
+                        # Add WikiLinks
+                        for att in attachment_info:
+                            # Extract just the filename from the Obsidian path
+                            if att.get('obsidian_path'):
+                                obsidian_filename = Path(att['obsidian_path']).stem
+                                new_lines.append(f"- 📎 [[{obsidian_filename}|{att['filename']}]]")
+                        continue
+                    elif in_attachments and line.startswith('📎'):
+                        # Skip old file path listings
+                        continue
+                    elif in_attachments and not line.strip():
+                        # End of attachments section
+                        in_attachments = False
+
+                    new_lines.append(line)
+
+                # Write updated content
+                with open(parent_file, 'w', encoding='utf-8') as f:
+                    f.write('\n'.join(new_lines))
+
+                logger.info(f"✅ Updated parent email with {len(attachment_info)} attachment WikiLinks")
+
+        except Exception as e:
+            logger.error(f"Failed to update parent with attachment links: {e}")
 
     async def process_file_from_watch(self, file_path: str):
         """Process file from watch folder and move to processed"""

@@ -143,13 +143,14 @@ class EnrichmentService:
 
     def extract_dates_from_content(self, content: str) -> List[str]:
         """
-        Extract dates from content using regex patterns
+        Extract dates from content using regex patterns + relative date parsing
 
         Patterns supported:
         - YYYY-MM-DD (ISO format)
         - DD.MM.YYYY (German format)
         - DD/MM/YYYY
         - Month DD, YYYY
+        - Relative dates: "next Monday", "nächste Woche", "am Montag" (via dateparser)
         """
         dates = set()
 
@@ -181,6 +182,42 @@ class EnrichmentService:
                 dates.add(iso_date)
             except ValueError:
                 pass
+
+        # Relative date parsing (e.g., "next Monday", "nächste Woche", "am Montag")
+        try:
+            import dateparser
+            # Split content into sentences to avoid parsing entire text
+            sentences = re.split(r'[.!?\n]', content[:3000])  # First 3000 chars only
+            for sentence in sentences[:50]:  # Max 50 sentences
+                if len(sentence.strip()) < 10:  # Skip very short sentences
+                    continue
+                # Look for relative date patterns
+                relative_patterns = [
+                    r'(next \w+)',  # next Monday, next week
+                    r'(nächste[nrs]? \w+)',  # nächste Woche, nächsten Montag
+                    r'(am \w+)',  # am Montag, am Freitag
+                    r'(morgen|tomorrow)',  # morgen, tomorrow
+                    r'(gestern|yesterday)',  # gestern, yesterday
+                    r'(übermorgen)',  # day after tomorrow
+                    r'(letzte[nrs]? \w+)',  # letzten Montag, letzte Woche
+                    r'(in \d+ \w+)',  # in 2 weeks, in 3 days
+                ]
+                for pattern in relative_patterns:
+                    matches = re.finditer(pattern, sentence, re.IGNORECASE)
+                    for match in matches:
+                        date_phrase = match.group(1)
+                        # Parse with dateparser (supports multiple languages)
+                        parsed = dateparser.parse(
+                            date_phrase,
+                            languages=['en', 'de', 'fr', 'es'],
+                            settings={'PREFER_DATES_FROM': 'future', 'RELATIVE_BASE': datetime.now()}
+                        )
+                        if parsed:
+                            dates.add(parsed.strftime('%Y-%m-%d'))
+        except ImportError:
+            pass  # dateparser not available, skip relative parsing
+        except Exception as e:
+            logger.debug(f"Error parsing relative dates: {e}")
 
         return sorted(list(dates))
 

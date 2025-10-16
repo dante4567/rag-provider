@@ -59,6 +59,7 @@ RUN pip install --no-cache-dir \
     Pillow==11.3.0 \
     pdf2image==1.17.0 \
     python-dateutil==2.9.0.post0 \
+    dateparser==1.2.0 \
     beautifulsoup4==4.13.5 \
     lxml==6.0.2 \
     extract-msg==0.55.0 \
