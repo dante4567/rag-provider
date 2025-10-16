@@ -49,6 +49,7 @@ from src.pipeline.models import (
     Chunk
 )
 from src.pipeline.stages import (
+    TriageStage,
     EnrichmentStage,
     QualityGateStage,
     ChunkingStage,
@@ -63,6 +64,8 @@ def create_ingestion_pipeline(
     chunking_service,
     vector_service,
     obsidian_service,
+    triage_service=None,
+    enable_triage: bool = True,
     enable_quality_gate: bool = True,
     enable_export: bool = True,
     pipeline_name: str = "ingestion_pipeline"
@@ -71,7 +74,7 @@ def create_ingestion_pipeline(
     Factory function to create a configured ingestion pipeline.
 
     This pipeline handles the full document ingestion flow:
-    RawDocument → EnrichedDocument → ChunkedDocument → StoredDocument → ExportedDocument
+    RawDocument → [Triage] → EnrichedDocument → [QualityGate] → ChunkedDocument → StoredDocument → ExportedDocument
 
     Args:
         enrichment_service: Service for LLM-based metadata extraction
@@ -79,6 +82,8 @@ def create_ingestion_pipeline(
         chunking_service: Service for structure-aware text splitting
         vector_service: Service for ChromaDB operations
         obsidian_service: Service for Obsidian markdown generation
+        triage_service: Service for document triage (optional, auto-created if None)
+        enable_triage: Whether to enable triage stage (default: True)
         enable_quality_gate: Whether to enable quality gating (default: True)
         enable_export: Whether to enable Obsidian export (default: True)
         pipeline_name: Optional custom pipeline name
@@ -105,30 +110,60 @@ def create_ingestion_pipeline(
         ...     print(f"⛔ Document gated: {context.gate_reason}")
     """
 
-    stages = [
+    stages = []
+
+    # Stage 1: Triage (optional, runs before enrichment to save costs)
+    if enable_triage and triage_service:
+        stages.append(
+            TriageStage(
+                triage_service=triage_service,
+                enable_duplicate_detection=True,
+                enable_junk_filtering=True,
+                name="triage"
+            )
+        )
+
+    # Stage 2: Enrichment (LLM-based metadata extraction)
+    stages.append(
         EnrichmentStage(
             enrichment_service=enrichment_service,
             name="enrichment"
-        ),
+        )
+    )
+
+    # Stage 3: Quality Gate (optional, filters low-quality docs)
+    stages.append(
         QualityGateStage(
             quality_service=quality_service,
             enable_gating=enable_quality_gate,
             name="quality_gate"
-        ),
+        )
+    )
+
+    # Stage 4: Chunking (structure-aware text splitting)
+    stages.append(
         ChunkingStage(
             chunking_service=chunking_service,
             name="chunking"
-        ),
+        )
+    )
+
+    # Stage 5: Storage (ChromaDB persistence)
+    stages.append(
         StorageStage(
             vector_service=vector_service,
             name="storage"
-        ),
+        )
+    )
+
+    # Stage 6: Export (optional, Obsidian markdown generation)
+    stages.append(
         ExportStage(
             obsidian_service=obsidian_service,
             enable_export=enable_export,
             name="export"
         )
-    ]
+    )
 
     return Pipeline(stages=stages, name=pipeline_name)
 
@@ -149,6 +184,7 @@ __all__ = [
     "Chunk",
 
     # Pipeline stages
+    "TriageStage",
     "EnrichmentStage",
     "QualityGateStage",
     "ChunkingStage",

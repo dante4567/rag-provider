@@ -412,13 +412,16 @@ class RAGService:
             self.quality_scoring_service = QualityScoringService()
 
             # Initialize ingestion pipeline (modular architecture)
+            # NEW: Triage stage runs BEFORE enrichment to save costs on duplicates/junk
             self.pipeline = create_ingestion_pipeline(
                 enrichment_service=self.enrichment_service,
                 quality_service=self.quality_scoring_service,
                 chunking_service=self.chunking_service,
                 vector_service=self.vector_service,
                 obsidian_service=self.obsidian_service,
-                enable_quality_gate=False,  # Disabled by default (set ENABLE_QUALITY_GATE=true to enable)
+                triage_service=self.triage_service,  # NEW: Enable smart triage
+                enable_triage=True,  # NEW: Duplicate detection + junk filtering
+                enable_quality_gate=True,  # CHANGED: Enable quality gating (was False)
                 enable_export=True  # Re-enabled after fixing API mismatch
             )
 
@@ -429,7 +432,9 @@ class RAGService:
             logger.info(f"   📍 Places: {len(self.vocabulary_service.get_all_places())}")
             logger.info("✅ Structure-aware chunking enabled (ignores RAG:IGNORE blocks)")
             logger.info(f"✅ ObsidianService initialized (RAG-first format) → {obsidian_output_dir}")
-            logger.info("✅ Pipeline architecture initialized (5 stages: enrichment → quality → chunking → storage → export)")
+            logger.info("✅ Pipeline architecture initialized (6 stages: triage → enrichment → quality → chunking → storage → export)")
+            logger.info("   🔍 Triage enabled: duplicate detection + junk filtering")
+            logger.info("   🚪 Quality gate enabled: filters low-quality documents")
             if enable_vcf_ics:
                 logger.info(f"✅ ContactService enabled → {contacts_output_dir}")
                 logger.info(f"✅ CalendarService enabled → {calendar_output_dir}")
