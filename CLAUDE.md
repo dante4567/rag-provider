@@ -31,19 +31,22 @@ curl -X POST http://localhost:8001/search \
 - **Active development** - Enrichment fixes committed Oct 15, 2025
 
 **System Health:**
-- ✅ **955/955 unit tests passing (100%)** - 32/37 services tested (91% coverage)
-- ✅ **11/11 smoke tests passing** - Fast CI/CD validation (< 1s)
+- ✅ **955/955 unit tests passing (100%)** in 9.84s - 32/37 services tested (91% coverage)
 - ✅ **LiteLLM integration** - Support for 100+ LLM providers
 - ✅ **Instructor integration** - Type-safe structured outputs with Pydantic
 - ✅ **Modular architecture** - app.py: 778 LOC, RAGService orchestrator pattern
 - ✅ **Docker deployment** - Persistent volumes, configurable ports
-- ⚠️ **Integration tests**: 39% pass rate (flaky due to LLM rate limits)
-- 🔴 **Bulk ingestion**: Needs retry logic (implemented Oct 15, not yet tested)
+- ✅ **Entity linking complete** - 6/6 entity types (people, orgs, tech, places, dates, projects)
+- ✅ **Auto-linking working** - Entity mentions auto-converted to WikiLinks
+- 🔴 **Smoke tests**: 4/11 passing (hang after 30-60s, need LLM mocking)
+- 🔴 **Integration tests**: 0% pass rate (broken: ChromaDB connection in test fixtures)
 
-**Real Costs (Verified):**
-- $0.000063 per document enrichment (Groq Llama 3.3 70B)
+**Real Costs (Verified Oct 16, 2025):**
+- $0.00009 per document enrichment (Groq Llama 3.3 70B, 128k context)
 - $0.005 per quality critique (optional, Claude Sonnet)
 - 95-98% savings vs industry standard
+
+**Last Verified:** October 16, 2025 - Comprehensive test audit performed
 
 ## Architecture
 

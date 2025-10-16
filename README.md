@@ -7,9 +7,9 @@
 
 ## 🚨 **HONEST NO-BS STATUS**
 
-**Version: v3.0.0 - Active Production System (Grade A-, 93/100 → Oct 15, 2025)**
+**Version: v3.0.0 + Oct 16 Entity Linking Update (Grade B+, 85/100)**
 
-This is an **actively used production RAG system** processing real personal documents (344 emails ingested from Villa Luna daycare). v3.0 features: LiteLLM integration (100+ providers), Instructor for type-safe outputs, modular routes, RAGService orchestrator.
+This is an **actively used production RAG system** processing real personal documents (344 emails ingested from Villa Luna daycare). v3.0 features: LiteLLM integration (100+ providers), Instructor for type-safe outputs, modular routes, RAGService orchestrator. Oct 16 update adds complete entity linking with auto-WikiLink conversion.
 
 **Real Production Metrics (Oct 14, 2025 ingestion run):**
 - **344/524 documents successfully ingested (66% success rate)**
@@ -18,12 +18,12 @@ This is an **actively used production RAG system** processing real personal docu
 - **Issue:** Bulk ingestion hits rate limits even with 5s delays
 - **Fix:** Retry logic with exponential backoff now implemented (Oct 15)
 
-**What Works:**
-- ✅ **955 unit tests passing (100%)** - 41 test files, 91% service coverage
-- ✅ **11 smoke tests passing** - Fast CI/CD validation (< 1s)
+**What Works (Verified Oct 16, 2025):**
+- ✅ **955 unit tests passing (100%)** in 9.84s - 41 test files, 91% service coverage
 - ✅ **LiteLLM integration** - Support for 100+ LLM providers
 - ✅ **Instructor integration** - Type-safe structured outputs
 - ✅ **Modular architecture** - 10 route modules, RAGService orchestrator
+- ✅ **Entity linking complete** - 6/6 entity types with auto-WikiLink conversion
 - ✅ Document processing (PDF, Office, text files, 13+ formats)
 - ✅ LLM-as-critic quality scoring - 7-point rubric, $0.005/critique
 - ✅ Gold query evaluation - Precision@k, MRR metrics
@@ -31,7 +31,11 @@ This is an **actively used production RAG system** processing real personal docu
 - ✅ Controlled vocabulary enrichment (no hallucinated tags)
 - ✅ Structure-aware chunking with RAG:IGNORE support
 - ✅ OCR processing, smart triage, Obsidian integration
-- ✅ Cost tracking ($0.000063/doc enrichment)
+- ✅ Cost tracking ($0.00009/doc enrichment, verified Oct 16)
+
+**What Needs Fixing:**
+- 🔴 **Smoke tests:** 4/11 passing (hang after 30-60s, need LLM mocking)
+- 🔴 **Integration tests:** 0% pass rate (broken: ChromaDB connection in test fixtures)
 
 **Recent Improvements (v3.0.0 - Oct 2025):**
 - ✅ **LiteLLM** - Unified API for 100+ providers, automatic retries
@@ -41,9 +45,9 @@ This is an **actively used production RAG system** processing real personal docu
 - ✅ **Test coverage** - 955 test functions (was 585)
 - ✅ **Documentation** - Streamlined CLAUDE.md, migration history preserved
 
-**Deployment Status**: ✅ Production-ready (v3.0.0, Grade A 92/100)
-**CI/CD Status**: ⏸️ Configured, awaiting activation → [Activation Guide](docs/guides/CI_CD_ACTIVATION_GUIDE.md)
-**Test Coverage**: ✅ 100% unit test pass rate (955 tests)
+**Deployment Status**: ✅ Production-ready for local/dev use (v3.0.0 + Oct 16 updates, Grade B+ 85/100)
+**CI/CD Status**: 🔴 Integration/smoke tests broken (need mocking) → [Test Results](docs/TEST_AUDIT_OCT16.md)
+**Test Coverage**: ✅ 100% unit test pass rate (955 tests in 9.84s)
 
 ## ⚡ Quick Start
 

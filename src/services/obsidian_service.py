@@ -993,13 +993,22 @@ class ObsidianService:
 ## Events on This Date
 
 ```dataview
-TABLE file.link as "Document", summary as "Summary", dates_detailed as "Date Context"
-WHERE contains(dates, "{name}")
+TABLE file.link as "Document", summary as "Summary", topics as "Topics"
+WHERE dates AND contains(dates, "{name}")
 SORT file.mtime DESC
 LIMIT 50
 ```
 
-**Note:** Shows all documents with events/deadlines on this date. The "Date Context" column shows details (meeting, deadline, birthday, etc.).
+**Note:** Shows all documents with events/deadlines on this date.
+
+## All Documents Created on This Date
+
+```dataview
+TABLE file.link as "Document", summary as "Summary"
+WHERE created_at = "{name}" OR ingested_at = "{name}"
+SORT file.mtime DESC
+LIMIT 50
+```
 """
         elif entity_type == 'person':
             # Enhanced person stub with summary, contact info, and relationships
