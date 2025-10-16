@@ -1112,12 +1112,14 @@ class RAGService:
                 raise HTTPException(status_code=500, detail="Pipeline processing failed")
 
             # Success - extract response data from output
-            logger.info(f"✅ Pipeline complete: {doc_id} ({output.chunk_count} chunks)")
+            # Get chunk count from metadata (stored by storage stage)
+            chunk_count = output.metadata.get('chunks', 0)
+            logger.info(f"✅ Pipeline complete: {doc_id} ({chunk_count} chunks)")
 
             return IngestResponse(
                 success=True,
                 doc_id=doc_id,
-                chunks=output.chunk_count,
+                chunks=chunk_count,
                 metadata=output.metadata,
                 obsidian_path=output.obsidian_path
             )
@@ -1168,16 +1170,28 @@ class RAGService:
                         logger.info(f"✅ Added {len(attachment_summaries)} attachment summaries to email enrichment context")
 
             # Process main document (now with attachment context if applicable)
-            result = await self.process_document(
-                content=content,
-                filename=filename,
-                document_type=document_type,
-                process_ocr=process_ocr,
-                generate_obsidian=generate_obsidian,
-                file_metadata=metadata,
-                use_critic=use_critic,
-                use_iteration=use_iteration
-            )
+            # Use pipeline if enabled and no critic/iteration requested (pipeline doesn't support those yet)
+            use_pipeline = os.getenv("USE_PIPELINE", "true").lower() == "true"
+            if use_pipeline and not use_critic and not use_iteration:
+                logger.info("Using pipeline-based ingestion")
+                result = await self.process_document_pipeline(
+                    content=content,
+                    filename=filename,
+                    document_type=document_type
+                )
+            else:
+                if use_critic or use_iteration:
+                    logger.info("Using legacy ingestion (critic/iteration requested)")
+                result = await self.process_document(
+                    content=content,
+                    filename=filename,
+                    document_type=document_type,
+                    process_ocr=process_ocr,
+                    generate_obsidian=generate_obsidian,
+                    file_metadata=metadata,
+                    use_critic=use_critic,
+                    use_iteration=use_iteration
+                )
 
             # Process email attachments as full documents (now that parent is enriched)
             if process_attachments and metadata.get('has_attachments', False):
